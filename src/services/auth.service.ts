@@ -11,7 +11,8 @@ import {
   LoginRequest, 
   RegisterRequest, 
   AuthResponse,
-  User 
+  User,
+  UserRole
 } from '@/types/api.types';
 
 export const authService = {
@@ -22,14 +23,35 @@ export const authService = {
     // Mock implementation - remove when API is ready
     await new Promise(resolve => setTimeout(resolve, 800));
     
+    // Determine role based on email
+    let role: UserRole = 'SELLER'; // default
+    const emailLower = credentials.email.toLowerCase();
+    
+    if (emailLower.includes('admin') || emailLower === 'admin@test.com') {
+      role = 'ADMIN';
+    } else if (emailLower.includes('seller') || emailLower === 'seller@test.com') {
+      role = 'SELLER';
+    } else if (emailLower.includes('buyer') || emailLower === 'buyer@test.com') {
+      role = 'BUYER';
+    } else if (emailLower.includes('3pl') || emailLower === '3pl@test.com') {
+      role = '3PL';
+    }
+
+    // Create mock user with role-specific data
     const mockUser: User = {
-      id: 'user_123',
+      id: 'user_' + role.toLowerCase() + '_123',
       email: credentials.email,
-      role: 'SELLER',
-      organizationId: 'org_456',
-      organizationName: 'Steel Manufacturing Ltd',
+      role,
+      organizationId: 'org_' + role.toLowerCase() + '_456',
+      organizationName: role === 'ADMIN' 
+        ? 'SteelConnect Admin' 
+        : role === 'SELLER'
+        ? 'Steel Manufacturing Ltd'
+        : role === 'BUYER'
+        ? 'Construction Corp Ltd'
+        : '3PL Logistics Ltd',
       mobile: '+919876543210',
-      onboardingCompleted: true, // Mock user has completed onboarding
+      onboardingCompleted: role === 'ADMIN' ? true : true, // Admin doesn't need onboarding
       createdAt: new Date().toISOString()
     };
 
@@ -58,7 +80,7 @@ export const authService = {
       organizationId: 'org_' + Date.now(),
       organizationName: data.organizationName,
       mobile: data.mobile,
-      onboardingCompleted: false, // New users need onboarding
+      onboardingCompleted: data.role === 'ADMIN' ? true : false, // Admin doesn't need onboarding
       createdAt: new Date().toISOString()
     };
 

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -46,13 +47,30 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     navigate('/auth/login');
   };
 
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: FileText, label: 'RFQs', path: '/rfqs' },
-    { icon: Package, label: 'My Quotes', path: '/quotes' },
-    { icon: Truck, label: 'Orders', path: '/orders' },
-    { icon: CheckCircle, label: 'KYC Status', path: '/kyc-status' },
-  ];
+  // Role-based navigation items
+  const getNavItems = () => {
+    const baseItems = [
+      { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+    ];
+
+    if (user?.role === 'ADMIN') {
+      return baseItems;
+    }
+
+    if (user?.role === 'SELLER') {
+      return [
+        ...baseItems,
+        { icon: FileText, label: 'RFQs', path: '/rfqs' },
+        { icon: Package, label: 'My Quotes', path: '/quotes' },
+        { icon: Truck, label: 'Orders', path: '/orders' },
+        { icon: CheckCircle, label: 'KYC Status', path: '/kyc-status' },
+      ];
+    }
+
+    return baseItems;
+  };
+
+  const navItems = getNavItems();
 
   const NavLinks = () => (
     <>
@@ -151,9 +169,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                   </p>
-                  <p className="text-xs leading-none text-muted-foreground capitalize">
-                    {user?.role?.toLowerCase()} Account
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant={user?.role === 'ADMIN' ? 'default' : 'secondary'} className="text-xs">
+                      {user?.role}
+                    </Badge>
+                  </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

@@ -3,13 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { OnboardingGuard } from "./components/OnboardingGuard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminRoute } from "./components/AdminRoute";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import KYCStatus from "./pages/KYCStatus";
 import NotFound from "./pages/NotFound";
 import RFQList from "./pages/RFQList";
 import RoleSelection from "./pages/RoleSelection";
-import SellerDashboard from "./pages/SellerDashboard";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import SellerOnboarding from "./pages/onboarding/SellerOnboarding";
@@ -54,14 +55,14 @@ function App() {
             } 
           />
 
-          {/* Dashboard Routes - All at root level with full protection */}
+          {/* Dashboard Routes - Role-based routing */}
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute>
                 <OnboardingGuard>
                   <DashboardLayout>
-                    <SellerDashboard />
+                    <Dashboard />
                   </DashboardLayout>
                 </OnboardingGuard>
               </ProtectedRoute>
