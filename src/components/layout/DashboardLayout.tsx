@@ -54,7 +54,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     ];
 
     if (user?.role === 'ADMIN') {
-      return baseItems;
+      return [
+        ...baseItems,
+        { icon: User, label: 'Users', path: '/admin/users' },
+        { icon: CheckCircle, label: 'Approvals', path: '/admin/approvals' },
+        { icon: FileText, label: 'All RFQs', path: '/admin/rfqs' },
+        { icon: Package, label: 'All Orders', path: '/admin/orders' },
+      ];
     }
 
     if (user?.role === 'SELLER') {
@@ -64,6 +70,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         { icon: Package, label: 'My Quotes', path: '/quotes' },
         { icon: Truck, label: 'Orders', path: '/orders' },
         { icon: CheckCircle, label: 'KYC Status', path: '/kyc-status' },
+      ];
+    }
+
+    if (user?.role === 'BUYER') {
+      return [
+        ...baseItems,
+        { icon: FileText, label: 'My RFQs', path: '/buyer/rfqs' },
+        { icon: Package, label: 'Quotes Received', path: '/buyer/quotes' },
+        { icon: Truck, label: 'Orders', path: '/buyer/orders' },
+      ];
+    }
+
+    if (user?.role === '3PL') {
+      return [
+        ...baseItems,
+        { icon: Truck, label: 'Shipments', path: '/3pl/shipments' },
+        { icon: Package, label: 'Deliveries', path: '/3pl/deliveries' },
+        { icon: CheckCircle, label: 'Status', path: '/3pl/status' },
       ];
     }
 
