@@ -4,16 +4,16 @@
  * Can be reused in React Native
  */
 
-import { apiClient } from './api.client';
 import { API_CONFIG, STORAGE_KEYS } from '@/config/api.config';
-import { storage } from '@/utils/storage.util';
-import { 
-  LoginRequest, 
-  RegisterRequest, 
+import {
   AuthResponse,
+  LoginRequest,
+  RegisterRequest,
   User,
   UserRole
 } from '@/types/api.types';
+import { storage } from '@/utils/storage.util';
+import { apiClient } from './api.client';
 
 export const authService = {
   /**
@@ -44,11 +44,11 @@ export const authService = {
       role,
       organizationId: 'org_' + role.toLowerCase() + '_456',
       organizationName: role === 'ADMIN' 
-        ? 'SteelConnect Admin' 
+        ? 'Bulk Mandi Admin' 
         : role === 'SELLER'
-        ? 'Steel Manufacturing Ltd'
+        ? 'Seller'
         : role === 'BUYER'
-        ? 'Construction Corp Ltd'
+        ? 'Buyer'
         : '3PL Logistics Ltd',
       mobile: '+919876543210',
       onboardingCompleted: role === 'ADMIN' ? true : true, // Admin doesn't need onboarding

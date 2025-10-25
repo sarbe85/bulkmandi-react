@@ -3,11 +3,10 @@
  * Main layout wrapper with navigation and logout
  */
 
-import { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -15,22 +14,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Package, 
-  Truck, 
-  User, 
-  LogOut,
-  Menu,
-  CheckCircle,
-  Moon,
-  Sun
-} from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  CheckCircle,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Moon,
+  Package,
+  Sun,
+  Truck,
+  User
+} from 'lucide-react';
+import { ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -135,7 +135,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {/* Logo */}
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
               <Package className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg">SteelConnect</span>
+              <span className="font-bold text-lg">Bulk Mandi</span>
             </div>
 
             {/* Desktop Navigation */}
