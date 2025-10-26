@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { BankDocData, PayoutMethod, DocumentType } from '@/types/onboarding.types';
-import { onboardingService } from '@/services/onboarding.service';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Check, Upload, FileText } from 'lucide-react';
+import { onboardingService } from '@/services/onboarding.service';
+import { BankDocData, DocumentType, PayoutMethod } from '@/types/onboarding.types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Check, FileText, Loader2, Upload } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 const schema = z.object({
   accountName: z.string().min(2, 'Account name is required'),
@@ -45,7 +45,7 @@ const REQUIRED_DOCUMENTS: { type: DocumentType; label: string; required: boolean
 export const BankDocsStep = ({ data, onNext, onBack }: Props) => {
   const { toast } = useToast();
   const [pennyDropping, setPennyDropping] = useState(false);
-  const [pennyDropResult, setPennyDropResult] = useState<any>(null);
+  const [pennyDropResult, setPennyDropResult] = useState(null);
   const [documents, setDocuments] = useState<Map<DocumentType, File>>(new Map());
   const [uploadedDocs, setUploadedDocs] = useState<DocumentType[]>(data?.documents.map(d => d.type) || []);
 
@@ -91,7 +91,7 @@ export const BankDocsStep = ({ data, onNext, onBack }: Props) => {
           description: `Account matched: ${result.accountName}`,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: 'Verification Failed',
         description: error.message || 'Failed to verify account.',
@@ -169,7 +169,21 @@ export const BankDocsStep = ({ data, onNext, onBack }: Props) => {
       },
     };
 
-    onNext(bankDocData);
+    // Save to backend
+    try {
+      await onboardingService.updateBankDetails(bankDocData);
+      toast({
+        title: 'Success',
+        description: 'Bank details saved successfully',
+      });
+      onNext(bankDocData);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save bank details',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

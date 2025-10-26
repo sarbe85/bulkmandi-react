@@ -3,11 +3,11 @@
  * Routes to appropriate dashboard based on user role
  */
 
+import { useAuth } from '@/hooks/useAuth';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import AdminDashboard from './AdminDashboard';
-import SellerDashboard from './SellerDashboard';
+import AdminDashboard from './admin/Dashboard';
+import SellerDashboard from './seller/Dashboard';
 
 const Dashboard = () => {
   const { user } = useAuth();

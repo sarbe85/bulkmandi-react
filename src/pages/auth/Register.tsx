@@ -55,7 +55,7 @@ export default function Register() {
     try {
       await register(formData);
       toast.success('Registration successful! Please complete your onboarding.');
-      navigate(formData.role === 'SELLER' ? '/seller-onboarding' : '/dashboard');
+      navigate(formData.role === 'SELLER' ? '/seller/onboarding' : '/seller/dashboard');
     } catch (error) {
       toast.error(error.message || 'Registration failed');
     }

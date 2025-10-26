@@ -50,28 +50,28 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   // Role-based navigation items
   const getNavItems = () => {
     const baseItems = [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+      { icon: LayoutDashboard, label: 'Dashboard', path: '/seller/dashboard' },
     ];
 
-    if (user?.role === 'ADMIN') {
-      return [
-        ...baseItems,
-        { icon: User, label: 'Users', path: '/admin/users' },
-        { icon: CheckCircle, label: 'Approvals', path: '/admin/approvals' },
-        { icon: FileText, label: 'All RFQs', path: '/admin/rfqs' },
-        { icon: Package, label: 'All Orders', path: '/admin/orders' },
-      ];
-    }
+   if (user?.role === 'ADMIN') {
+    return [
+      ...baseItems,
+      { icon: User, label: 'Users', path: '/admin/users' },
+      { icon: CheckCircle, label: 'Approvals', path: '/admin/approvals' },
+      { icon: FileText, label: 'All RFQs', path: '/admin/rfqs' },
+      { icon: Package, label: 'All Orders', path: '/admin/orders' },
+    ];
+  }
 
     if (user?.role === 'SELLER') {
-      return [
-        ...baseItems,
-        { icon: FileText, label: 'RFQs', path: '/rfqs' },
-        { icon: Package, label: 'My Quotes', path: '/quotes' },
-        { icon: Truck, label: 'Orders', path: '/orders' },
-        { icon: CheckCircle, label: 'KYC Status', path: '/kyc-status' },
-      ];
-    }
+    return [
+      ...baseItems,
+      { icon: FileText, label: 'RFQs', path: '/seller/rfqs' }, // CHANGED
+      { icon: Package, label: 'My Quotes', path: '/seller/quotes' }, // CHANGED
+      { icon: Truck, label: 'Orders', path: '/seller/orders' }, // CHANGED
+      { icon: CheckCircle, label: 'KYC Status', path: '/seller/kyc-status' }, // CHANGED
+    ];
+  }
 
     if (user?.role === 'BUYER') {
       return [

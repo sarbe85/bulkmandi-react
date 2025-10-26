@@ -11,8 +11,9 @@ import { toast } from 'sonner';
 export default function Login() {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const [email, setEmail] = useState('user@test.com');
+const [password, setPassword] = useState('password123');
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
