@@ -1,10 +1,13 @@
+ 
+// import { AdminDashboardData, adminService } from '@/services/admin.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// import { Badge } from '@/shared/components/ui/badge';
 import { Badge } from '@/shared/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle, Clock, FileText, ShoppingCart, TrendingUp, Users } from 'lucide-react';
-import { adminService, AdminDashboardData } from '@/services/admin.service';
+import adminService from '../services/admin.service';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
