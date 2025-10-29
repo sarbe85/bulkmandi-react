@@ -1,13 +1,8 @@
-/**
- * Dashboard Router Component
- * Routes to appropriate dashboard based on user role
- */
-
-import { useAuth } from '@/hooks/useAuth';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import AdminDashboard from './admin/Dashboard';
-import SellerDashboard from './seller/Dashboard';
+import AdminDashboard from "@/features/admin/pages/Dashboard";
+import SellerDashboard from "@/features/seller/pages/Dashboard";
+import { useAuth } from "@/shared/hooks/useAuth";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -16,7 +11,7 @@ const Dashboard = () => {
   useEffect(() => {
     // Redirect if user is not authenticated
     if (!user) {
-      navigate('/auth/login');
+      navigate("/auth/login");
     }
   }, [user, navigate]);
 
@@ -26,20 +21,24 @@ const Dashboard = () => {
 
   // Route to appropriate dashboard based on role
   switch (user.role) {
-    case 'ADMIN':
+    case "ADMIN":
       return <AdminDashboard />;
-    case 'SELLER':
+    case "SELLER":
       return <SellerDashboard />;
-    case 'BUYER':
-      return <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold">Buyer Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Coming soon...</p>
-      </div>;
-    case '3PL':
-      return <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold">3PL Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Coming soon...</p>
-      </div>;
+    case "BUYER":
+      return (
+        <div className="container mx-auto p-6">
+          <h1 className="text-3xl font-bold">Buyer Dashboard</h1>
+          <p className="text-muted-foreground mt-2">Coming soon...</p>
+        </div>
+      );
+    case "3PL":
+      return (
+        <div className="container mx-auto p-6">
+          <h1 className="text-3xl font-bold">3PL Dashboard</h1>
+          <p className="text-muted-foreground mt-2">Coming soon...</p>
+        </div>
+      );
     default:
       return <SellerDashboard />;
   }

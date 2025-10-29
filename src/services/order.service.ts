@@ -3,9 +3,7 @@
  * Handles order-related API calls
  */
 
-import { apiClient } from './api.client';
-import { API_CONFIG } from '@/config/api.config';
-import { OrdersListResponse } from '@/types/api.types';
+import { OrdersListResponse } from '@/shared/types/api.types';
 
 export const orderService = {
   /**

@@ -1,188 +1,231 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/useAuth';
-import { ArrowRight, CheckCircle2, Lock, Mail } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/shared/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { AlertCircle, ArrowRight, CheckCircle2, Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
-const [email, setEmail] = useState('user@test.com');
-const [password, setPassword] = useState('password123');
+  const { toast } = useToast();
 
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+  });
+
+  const validateForm = (): boolean => {
+    const newErrors = {
+      email: '',
+      password: '',
+    };
+
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+
+    setErrors(newErrors);
+    return !newErrors.email && !newErrors.password;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
+    if (!validateForm()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fix the errors in the form',
+        variant: 'destructive',
+      });
       return;
     }
 
     try {
-      await login({ email, password });
-      toast.success('Login successful');
-      navigate('/dashboard');
-    } catch (error) {
-      toast.error(error.message || 'Login failed');
+      await login(formData);
+
+      toast({
+        title: 'Success',
+        description: 'Login successful! Redirecting...',
+      });
+
+      setTimeout(() => {
+        navigate('/seller/dashboard');
+      }, 500);
+    } catch (error: any) {
+      // Extract error message
+      let errorMessage = 'An error occurred';
+
+      if (error?.response?.data?.message) {
+        const msg = error.response.data.message;
+        if (Array.isArray(msg)) {
+          errorMessage = msg.join('. ');
+        } else {
+          errorMessage = String(msg);
+        }
+      } else if (error?.response?.data?.error) {
+        errorMessage = String(error.response.data.error);
+      } else if (error?.message) {
+        errorMessage = String(error.message);
+      }
+
+      toast({
+        title: 'Login Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   };
 
+  const handleChange = (field: 'email' | 'password') => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl">
-        <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6 items-center">
-          {/* Left: Form */}
-          <Card className="shadow-2xl border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-2xl">Welcome Back</CardTitle>
-              <CardDescription>Sign in to access your dashboard</CardDescription>
-            </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
+        <Card className="shadow-xl">
+          <CardHeader className="space-y-2">
+            <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
+            <CardDescription className="text-base">
+              Sign in to continue to BulkMandi
+            </CardDescription>
+          </CardHeader>
 
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-3">
-                {/* Email Field */}
-                <div className="space-y-1">
-                  <Label htmlFor="email" className="text-xs font-medium">
-                    Email Address
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-9 text-sm"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={formData.email}
+                    onChange={handleChange('email')}
+                    className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
+                    autoComplete="email"
+                  />
                 </div>
-
-                {/* Password Field */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-xs font-medium">
-                      Password
-                    </Label>
-                    <Link
-                      to="/auth/forgot-password"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Forgot?
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 h-9 text-sm"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full h-9 text-sm font-medium mt-4"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="h-3 w-3 border-2 border-background/30 border-t-background rounded-full animate-spin mr-2" />
-                      Signing in...
-                    </>
-                  ) : (
-                    <>
-                      Sign in
-                      <ArrowRight className="ml-2 h-3 w-3" />
-                    </>
-                  )}
-                </Button>
-
-                {/* Sign Up Link */}
-                <div className="text-center pt-2">
-                  <p className="text-xs text-muted-foreground">
-                    New to platform?{' '}
-                    <Link
-                      to="/get-started"
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Get Started
-                    </Link>
+                {errors.email && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.email}
                   </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange('password')}
+                    className={`pl-10 ${errors.password ? 'border-red-500' : ''}`}
+                    autoComplete="current-password"
+                  />
                 </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Right: Benefits / Info */}
-          <div className="hidden lg:flex flex-col gap-4">
-            {/* Quick Benefits */}
-            <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Why Login?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Access your dashboard</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Manage RFQs & Orders</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Track shipments</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Security & Trust */}
-            <Card className="bg-gradient-to-br from-success/5 to-success/10 border-success/20">
-              <CardContent className="pt-6">
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                    <span className="text-muted-foreground">Secure & encrypted</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                    <span className="text-muted-foreground">24/7 support</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                    <span className="text-muted-foreground">Real-time updates</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3 text-center text-sm">
-              <div>
-                <div className="font-bold text-primary text-lg">500+</div>
-                <div className="text-xs text-muted-foreground">Active Users</div>
+                {errors.password && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.password}
+                  </p>
+                )}
               </div>
-              <div>
-                <div className="font-bold text-primary text-lg">₹200Cr+</div>
-                <div className="text-xs text-muted-foreground">Monthly GMV</div>
+
+              <div className="flex justify-end">
+                <Link
+                  to="/auth/forgot-password"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Forgot password?
+                </Link>
               </div>
+
+              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                {isLoading ? (
+                  <span className="animate-pulse">Signing in...</span>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </>
+                )}
+              </Button>
+
+              <p className="text-center text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link
+                  to="/auth/register"
+                  className="text-blue-600 hover:underline font-medium"
+                >
+                  Create one
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="hidden md:block space-y-6">
+          <div>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              India's Leading B2B Steel Marketplace
+            </h2>
+            <p className="text-lg text-gray-600">
+              Connect with verified buyers and sellers across the country
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              'Real-time pricing & inventory',
+              'Secure payment & logistics',
+              'Verified business partners',
+              '24/7 customer support',
+            ].map((feature, idx) => (
+              <div key={idx} className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                <p className="text-gray-700 text-lg">{feature}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 pt-6">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="text-3xl font-bold text-blue-600">500+</p>
+              <p className="text-sm text-gray-600">Active Partners</p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <p className="text-3xl font-bold text-green-600">₹200Cr+</p>
+              <p className="text-sm text-gray-600">Monthly GMV</p>
             </div>
           </div>
         </div>

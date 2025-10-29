@@ -3,9 +3,9 @@
  * Helper functions for role-based access control
  */
 
-import { UserRole } from '@/types/api.types';
-import { storage } from '@/utils/storage.util';
 import { STORAGE_KEYS } from '@/config/api.config';
+import { UserRole } from '@/shared/types/api.types';
+import { storage } from '@/utils/storage.util';
 
 export const authUtil = {
   /**

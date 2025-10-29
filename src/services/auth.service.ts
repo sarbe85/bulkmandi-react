@@ -1,147 +1,176 @@
-/**
- * Authentication Service
- * Handles all authentication-related API calls
- * Can be reused in React Native
- */
 
-import { API_CONFIG, STORAGE_KEYS } from '@/config/api.config';
+import { API_CONFIG, STORAGE_KEYS } from '../config/api.config';
 import {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
   User,
-  UserRole
-} from '@/types/api.types';
-import { storage } from '@/utils/storage.util';
-import { apiClient } from './api.client';
+} from '../shared/types/api.types';
+
+// Helper to get auth token
+const getAuthToken = (): string | null => {
+  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+};
+
+// ✅ FIXED: API request helper with proper error structure
+const apiRequest = async (
+  method: string,
+  endpoint: string,
+  body?: any
+): Promise<any> => {
+  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
+
+  const options: RequestInit = {
+    method,
+    headers: {
+      ...API_CONFIG.HEADERS,
+    },
+    signal: controller.signal,
+  };
+
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  try {
+    const response = await fetch(url, options);
+    clearTimeout(timeoutId);
+
+    // ✅ Parse response body for both success and error
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      // ✅ Throw error with proper structure matching axios
+      const error: any = new Error(
+        Array.isArray(data.message)
+          ? data.message.join(', ')
+          : data.message || `API Error: ${response.status}`
+      );
+      
+      // ✅ Add response structure like axios
+      error.response = {
+        data: data,
+        status: response.status,
+        statusText: response.statusText,
+      };
+      
+      throw error;
+    }
+
+    return data;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+
+    if (error.name === 'AbortError') {
+      const timeoutError: any = new Error('Request timeout. Please try again.');
+      timeoutError.response = {
+        data: { message: 'Request timeout. Please try again.' },
+      };
+      throw timeoutError;
+    }
+
+    // Re-throw if already has response property
+    if (error.response) {
+      throw error;
+    }
+
+    // Network error
+    const networkError: any = new Error('Network error. Please check your connection.');
+    networkError.response = {
+      data: { message: 'Network error. Please check your connection.' },
+    };
+    throw networkError;
+  }
+};
 
 export const authService = {
-  /**
-   * Login user
-   */
-  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    // Mock implementation - remove when API is ready
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Determine role based on email
-    let role: UserRole = 'SELLER'; // default
-    const emailLower = credentials.email.toLowerCase();
-    
-    if (emailLower.includes('admin') || emailLower === 'admin@test.com') {
-      role = 'ADMIN';
-    } else if (emailLower.includes('seller') || emailLower === 'seller@test.com') {
-      role = 'SELLER';
-    } else if (emailLower.includes('buyer') || emailLower === 'buyer@test.com') {
-      role = 'BUYER';
-    } else if (emailLower.includes('3pl') || emailLower === '3pl@test.com') {
-      role = '3PL';
-    }
-
-    // Create mock user with role-specific data
-    const mockUser: User = {
-      id: 'user_' + role.toLowerCase() + '_123',
+  async login(credentials: LoginRequest): Promise<AuthResponse> {
+    const response = await apiRequest('POST', '/auth/login', {
       email: credentials.email,
-      role,
-      organizationId: 'org_' + role.toLowerCase() + '_456',
-      organizationName: role === 'ADMIN' 
-        ? 'Bulk Mandi Admin' 
-        : role === 'SELLER'
-        ? 'Seller'
-        : role === 'BUYER'
-        ? 'Buyer'
-        : '3PL Logistics Ltd',
-      mobile: '+919876543210',
-      onboardingCompleted: role === 'ADMIN' ? true : true, // Admin doesn't need onboarding
-      createdAt: new Date().toISOString()
-    };
+      password: credentials.password,
+    });
 
-    const mockToken = 'mock_access_token_' + Date.now();
-    
-    storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
-    storage.setItem(STORAGE_KEYS.USER, JSON.stringify(mockUser));
-
-    return {
-      accessToken: mockToken,
-      user: mockUser,
-    };
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user));
+    return response;
   },
 
-  /**
-   * Register new user
-   */
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    // Mock implementation - remove when API is ready
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const mockUser: User = {
-      id: 'user_' + Date.now(),
+  async register(data: RegisterRequest): Promise<AuthResponse> {
+    const response = await apiRequest('POST', '/auth/register', {
       email: data.email,
-      role: data.role,
-      organizationId: 'org_' + Date.now(),
-      organizationName: data.organizationName,
+      password: data.password,
       mobile: data.mobile,
-      onboardingCompleted: data.role === 'ADMIN' ? true : false, // Admin doesn't need onboarding
-      createdAt: new Date().toISOString()
-    };
+      role: data.role,
+      organizationName: data.organizationName,
+    });
 
-    const mockToken = 'mock_access_token_' + Date.now();
-    
-    storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
-    storage.setItem(STORAGE_KEYS.USER, JSON.stringify(mockUser));
-
-    return {
-      accessToken: mockToken,
-      user: mockUser,
-    };
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user));
+    return response;
   },
 
-  /**
-   * Logout user
-   */
-  logout: async (): Promise<void> => {
+  async logout(): Promise<void> {
     try {
-      await apiClient.post(API_CONFIG.ENDPOINTS.LOGOUT);
+      const token = getAuthToken();
+      if (token) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
+        try {
+          await fetch(`${API_CONFIG.BASE_URL}/auth/logout`, {
+            method: 'POST',
+            headers: {
+              ...API_CONFIG.HEADERS,
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
     } catch (error) {
-      // Continue with logout even if API call fails
       console.error('Logout API error:', error);
     } finally {
-      // Clear storage
-      storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      storage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      storage.removeItem(STORAGE_KEYS.USER);
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.USER);
     }
   },
 
-  /**
-   * Get current user from storage
-   */
-  getCurrentUser: (): User | null => {
-    return storage.getItem<User>(STORAGE_KEYS.USER);
+  getCurrentUser(): User | null {
+    const userData = localStorage.getItem(STORAGE_KEYS.USER);
+    if (userData) {
+      try {
+        return JSON.parse(userData);
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        return null;
+      }
+    }
+    return null;
   },
 
-  /**
-   * Check if user is authenticated
-   */
-  isAuthenticated: (): boolean => {
-    const token = storage.getItem<string>(STORAGE_KEYS.ACCESS_TOKEN);
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     return !!token;
+  },
+
+  isOnboardingComplete(): boolean {
+    const user = this.getCurrentUser();
+    return user?.onboardingCompleted ?? false;
+  },
+
+  getUserRole(): string | null {
+    const user = this.getCurrentUser();
+    return user?.role || null;
+  },
+
+  getOrganizationId(): string | null {
+    const user = this.getCurrentUser();
+    return user?.organizationId || null;
   },
 };
 
-/**
- * Usage Example:
- * 
- * import { authService } from '@/services/auth.service';
- * 
- * // Login
- * const authData = await authService.login({
- *   email: 'seller@example.com',
- *   password: 'password123'
- * });
- * 
- * // Check auth status
- * const isLoggedIn = authService.isAuthenticated();
- * 
- * // Logout
- * await authService.logout();
- */
+export default authService;

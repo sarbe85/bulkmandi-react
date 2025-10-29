@@ -3,9 +3,7 @@
  * Handles RFQ-related API calls
  */
 
-import { apiClient } from './api.client';
-import { API_CONFIG } from '@/config/api.config';
-import { RFQListResponse, RFQDetailResponse, PaginationParams } from '@/types/api.types';
+import { PaginationParams, RFQDetailResponse, RFQListResponse } from '@/shared/types/api.types';
 
 export const rfqService = {
   /**

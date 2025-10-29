@@ -4,10 +4,10 @@
  * This can be easily adapted for React Native
  */
 
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { API_CONFIG, STORAGE_KEYS } from '@/config/api.config';
+import { ApiError } from '@/shared/types/api.types';
 import { storage } from '@/utils/storage.util';
-import { ApiError } from '@/types/api.types';
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 class ApiClient {
   private client: AxiosInstance;
