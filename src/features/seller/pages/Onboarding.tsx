@@ -355,14 +355,6 @@ export default function SellerOnboarding() {
             />
           )}
 
-          {currentStep === 'bank-details' && (
-            <BankDocsStep
-              data={onboardingData.bankDocs}
-              onNext={handleNext}
-              onBack={handleBack}
-            />
-          )}
-
           {currentStep === 'compliance-docs' && (
             <ComplianceDocsStep
               data={onboardingData.complianceDocs}

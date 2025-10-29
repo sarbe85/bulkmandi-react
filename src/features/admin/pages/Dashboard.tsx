@@ -1,13 +1,37 @@
- 
 // import { AdminDashboardData, adminService } from '@/services/admin.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import { Badge } from '@/shared/components/ui/badge';
 import { Badge } from '@/shared/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle, Clock, FileText, ShoppingCart, TrendingUp, Users } from 'lucide-react';
 import adminService from '../services/admin.service';
+
+interface AdminDashboardData {
+  kpis: {
+    totalUsers: number;
+    totalOrders: number;
+    totalRfqs: number;
+    platformRevenue: number;
+  };
+  userStats: {
+    sellers: number;
+    buyers: number;
+    threepl: number;
+    admins: number;
+  };
+  pendingApprovals: {
+    kycPending: number;
+    catalogPending: number;
+  };
+  recentActivity: Array<{
+    id: string;
+    type: string;
+    user: string;
+    details: string;
+    timestamp: string;
+  }>;
+}
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -21,7 +45,48 @@ const AdminDashboard = () => {
   const loadDashboard = async () => {
     try {
       setLoading(true);
-      const dashboardData = await adminService.getDashboard();
+      // Mock dashboard data for now
+      const dashboardData: AdminDashboardData = {
+        kpis: {
+          totalUsers: 150,
+          totalOrders: 342,
+          totalRfqs: 89,
+          platformRevenue: 12500000,
+        },
+        userStats: {
+          sellers: 67,
+          buyers: 78,
+          threepl: 3,
+          admins: 2,
+        },
+        pendingApprovals: {
+          kycPending: 5,
+          catalogPending: 3,
+        },
+        recentActivity: [
+          {
+            id: '1',
+            type: 'USER_REGISTERED',
+            user: 'ABC Steel Industries',
+            details: 'New seller registration',
+            timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+          },
+          {
+            id: '2',
+            type: 'ORDER_PLACED',
+            user: 'XYZ Manufacturing',
+            details: 'Placed order for 50MT TMT Bars',
+            timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+          },
+          {
+            id: '3',
+            type: 'KYC_APPROVED',
+            user: 'Steel Corp India',
+            details: 'KYC verification completed',
+            timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+          },
+        ],
+      };
       setData(dashboardData);
     } catch (error) {
       console.error('Failed to load admin dashboard:', error);

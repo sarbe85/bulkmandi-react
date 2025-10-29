@@ -5,7 +5,7 @@ import { Card } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, CheckCircle2, Loader2, Package } from 'lucide-react';
 import { useState } from 'react';
 import onboardingService from '../../services/onboarding.service';
 import { CatalogData } from '../../types/onboarding.types';
@@ -216,46 +216,76 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
 };
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <h3 className="text-xl font-semibold mb-6">Product Catalog</h3>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Instructions Card */}
+      <Card className="p-6 bg-primary/5 border-2 border-primary/20">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
+          <Package className="h-5 w-5 text-primary" />
+          Product Catalog Configuration
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Select the product categories you offer, specify grades, set pricing, and configure MOQ and lead times.
+        </p>
+      </Card>
+
+      <Card className="p-6 border-2 hover:shadow-lg transition-all">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-bold">1</span>
+          </div>
+          Select Categories & Configure Details
+        </h3>
 
         {/* Categories Selection */}
         <div className="space-y-4 mb-6">
-          <h4 className="font-semibold">Select Categories</h4>
 
           {AVAILABLE_CATEGORIES.map((category) => {
             const isSelected = selectedCategories.has(category.name);
             const categoryData = selectedCategories.get(category.name);
 
             return (
-              <div key={category.id} className="border rounded-lg p-4 space-y-4">
+              <div key={category.id} className={`border-2 rounded-lg p-5 space-y-4 transition-all ${
+                isSelected 
+                  ? 'bg-primary/5 border-primary/30 shadow-md' 
+                  : 'bg-background border-border hover:border-primary/20'
+              }`}>
                 {/* Category Checkbox */}
                 <div className="flex items-center gap-3">
                   <Checkbox
                     id={category.id}
                     checked={isSelected}
                     onCheckedChange={() => toggleCategory(category.name)}
+                    className="h-5 w-5"
                   />
                   <Label
                     htmlFor={category.id}
-                    className="font-medium cursor-pointer"
+                    className="font-semibold text-lg cursor-pointer flex-1"
                   >
                     {category.name}
                   </Label>
+                  {isSelected && (
+                    <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                      <Check className="h-3 w-3 mr-1" />
+                      Selected
+                    </Badge>
+                  )}
                 </div>
 
                 {/* If selected, show grades and details */}
                 {isSelected && categoryData && (
-                  <div className="ml-6 space-y-4 border-l pl-4">
+                  <div className="ml-6 space-y-5 border-l-2 border-primary/20 pl-5 bg-muted/30 p-4 rounded-r-lg">
                     {/* Grades Selection */}
                     <div>
-                      <Label className="block mb-2 font-medium">
-                        Select Grades
+                      <Label className="block mb-3 font-semibold text-base">
+                        Select Grades *
                       </Label>
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {category.availableGrades.map((grade) => (
-                          <div key={grade} className="flex items-center gap-2">
+                          <div key={grade} className={`flex items-center gap-2 p-2 rounded-md border transition-all ${
+                            categoryData.grades.includes(grade)
+                              ? 'bg-primary/10 border-primary/30'
+                              : 'bg-background border-border'
+                          }`}>
                             <Checkbox
                               id={`${category.id}-${grade}`}
                               checked={categoryData.grades.includes(grade)}
@@ -265,7 +295,7 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
                             />
                             <Label
                               htmlFor={`${category.id}-${grade}`}
-                              className="font-normal cursor-pointer"
+                              className="font-normal cursor-pointer text-sm"
                             >
                               {grade}
                             </Label>
@@ -274,68 +304,73 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
                       </div>
                     </div>
 
-                    {/* MOQ */}
-                    <div>
-                      <Label htmlFor={`moq-${category.id}`}>
-                        Minimum Order Quantity (MOQ)
-                      </Label>
-                      <Input
-                        id={`moq-${category.id}`}
-                        type="number"
-                        min="1"
-                        value={categoryData.moq}
-                        onChange={(e) =>
-                          updateCategoryField(
-                            category.name,
-                            'moq',
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        placeholder="Enter MOQ"
-                      />
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* MOQ */}
+                      <div>
+                        <Label htmlFor={`moq-${category.id}`} className="font-medium">
+                          MOQ (MT) *
+                        </Label>
+                        <Input
+                          id={`moq-${category.id}`}
+                          type="number"
+                          min="1"
+                          value={categoryData.moq}
+                          onChange={(e) =>
+                            updateCategoryField(
+                              category.name,
+                              'moq',
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          placeholder="e.g., 5"
+                          className="mt-1"
+                        />
+                      </div>
 
-                    {/* Lead Time */}
-                    <div>
-                      <Label htmlFor={`leadtime-${category.id}`}>
-                        Standard Lead Time (Days)
-                      </Label>
-                      <Input
-                        id={`leadtime-${category.id}`}
-                        type="number"
-                        min="1"
-                        value={categoryData.leadTime}
-                        onChange={(e) =>
-                          updateCategoryField(
-                            category.name,
-                            'leadTime',
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        placeholder="Enter lead time in days"
-                      />
-                    </div>
+                      {/* Lead Time */}
+                      <div>
+                        <Label htmlFor={`leadtime-${category.id}`} className="font-medium">
+                          Lead Time (Days) *
+                        </Label>
+                        <Input
+                          id={`leadtime-${category.id}`}
+                          type="number"
+                          min="1"
+                          value={categoryData.leadTime}
+                          onChange={(e) =>
+                            updateCategoryField(
+                              category.name,
+                              'leadTime',
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          placeholder="e.g., 7"
+                          className="mt-1"
+                        />
+                      </div>
 
-                    {/* Price Per MT */}
-                    <div>
-                      <Label htmlFor={`price-${category.id}`}>
-                        Price per MT (₹)
-                      </Label>
-                      <Input
-                        id={`price-${category.id}`}
-                        type="number"
-                        min="0"
-                        step="1000"
-                        value={categoryData.pricePerMT}
-                        onChange={(e) =>
-                          updateCategoryField(
-                            category.name,
-                            'pricePerMT',
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        placeholder="Enter price per MT"
-                      />
+                      {/* Price Per MT */}
+                      <div>
+                        <Label htmlFor={`price-${category.id}`} className="font-medium">
+                          Price per MT (₹) *
+                        </Label>
+                        <Input
+                          id={`price-${category.id}`}
+                          type="number"
+                          min="0"
+                          step="1000"
+                          value={categoryData.pricePerMT}
+                          onChange={(e) =>
+                            updateCategoryField(
+                              category.name,
+                              'pricePerMT',
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          placeholder="e.g., 45000"
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -346,11 +381,14 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
 
         {/* Selected Summary */}
         {selectedCategories.size > 0 && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm font-medium mb-2">Selected Categories:</p>
+          <div className="mt-6 p-5 bg-success/5 border-2 border-success/20 rounded-lg">
+            <p className="text-sm font-semibold mb-3 flex items-center gap-2 text-success">
+              <CheckCircle2 className="h-4 w-4" />
+              Selected Categories ({selectedCategories.size}):
+            </p>
             <div className="flex flex-wrap gap-2">
               {Array.from(selectedCategories.keys()).map((cat) => (
-                <Badge key={cat} variant="secondary">
+                <Badge key={cat} variant="secondary" className="bg-success/10 text-success border-success/20">
                   <Check className="h-3 w-3 mr-1" />
                   {cat}
                 </Badge>
@@ -361,11 +399,20 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
       </Card>
 
       {/* Logistics Preference */}
-      <Card className="p-6">
-        <h4 className="font-semibold mb-4">Logistics Preference</h4>
+      <Card className="p-6 border-2 hover:shadow-lg transition-all">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-bold">2</span>
+          </div>
+          Logistics Preference
+        </h3>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
+        <div className="space-y-4">
+          <div className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all ${
+            logisticsPreference.usePlatform3PL 
+              ? 'bg-primary/5 border-primary/30' 
+              : 'bg-background border-border'
+          }`}>
             <Checkbox
               id="platform-3pl"
               checked={logisticsPreference.usePlatform3PL}
@@ -375,16 +422,26 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
                   usePlatform3PL: checked as boolean,
                 })
               }
+              className="mt-1"
             />
-            <Label
-              htmlFor="platform-3pl"
-              className="font-normal cursor-pointer"
-            >
-              Use Platform 3PL (Third-Party Logistics)
-            </Label>
+            <div>
+              <Label
+                htmlFor="platform-3pl"
+                className="font-semibold cursor-pointer text-base"
+              >
+                Use Platform 3PL (Third-Party Logistics)
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Let our verified logistics partners handle delivery with real-time tracking
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all ${
+            logisticsPreference.selfPickupAllowed 
+              ? 'bg-primary/5 border-primary/30' 
+              : 'bg-background border-border'
+          }`}>
             <Checkbox
               id="self-pickup"
               checked={logisticsPreference.selfPickupAllowed}
@@ -394,27 +451,34 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
                   selfPickupAllowed: checked as boolean,
                 })
               }
+              className="mt-1"
             />
-            <Label
-              htmlFor="self-pickup"
-              className="font-normal cursor-pointer"
-            >
-              Allow Self Pickup
-            </Label>
+            <div>
+              <Label
+                htmlFor="self-pickup"
+                className="font-semibold cursor-pointer text-base"
+              >
+                Allow Self Pickup
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Buyers can arrange their own transportation and pickup from your location
+              </p>
+            </div>
           </div>
         </div>
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <Button type="button" variant="outline" onClick={onBack}>
+      <div className="flex gap-4 justify-end pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onBack} size="lg">
           Back
         </Button>
         <Button
           type="button"
-          disabled={isSubmitting}
+          disabled={isSubmitting || selectedCategories.size === 0}
           onClick={handleSubmit}
-          className="flex-1"
+          className="min-w-[200px]"
+          size="lg"
         >
           {isSubmitting ? (
             <>
@@ -422,7 +486,10 @@ export const CatalogStep = ({ data, onNext, onBack }: Props) => {
               Saving...
             </>
           ) : (
-            'Save & Continue'
+            <>
+              Save & Continue
+              <Check className="ml-2 h-4 w-4" />
+            </>
           )}
         </Button>
       </div>

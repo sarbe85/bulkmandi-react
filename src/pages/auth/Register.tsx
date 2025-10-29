@@ -133,7 +133,18 @@ export default function Register() {
         );
       }, 500);
     } catch (error: any) {
-      const errorMessage = extractErrorMessage(error);
+      console.error('Registration error:', error);
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error?.response?.data?.message) {
+        const msg = error.response.data.message;
+        errorMessage = Array.isArray(msg) ? msg.join('. ') : String(msg);
+      } else if (error?.response?.data?.error) {
+        errorMessage = String(error.response.data.error);
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
 
       toast({
         title: 'Registration Failed',
