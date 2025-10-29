@@ -219,10 +219,15 @@ export const BankDetailsStep = ({ data, onNext, onBack }: Props) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto">
       {/* Bank Account Information */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Bank Account Information</h3>
+      <Card className="p-6 border-2 hover:shadow-lg transition-all">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-bold">1</span>
+          </div>
+          Bank Account Information
+        </h3>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
@@ -292,8 +297,13 @@ export const BankDetailsStep = ({ data, onNext, onBack }: Props) => {
       </Card>
 
       {/* Account Verification */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Account Verification</h3>
+      <Card className="p-6 border-2 hover:shadow-lg transition-all">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-bold">2</span>
+          </div>
+          Account Verification
+        </h3>
 
         <Button
           type="button"
@@ -321,8 +331,13 @@ export const BankDetailsStep = ({ data, onNext, onBack }: Props) => {
       </Card>
 
       {/* Supporting Document */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Supporting Document</h3>
+      <Card className="p-6 border-2 hover:shadow-lg transition-all">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-bold">3</span>
+          </div>
+          Supporting Document
+        </h3>
 
         <Label className="text-sm font-medium mb-3 block">
           Cancelled Cheque / Passbook *
@@ -355,8 +370,13 @@ export const BankDetailsStep = ({ data, onNext, onBack }: Props) => {
       </Card>
 
       {/* Declarations */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Declarations</h3>
+      <Card className="p-6 border-2 hover:shadow-lg transition-all">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-bold">4</span>
+          </div>
+          Declarations
+        </h3>
 
         <div className="space-y-4">
           {/* Warranty Assurance */}
@@ -440,18 +460,21 @@ export const BankDetailsStep = ({ data, onNext, onBack }: Props) => {
       </Card>
 
       {/* Form Actions */}
-      <div className="flex gap-4 justify-end">
-        <Button type="button" variant="outline" onClick={onBack}>
+      <div className="flex gap-4 justify-end pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onBack} size="lg">
           Back
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="min-w-[200px]">
+        <Button type="submit" disabled={isSubmitting} className="min-w-[200px]" size="lg">
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Saving...
             </>
           ) : (
-            'Save & Continue'
+            <>
+              Save & Continue
+              <Check className="ml-2 h-4 w-4" />
+            </>
           )}
         </Button>
       </div>

@@ -73,20 +73,17 @@ export default function Login() {
         navigate('/seller/dashboard');
       }, 500);
     } catch (error: any) {
-      // Extract error message
-      let errorMessage = 'An error occurred';
-
+      console.error('Login error:', error);
+      
+      let errorMessage = 'Login failed. Please try again.';
+      
       if (error?.response?.data?.message) {
         const msg = error.response.data.message;
-        if (Array.isArray(msg)) {
-          errorMessage = msg.join('. ');
-        } else {
-          errorMessage = String(msg);
-        }
+        errorMessage = Array.isArray(msg) ? msg.join('. ') : String(msg);
       } else if (error?.response?.data?.error) {
         errorMessage = String(error.response.data.error);
       } else if (error?.message) {
-        errorMessage = String(error.message);
+        errorMessage = error.message;
       }
 
       toast({

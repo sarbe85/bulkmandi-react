@@ -2,7 +2,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Label } from '@/shared/components/ui/label';
-import { Check, Loader2, Upload } from 'lucide-react';
+import { Check, FileText, Loader2, Shield, Upload, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import onboardingService from '../../services/onboarding.service';
 import {
@@ -34,7 +34,6 @@ export const ComplianceDocsStep = ({ data, onNext, onBack }: Props) => {
   const [documents, setDocuments] = useState<Map<string, File>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Pre-fill documents from data prop
   useEffect(() => {
     if (data?.complianceDocuments) {
       const docsMap = new Map<string, File>();
@@ -56,17 +55,13 @@ export const ComplianceDocsStep = ({ data, onNext, onBack }: Props) => {
   };
 
   const handleSubmit = async () => {
-    console.log('🚀 ComplianceDocsStep - handleSubmit started');
-    
     try {
       setIsSubmitting(true);
 
-      // Check required documents
       const requiredDocs = DOCUMENT_TYPES.filter((d) => d.required);
       const missingDocs = requiredDocs.filter((d) => !documents.has(d.type));
 
       if (missingDocs.length > 0) {
-        console.log('❌ Missing required documents:', missingDocs);
         toast({
           title: 'Missing Required Documents',
           description: `Please upload: ${missingDocs
@@ -78,13 +73,12 @@ export const ComplianceDocsStep = ({ data, onNext, onBack }: Props) => {
         return;
       }
 
-      // Prepare compliance documents
       const complianceDocuments: DocumentUpload[] = Array.from(
         documents.entries()
       ).map(([type, file]) => ({
         type: type as any,
         fileName: file.name,
-        fileUrl: URL.createObjectURL(file), // ✅ Proper URL
+        fileUrl: URL.createObjectURL(file),
         uploadedAt: new Date().toISOString(),
         status: 'UPLOADED' as const,
       }));
@@ -93,100 +87,138 @@ export const ComplianceDocsStep = ({ data, onNext, onBack }: Props) => {
         complianceDocuments,
       };
 
-      console.log('📤 Sending compliance data to API:', complianceData);
-
-      // ✅ FIXED: Store the API response
       const response = await onboardingService.uploadComplianceDocs(complianceData);
-      
-      console.log('✅ API Response received:', response);
 
       toast({
         title: 'Success',
-        description: 'Compliance documents saved successfully',
+        description: 'Compliance documents uploaded successfully',
       });
 
-      // ✅ FIXED: Pass API response to onNext
-      console.log('📨 Calling onNext with response');
       onNext(response);
-      
     } catch (error: any) {
-      console.error('❌ ComplianceDocsStep error:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save documents',
+        description: error.message || 'Failed to upload documents.',
         variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
-      console.log('🏁 ComplianceDocsStep - handleSubmit completed');
     }
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Compliance Documents</h3>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Upload Instructions */}
+      <Card className="p-6 bg-primary/5 border-2 border-primary/20">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
+          <Shield className="h-5 w-5 text-primary" />
+          Required Compliance Documents
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Please upload the following documents to complete your compliance verification.
+          All documents marked with * are mandatory.
+        </p>
+      </Card>
 
-        <div className="space-y-4">
-          {DOCUMENT_TYPES.map((doc) => (
-            <div key={doc.type}>
-              <Label className="text-sm font-medium mb-2 block">
-                {doc.label}
-                {doc.required && <span className="text-red-600 ml-1">*</span>}
-              </Label>
+      {/* Document Upload Cards */}
+      <Card className="p-6 border-2 hover:shadow-lg transition-all">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <FileText className="h-5 w-5 text-primary" />
+          </div>
+          Upload Documents
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {DOCUMENT_TYPES.map((docType) => {
+            const uploaded = documents.has(docType.type);
+            const file = documents.get(docType.type);
 
-              <div className="border-2 border-dashed rounded-lg p-6 text-center relative">
-                <input
-                  type="file"
-                  id={`file-${doc.type}`}
-                  onChange={(e) =>
-                    handleFileChange(doc.type, e.target.files?.[0] || null)
-                  }
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
+            return (
+              <div key={docType.type} className="relative">
+                <Card className={`p-4 border-2 transition-all ${
+                  uploaded 
+                    ? 'bg-success/5 border-success/20 hover:shadow-md' 
+                    : docType.required 
+                      ? 'border-border hover:border-primary/50' 
+                      : 'border-border hover:border-muted-foreground/30'
+                }`}>
+                  <Label className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {docType.label}
+                    {docType.required && <span className="text-destructive">*</span>}
+                  </Label>
 
-                <label htmlFor={`file-${doc.type}`} className="cursor-pointer">
-                  {documents.has(doc.type) ? (
-                    <div className="flex items-center justify-center gap-2 text-green-600">
-                      <Check className="h-5 w-5" />
-                      <span>{documents.get(doc.type)?.name}</span>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        PDF, JPG, JPEG, PNG
-                      </p>
-                    </>
-                  )}
-                </label>
+                  <div className="relative border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-all">
+                    <input
+                      type="file"
+                      id={docType.type}
+                      onChange={(e) =>
+                        handleFileChange(docType.type, e.target.files?.[0] || null)
+                      }
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                    />
+
+                    {uploaded && file ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="h-10 w-10 rounded-full bg-success flex items-center justify-center">
+                          <Check className="h-5 w-5 text-success-foreground" />
+                        </div>
+                        <p className="text-sm font-medium text-success">{file.name}</p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFileChange(docType.type, null);
+                          }}
+                          className="mt-1"
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Remove
+                        </Button>
+                      </div>
+                    ) : (
+                      <label htmlFor={docType.type} className="cursor-pointer">
+                        <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PDF, JPG, JPEG, PNG (Max 5MB)
+                        </p>
+                      </label>
+                    )}
+                  </div>
+                </Card>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
 
-      <div className="flex gap-4 justify-end">
-        <Button type="button" variant="outline" onClick={onBack}>
+      {/* Actions */}
+      <div className="flex gap-4 justify-end pt-4 border-t">
+        <Button variant="outline" onClick={onBack} disabled={isSubmitting} size="lg">
           Back
         </Button>
         <Button
-          type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
           className="min-w-[200px]"
+          size="lg"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              Uploading...
             </>
           ) : (
-            'Save & Continue'
+            <>
+              Save & Continue
+              <Check className="ml-2 h-4 w-4" />
+            </>
           )}
         </Button>
       </div>

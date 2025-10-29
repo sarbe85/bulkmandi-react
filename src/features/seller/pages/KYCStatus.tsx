@@ -129,26 +129,28 @@ export default function KYCStatus() {
   const statusDetails = getStatusDetails();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <SellerHeader kycStatus={data.kycStatus} showKYCBadge />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Status Overview */}
-        <Card className={`mb-8 border-2 ${statusDetails.color}`}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                {statusDetails.icon}
+        <Card className={`mb-8 border-2 shadow-lg ${statusDetails.color}`}>
+          <CardContent className="p-8">
+            <div className="flex items-center justify-between flex-wrap gap-6">
+              <div className="flex items-center gap-6">
+                <div className="h-16 w-16 rounded-full bg-background flex items-center justify-center shadow-md">
+                  {statusDetails.icon}
+                </div>
                 <div>
-                  <h1 className={`text-2xl font-bold ${statusDetails.textColor}`}>
+                  <h1 className={`text-3xl font-bold ${statusDetails.textColor} mb-2`}>
                     {statusDetails.title}
                   </h1>
-                  <p className="text-gray-600 mt-2 text-lg">
+                  <p className="text-muted-foreground text-lg">
                     {statusDetails.description}
                   </p>
                   {data.rejectionReason && (
-                    <div className="mt-4 p-3 bg-red-100 border border-red-200 rounded-md">
-                      <p className="text-sm text-red-800">
+                    <div className="mt-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
+                      <p className="text-sm text-destructive font-medium">
                         <strong>Rejection Reason:</strong> {data.rejectionReason}
                       </p>
                     </div>
@@ -156,8 +158,8 @@ export default function KYCStatus() {
                 </div>
               </div>
               {statusDetails.showEdit && (
-                <Button onClick={() => navigate('/seller/onboarding')}>
-                  <Edit2 className="h-4 w-4 mr-2" />
+                <Button onClick={() => navigate('/seller/onboarding')} size="lg" className="shadow-md">
+                  <Edit2 className="h-5 w-5 mr-2" />
                   {data.kycStatus === 'REJECTED' ? 'Update KYC' : 'Complete KYC'}
                 </Button>
               )}
@@ -166,16 +168,17 @@ export default function KYCStatus() {
         </Card>
 
         {/* Progress Steps */}
-        <Card className="mb-8">
+        <Card className="mb-8 border-2 hover:shadow-lg transition-all">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+            <CardTitle className="text-xl flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
               KYC Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-5 gap-4">
-              {[
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">{[
                 { key: 'orgKyc', label: 'Organization', icon: Building },
                 { key: 'bankDetails', label: 'Bank Details', icon: CreditCard },
                 { key: 'docs', label: 'Documents', icon: FileText },
@@ -188,21 +191,21 @@ export default function KYCStatus() {
                 return (
                   <div key={step.key} className="text-center">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${
+                      className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 transition-all ${
                         isCompleted
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-gray-100 text-gray-400'
+                          ? 'bg-success text-success-foreground shadow-md'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {isCompleted ? (
-                        <Check className="h-5 w-5" />
+                        <Check className="h-6 w-6" />
                       ) : (
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-6 w-6" />
                       )}
                     </div>
                     <p
-                      className={`text-xs font-medium ${
-                        isCompleted ? 'text-green-600' : 'text-gray-500'
+                      className={`text-sm font-medium ${
+                        isCompleted ? 'text-success' : 'text-muted-foreground'
                       }`}
                     >
                       {step.label}
@@ -217,10 +220,12 @@ export default function KYCStatus() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Organization Details */}
           {data.orgKyc && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" />
+            <Card className="border-2 hover:shadow-lg transition-all">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Building className="h-4 w-4 text-primary" />
+                  </div>
                   Organization Details
                 </CardTitle>
                 {statusDetails.showEdit && (
@@ -233,25 +238,19 @@ export default function KYCStatus() {
                   </Button>
                 )}
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Legal Name</p>
-                  <p className="font-semibold">{data.orgKyc.legalName}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">GSTIN</p>
-                  <p className="font-mono">{data.orgKyc.gstin}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">PAN</p>
-                  <p className="font-mono">{data.orgKyc.pan}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Plant Locations</p>
-                  <p className="font-semibold">
-                    {data.orgKyc.plantLocations?.length || 0} locations
-                  </p>
-                </div>
+              <CardContent className="space-y-4">{[
+                  { label: 'Legal Name', value: data.orgKyc.legalName },
+                  { label: 'GSTIN', value: data.orgKyc.gstin, mono: true },
+                  { label: 'PAN', value: data.orgKyc.pan, mono: true },
+                  { label: 'Plant Locations', value: `${data.orgKyc.plantLocations?.length || 0} locations` },
+                ].map((item) => (
+                  <div key={item.label} className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-sm font-medium text-muted-foreground mb-1">{item.label}</p>
+                    <p className={`font-semibold text-foreground ${item.mono ? 'font-mono' : ''}`}>
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
