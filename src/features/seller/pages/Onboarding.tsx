@@ -152,22 +152,21 @@ export default function Onboarding() {
   const totalSteps = ONBOARDING_STEP_LIST.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* ========== PAGE HEADER ========== */}
-        <div className="mb-8 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 blur-3xl -z-10"></div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent mb-3">
-            Seller Onboarding
-          </h1>
-          <p className="text-muted-foreground text-lg mb-4">{ONBOARDING_STEP_DESCRIPTIONS[currentStep]}</p>
-          <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 px-4 py-2 text-sm font-semibold shadow-lg">
-            Step {stepNumber} of {totalSteps}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Seller Onboarding</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{ONBOARDING_STEP_DESCRIPTIONS[currentStep]}</p>
+          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+            Step {stepNumber}/{totalSteps}
           </Badge>
+          <br />
+          {currentStep}
         </div>
 
         {/* ========== STEPPER INDICATOR ========== */}
-        <Card className="p-8 mb-8 border-2 bg-gradient-to-br from-card to-card/50 hover:shadow-xl transition-all duration-300">
+        <Card className="p-6 mb-8">
           <div className="flex items-center justify-between gap-2 overflow-x-auto">
             {ONBOARDING_STEP_LIST.map((step, index) => {
               const isCompleted = completedSteps.includes(step);
@@ -178,11 +177,11 @@ export default function Onboarding() {
                 <div key={step} className="flex items-center gap-2">
                   {/* Step Circle */}
                   <div
-                    className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-base flex-shrink-0 transition-all duration-300 shadow-lg ${
+                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 transition-all ${
                       isCompleted
-                        ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
                         : isCurrent
-                        ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white ring-4 ring-blue-400/30 dark:ring-blue-600/30 scale-110"
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ring-2 ring-blue-400 dark:ring-blue-600"
                         : "bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-gray-400"
                     }`}
                   >
@@ -203,8 +202,8 @@ export default function Onboarding() {
                   {/* Connector Line */}
                   {index < ONBOARDING_STEP_LIST.length - 1 && (
                     <div
-                      className={`h-2 w-12 rounded-full transition-all duration-300 ${
-                        isCompleted ? "bg-gradient-to-r from-green-400 to-emerald-500" : "bg-gray-300 dark:bg-slate-600"
+                      className={`h-1 w-8 rounded ${
+                        isCompleted ? "bg-green-400 dark:bg-green-600" : "bg-gray-300 dark:bg-slate-600"
                       }`}
                     ></div>
                   )}
