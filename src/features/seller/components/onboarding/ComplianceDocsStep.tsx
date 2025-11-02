@@ -188,23 +188,36 @@ export default function ComplianceDocsStep({
   };
 
   return (
-    <Card className="p-8 max-w-4xl mx-auto">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Compliance Documents</h1>
-          <p className="text-gray-600">Upload required compliance documents</p>
-        </div>
+    <div className="space-y-8 animate-fade-in">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10 blur-3xl -z-10"></div>
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
+          Compliance Documents
+        </h2>
+        <p className="text-muted-foreground mt-2 text-lg">Upload required compliance documents</p>
+      </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Documents Section */}
-          <div className="border-b pb-6">
-            <h2 className="text-xl font-semibold mb-4">Required Documents</h2>
-            <div className="space-y-4">
-              {COMPLIANCE_DOCS.map((doc) => (
-                <div
-                  key={doc.type}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                >
+      <Card className="p-8 border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
+        <div className="space-y-6">
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {/* Documents Section */}
+            <div className="pb-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  1
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Required Documents</h3>
+                  <p className="text-sm text-muted-foreground">Upload all necessary compliance documents</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {COMPLIANCE_DOCS.map((doc) => (
+                  <div
+                    key={doc.type}
+                    className="flex items-center justify-between p-5 border-2 rounded-xl hover:border-primary/30 transition-all bg-gradient-to-r from-background to-muted/20"
+                  >
                   <div className="flex-1">
                     <p className="font-medium">
                       {doc.label}
@@ -262,10 +275,17 @@ export default function ComplianceDocsStep({
             </div>
           </div>
 
-          {/* Declarations Section */}
-          <div className="border-b pb-6">
-            <h2 className="text-xl font-semibold mb-4">Declarations</h2>
-            <p className="text-gray-600 mb-4">Please confirm to proceed with your application</p>
+            {/* Declarations Section */}
+            <div className="pt-6 border-t">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  2
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Declarations</h3>
+                  <p className="text-sm text-muted-foreground">Please confirm to proceed with your application</p>
+                </div>
+              </div>
 
             <div className="space-y-4">
               {/* Warranty Assurance */}
@@ -342,33 +362,37 @@ export default function ComplianceDocsStep({
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onBack}
-              disabled={isSubmitting}
-            >
-              Back
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading & Saving...
-                </>
-              ) : (
-                'Save & Continue'
-              )}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </Card>
+            {/* Form Actions */}
+            <div className="flex gap-4 pt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onBack}
+                disabled={isSubmitting}
+                size="lg"
+                className="min-w-32"
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Uploading & Saving...
+                  </>
+                ) : (
+                  'Save & Continue →'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Card>
+    </div>
   );
 }

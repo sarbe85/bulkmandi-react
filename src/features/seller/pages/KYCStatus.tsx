@@ -152,13 +152,16 @@ export default function KYCStatus() {
   const statusDetails = getStatusDetails();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4">
+      <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
         {/* ========== PAGE HEADER ========== */}
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">KYC Status</h1>
-            <p className="text-gray-600 dark:text-gray-400">Track your Know Your Customer verification progress</p>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10 blur-3xl -z-10"></div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent mb-2">
+              KYC Status
+            </h1>
+            <p className="text-muted-foreground text-lg">Track your Know Your Customer verification progress</p>
           </div>
           <Button
             onClick={refreshData}
@@ -172,7 +175,8 @@ export default function KYCStatus() {
         </div>
 
         {/* ========== STATUS CARD ========== */}
-        <Card className={`${statusDetails.bgColor} ${statusDetails.borderColor} border-2 p-8 dark:bg-opacity-50`}>
+        <Card className={`${statusDetails.bgColor} ${statusDetails.borderColor} border-3 p-10 shadow-2xl hover:shadow-3xl transition-all duration-300 relative overflow-hidden`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent pointer-events-none"></div>
           <div className="flex items-start gap-6">
             <div className="flex-shrink-0 pt-1">{statusDetails.icon}</div>
             <div className="flex-1">
@@ -208,7 +212,7 @@ export default function KYCStatus() {
         {/* ========== PROGRESS INFORMATION ========== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Completion Summary */}
-          <Card className="bg-white dark:bg-slate-800 p-6">
+          <Card className="p-8 border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Completion Summary</h3>
             <div className="space-y-4">
               <div>
@@ -236,7 +240,7 @@ export default function KYCStatus() {
           </Card>
 
           {/* Status Timeline */}
-          <Card className="bg-white dark:bg-slate-800 p-6">
+          <Card className="p-8 border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Status Information</h3>
             <div className="space-y-3 text-sm">
               <div>
@@ -270,10 +274,10 @@ export default function KYCStatus() {
             {kycSteps.map((step, index) => (
               <Card
                 key={step.id}
-                className={`p-6 transition-all cursor-pointer hover:shadow-lg ${
+                className={`p-7 transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.02] ${
                   step.completed
-                    ? "bg-green-50 dark:bg-green-900/10 border-2 border-green-200 dark:border-green-700"
-                    : "bg-white dark:bg-slate-800"
+                    ? "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-3 border-green-300 dark:border-green-600"
+                    : "bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/50"
                 }`}
                 onClick={() => navigate("/seller/onboarding")}
               >
@@ -324,7 +328,7 @@ export default function KYCStatus() {
         </div>
 
         {/* ========== HELPFUL INFO ========== */}
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-6">
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-2 border-blue-300 dark:border-blue-700 p-8 hover:shadow-xl transition-all duration-300">
           <div className="flex gap-4">
             <AlertCircle className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
             <div>
