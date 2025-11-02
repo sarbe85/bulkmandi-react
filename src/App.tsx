@@ -1,34 +1,35 @@
 import { adminRoutes } from '@/features/admin/routes';
 import { sellerRoutes } from '@/features/seller/routes';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import Index from './pages/Index';
-import NotFound from './pages/NotFound';
-import RoleSelection from './pages/RoleSelection';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+
+// Public pages
+import Login from '@/features/auth/pages/Login';
+import Register from '@/features/auth/pages/Register';
+import Dashboard from '@/features/common/pages/Dashboard';
+import GetStarted from '@/features/common/pages/GetStarted';
+import NotFound from '@/features/common/pages/NotFound';
+import RoleSelection from '@/features/common/pages/RoleSelection';
+import Index from '@/index';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
-         {/* Public Routes */}
+        {/* ✅ PUBLIC ROUTES */}
         <Route path="/" element={<Index />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/register" element={<Register />} />
+        <Route path="/get-started" element={<GetStarted />} />
         <Route path="/role-selection" element={<RoleSelection />} />
-        <Route path="/get-started" element={<RoleSelection />} />
 
-        {/* Legacy Redirects */}
-        <Route path="/dashboard" element={<Navigate to="/seller/dashboard" replace />} />
-        <Route path="/onboarding" element={<Navigate to="/seller/onboarding" replace />} />
+        {/* ✅ SELLER ROUTES */}
+        {sellerRoutes}
 
-        {/* Feature Routes */}
-        <Route path="/seller/*">{sellerRoutes}</Route>
-        <Route path="/admin/*">{adminRoutes}</Route>
-        {/* <Route path="/buyer/*">{buyerRoutes}</Route> */}
+        {/* ✅ ADMIN ROUTES */}
+        {adminRoutes}
 
-        {/* 404 */}
+        {/* ✅ 404 - MUST BE LAST */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

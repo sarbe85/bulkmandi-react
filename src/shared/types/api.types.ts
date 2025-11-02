@@ -4,24 +4,22 @@
  * These types can be shared with React Native
  */
 
-export type UserRole = 'SELLER' | 'BUYER' | 'ADMIN'| '3PL';
+export type UserRole = 'SELLER' | 'BUYER' | 'ADMIN' | '3PL';
+
 
 export interface User {
   id: string;
   email: string;
   role: UserRole;
+  name?: string;
   organizationId?: string;
   organizationName?: string;
-  mobile?: string;
+  permissions?: string[]; // For ADMIN
   onboardingCompleted?: boolean;
   createdAt?: string;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-}
-
+// ✅ This matches your backend response exactly
 export interface AuthResponse {
   accessToken: string;
   user: User;
@@ -38,6 +36,12 @@ export interface RegisterRequest {
   mobile: string;
   role: UserRole;
   organizationName?: string;
+}
+
+export interface ApiError {
+  message: string;
+  code?: string;
+  errors?: Record<string, unknown>;
 }
 
 // Dashboard Types
@@ -207,7 +211,7 @@ export interface OrdersListResponse {
 export interface ApiError {
   message: string;
   code?: string;
-  errors?: Record<string, string[]>;
+  errors?: Record<string, unknown>;
 }
 
 // Pagination

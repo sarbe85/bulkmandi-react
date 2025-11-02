@@ -1,415 +1,370 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
 import {
   AlertCircle,
-  Building,
-  Check,
+  Building2,
   CheckCircle2,
+  ChevronRight,
   Clock,
   CreditCard,
-  Edit2,
   FileText,
   Package,
-  Shield,
+  RotateCcw,
   XCircle,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import SellerHeader from '../components/SellerHeader';
-import { onboardingService } from '../services/onboarding.service';
-import { OnboardingReviewResponse } from '../types/onboarding.types';
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useOnboardingData } from "../hooks/useOnboardingData";
+import { ONBOARDING_STEP_DESCRIPTIONS, ONBOARDING_STEP_LABELS, ONBOARDING_STEPS } from "../types/onboarding.types";
 
-interface KYCStatusData extends OnboardingReviewResponse {
-  kycStatus: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  rejectionReason?: string;
+interface StepInfo {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  completed: boolean;
 }
 
 export default function KYCStatus() {
   const navigate = useNavigate();
-  const [data, setData] = useState<KYCStatusData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // ✅ Get data from hook - no useEffect needed!
+  const { onboarding, refreshData, error } = useOnboardingData();
 
-  useEffect(() => {
-    loadKYCStatus();
-  }, []);
-
-  const loadKYCStatus = async () => {
-    try {
-      const [reviewData, statusData] = await Promise.all([
-        onboardingService.getOnboardingReview(),
-        onboardingService.getOnboardingStatus(),
-      ]);
-
-      setData({
-        ...reviewData,
-        kycStatus: statusData.kycStatus as any,
-        rejectionReason: statusData.rejectionReason,
-      });
-    } catch (error) {
-      console.error('Failed to load KYC status:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getStatusDetails = () => {
-    switch (data?.kycStatus) {
-      case 'APPROVED':
-        return {
-          color: 'bg-green-50 border-green-200',
-          textColor: 'text-green-800',
-          icon: <CheckCircle2 className="h-6 w-6 text-green-600" />,
-          title: 'KYC Approved ✅',
-          description: 'Congratulations! Your account is fully verified.',
-          showEdit: false,
-        };
-      case 'SUBMITTED':
-        return {
-          color: 'bg-blue-50 border-blue-200',
-          textColor: 'text-blue-800',
-          icon: <Clock className="h-6 w-6 text-blue-600" />,
-          title: 'KYC Under Review',
-          description: 'Your application is being reviewed by our team.',
-          showEdit: false,
-        };
-      case 'REJECTED':
-        return {
-          color: 'bg-red-50 border-red-200',
-          textColor: 'text-red-800',
-          icon: <XCircle className="h-6 w-6 text-red-600" />,
-          title: 'KYC Rejected',
-          description: 'Please review the feedback and update your application.',
-          showEdit: true,
-        };
-      default:
-        return {
-          color: 'bg-yellow-50 border-yellow-200',
-          textColor: 'text-yellow-800',
-          icon: <AlertCircle className="h-6 w-6 text-yellow-600" />,
-          title: 'KYC Incomplete',
-          description: 'Please complete your KYC to access all features.',
-          showEdit: true,
-        };
-    }
-  };
-
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <SellerHeader kycStatus={data?.kycStatus} />
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <SellerHeader />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Card className="p-6 max-w-md">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No KYC Data Found</h3>
-              <p className="text-gray-600 mb-4">Please start your KYC process.</p>
-              <Button onClick={() => navigate('/seller/onboarding')}>
-                Start KYC Process
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
+              <div className="flex-1">
+                <h2 className="font-bold text-red-900 dark:text-red-300">Error Loading KYC Status</h2>
+                <p className="text-red-800 dark:text-red-400 text-sm mt-1">{error}</p>
+              </div>
+              <Button onClick={refreshData} size="sm" className="bg-red-600 hover:bg-red-700 text-white flex-shrink-0">
+                Retry
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     );
   }
+
+  if (!onboarding) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">No data available</p>
+      </div>
+    );
+  }
+
+  // ========== HELPERS ==========
+  const isKYCApproved = onboarding.kycStatus === "APPROVED";
+  const isKYCSubmitted = onboarding.kycStatus === "SUBMITTED";
+  const isKYCDraft = onboarding.kycStatus === "DRAFT";
+  const isKYCRejected = onboarding.kycStatus === "REJECTED";
+  const completedSteps = onboarding.completedSteps || [];
+
+  // Define KYC steps
+  const kycSteps: StepInfo[] = [
+    {
+      id: ONBOARDING_STEPS.ORG_KYC,
+      title: ONBOARDING_STEP_LABELS[ONBOARDING_STEPS.ORG_KYC],
+      description: ONBOARDING_STEP_DESCRIPTIONS[ONBOARDING_STEPS.ORG_KYC],
+      icon: <Building2 className="w-5 h-5" />,
+      completed: completedSteps.includes(ONBOARDING_STEPS.ORG_KYC),
+    },
+    {
+      id: ONBOARDING_STEPS.BANK_DETAILS,
+      title: ONBOARDING_STEP_LABELS[ONBOARDING_STEPS.BANK_DETAILS],
+      description: ONBOARDING_STEP_DESCRIPTIONS[ONBOARDING_STEPS.BANK_DETAILS],
+      icon: <CreditCard className="w-5 h-5" />,
+      completed: completedSteps.includes(ONBOARDING_STEPS.BANK_DETAILS),
+    },
+    {
+      id: ONBOARDING_STEPS.COMPLIANCE_DOCS,
+      title: ONBOARDING_STEP_LABELS[ONBOARDING_STEPS.COMPLIANCE_DOCS],
+      description: ONBOARDING_STEP_DESCRIPTIONS[ONBOARDING_STEPS.COMPLIANCE_DOCS],
+      icon: <FileText className="w-5 h-5" />,
+      completed: completedSteps.includes(ONBOARDING_STEPS.COMPLIANCE_DOCS),
+    },
+    {
+      id: ONBOARDING_STEPS.CATALOG_AND_PRICE,
+      title: ONBOARDING_STEP_LABELS[ONBOARDING_STEPS.CATALOG_AND_PRICE],
+      description: ONBOARDING_STEP_DESCRIPTIONS[ONBOARDING_STEPS.CATALOG_AND_PRICE],
+      icon: <Package className="w-5 h-5" />,
+      completed: completedSteps.includes(ONBOARDING_STEPS.CATALOG_AND_PRICE),
+    },
+  ];
+
+  // Get status badge details
+  const getStatusDetails = () => {
+    if (isKYCApproved) {
+      return {
+        status: "APPROVED",
+        title: "KYC Verified ✓",
+        description: "Your account is fully verified and approved to trade on BulkMandi.",
+        bgColor: "bg-green-50 dark:bg-green-900/20",
+        borderColor: "border-green-200 dark:border-green-700",
+        textColor: "text-green-900 dark:text-green-300",
+        badgeColor: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+        icon: <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />,
+      };
+    }
+    if (isKYCSubmitted) {
+      return {
+        status: "SUBMITTED",
+        title: "KYC Under Review",
+        description: "Your KYC application has been submitted and is being reviewed by our team.",
+        bgColor: "bg-blue-50 dark:bg-blue-900/20",
+        borderColor: "border-blue-200 dark:border-blue-700",
+        textColor: "text-blue-900 dark:text-blue-300",
+        badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+        icon: <Clock className="w-8 h-8 text-blue-600 dark:text-blue-400" />,
+      };
+    }
+    if (isKYCRejected) {
+      return {
+        status: "REJECTED",
+        title: "KYC Rejected",
+        description: "Your KYC application was rejected. Please review the feedback and resubmit.",
+        bgColor: "bg-red-50 dark:bg-red-900/20",
+        borderColor: "border-red-200 dark:border-red-700",
+        textColor: "text-red-900 dark:text-red-300",
+        badgeColor: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+        icon: <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />,
+      };
+    }
+    // DRAFT or INCOMPLETE
+    return {
+      status: "DRAFT",
+      title: "KYC Incomplete",
+      description: "Start your KYC process to unlock all trading features.",
+      bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
+      borderColor: "border-yellow-200 dark:border-yellow-700",
+      textColor: "text-yellow-900 dark:text-yellow-300",
+      badgeColor: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+      icon: <AlertCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />,
+    };
+  };
 
   const statusDetails = getStatusDetails();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <SellerHeader kycStatus={data.kycStatus} showKYCBadge />
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* ========== PAGE HEADER ========== */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">KYC Status</h1>
+            <p className="text-gray-600 dark:text-gray-400">Track your Know Your Customer verification progress</p>
+          </div>
+          <Button
+            onClick={refreshData}
+            variant="outline"
+            size="sm"
+            className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Status Overview */}
-        <Card className={`mb-8 border-2 shadow-lg ${statusDetails.color}`}>
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between flex-wrap gap-6">
-              <div className="flex items-center gap-6">
-                <div className="h-16 w-16 rounded-full bg-background flex items-center justify-center shadow-md">
-                  {statusDetails.icon}
+        {/* ========== STATUS CARD ========== */}
+        <Card className={`${statusDetails.bgColor} ${statusDetails.borderColor} border-2 p-8 dark:bg-opacity-50`}>
+          <div className="flex items-start gap-6">
+            <div className="flex-shrink-0 pt-1">{statusDetails.icon}</div>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className={`text-2xl font-bold ${statusDetails.textColor}`}>{statusDetails.title}</h2>
+                <Badge className={statusDetails.badgeColor}>{statusDetails.status}</Badge>
+              </div>
+              <p className={`${statusDetails.textColor} opacity-80 mb-4`}>{statusDetails.description}</p>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                {!isKYCApproved && (
+                  <Button
+                    onClick={() => navigate("/seller/onboarding")}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {isKYCDraft ? "Start KYC" : isKYCRejected ? "Resubmit KYC" : "View KYC"}
+                  </Button>
+                )}
+                {isKYCSubmitted && (
+                  <Button
+                    variant="outline"
+                    className="dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
+                  >
+                    📧 Check Email for Updates
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* ========== PROGRESS INFORMATION ========== */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Completion Summary */}
+          <Card className="bg-white dark:bg-slate-800 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Completion Summary</h3>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-700 dark:text-gray-300 font-semibold">Overall Progress</span>
+                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    {Math.round((completedSteps.length / kycSteps.length) * 100)}%
+                  </span>
                 </div>
-                <div>
-                  <h1 className={`text-3xl font-bold ${statusDetails.textColor} mb-2`}>
-                    {statusDetails.title}
-                  </h1>
-                  <p className="text-muted-foreground text-lg">
-                    {statusDetails.description}
-                  </p>
-                  {data.rejectionReason && (
-                    <div className="mt-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
-                      <p className="text-sm text-destructive font-medium">
-                        <strong>Rejection Reason:</strong> {data.rejectionReason}
+                <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all"
+                    style={{
+                      width: `${(completedSteps.length / kycSteps.length) * 100}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <p>
+                  <strong>{completedSteps.length}</strong> of <strong>{kycSteps.length}</strong> steps completed
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Status Timeline */}
+          <Card className="bg-white dark:bg-slate-800 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Status Information</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-gray-600 dark:text-gray-400">Current Status</p>
+                <p className="font-semibold text-gray-900 dark:text-white">{statusDetails.title}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400">Last Updated</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {new Date().toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400">Estimated Review Time</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {isKYCSubmitted ? "3-5 Business Days" : isKYCDraft ? "-" : "0 Days"}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* ========== KYC STEPS ========== */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">KYC Steps</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {kycSteps.map((step, index) => (
+              <Card
+                key={step.id}
+                className={`p-6 transition-all cursor-pointer hover:shadow-lg ${
+                  step.completed
+                    ? "bg-green-50 dark:bg-green-900/10 border-2 border-green-200 dark:border-green-700"
+                    : "bg-white dark:bg-slate-800"
+                }`}
+                onClick={() => navigate("/seller/onboarding")}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        step.completed
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                          : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400"
+                      }`}
+                    >
+                      {step.completed ? <CheckCircle2 className="w-6 h-6" /> : step.icon}
+                    </div>
+                    <div>
+                      <h3
+                        className={`font-bold ${
+                          step.completed ? "text-green-900 dark:text-green-300" : "text-gray-900 dark:text-white"
+                        }`}
+                      >
+                        {step.title}
+                      </h3>
+                      <p
+                        className={`text-sm ${
+                          step.completed ? "text-green-700 dark:text-green-400" : "text-gray-600 dark:text-gray-400"
+                        }`}
+                      >
+                        {step.description}
                       </p>
                     </div>
+                  </div>
+                  {step.completed && (
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                      ✓ Done
+                    </Badge>
                   )}
                 </div>
-              </div>
-              {statusDetails.showEdit && (
-                <Button onClick={() => navigate('/seller/onboarding')} size="lg" className="shadow-md">
-                  <Edit2 className="h-5 w-5 mr-2" />
-                  {data.kycStatus === 'REJECTED' ? 'Update KYC' : 'Complete KYC'}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Progress Steps */}
-        <Card className="mb-8 border-2 hover:shadow-lg transition-all">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              KYC Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">{[
-                { key: 'orgKyc', label: 'Organization', icon: Building },
-                { key: 'bankDetails', label: 'Bank Details', icon: CreditCard },
-                { key: 'docs', label: 'Documents', icon: FileText },
-                { key: 'catalog', label: 'Catalog', icon: Package },
-                { key: 'review', label: 'Review', icon: Shield },
-              ].map((step) => {
-                const isCompleted = data.completedSteps.includes(step.key);
-                const Icon = step.icon;
-
-                return (
-                  <div key={step.key} className="text-center">
-                    <div
-                      className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 transition-all ${
-                        isCompleted
-                          ? 'bg-success text-success-foreground shadow-md'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <Check className="h-6 w-6" />
-                      ) : (
-                        <Icon className="h-6 w-6" />
-                      )}
-                    </div>
-                    <p
-                      className={`text-sm font-medium ${
-                        isCompleted ? 'text-success' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {step.label}
-                    </p>
+                {!step.completed && (
+                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-semibold">
+                    Complete Step
+                    <ChevronRight className="w-4 h-4" />
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Organization Details */}
-          {data.orgKyc && (
-            <Card className="border-2 hover:shadow-lg transition-all">
-              <CardHeader className="flex flex-row items-center justify-between pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Building className="h-4 w-4 text-primary" />
-                  </div>
-                  Organization Details
-                </CardTitle>
-                {statusDetails.showEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/seller/onboarding?step=org-kyc')}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
                 )}
-              </CardHeader>
-              <CardContent className="space-y-4">{[
-                  { label: 'Legal Name', value: data.orgKyc.legalName },
-                  { label: 'GSTIN', value: data.orgKyc.gstin, mono: true },
-                  { label: 'PAN', value: data.orgKyc.pan, mono: true },
-                  { label: 'Plant Locations', value: `${data.orgKyc.plantLocations?.length || 0} locations` },
-                ].map((item) => (
-                  <div key={item.label} className="p-3 rounded-lg bg-muted/50">
-                    <p className="text-sm font-medium text-muted-foreground mb-1">{item.label}</p>
-                    <p className={`font-semibold text-foreground ${item.mono ? 'font-mono' : ''}`}>
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Bank Details */}
-          {data.primaryBankAccount && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Bank Details
-                </CardTitle>
-                {statusDetails.showEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/seller/onboarding?step=bank-details')}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Account Holder</p>
-                  <p className="font-semibold">
-                    {data.primaryBankAccount.accountHolderName}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Account Number</p>
-                  <p className="font-mono">
-                    ****{data.primaryBankAccount.accountNumber.slice(-4)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">IFSC Code</p>
-                  <p className="font-mono">{data.primaryBankAccount.ifsc}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Bank Name</p>
-                  <p className="font-semibold">{data.primaryBankAccount.bankName}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Compliance Documents */}
-          {data.complianceDocuments && data.complianceDocuments.length > 0 && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Compliance Documents
-                </CardTitle>
-                {statusDetails.showEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      navigate('/seller/onboarding?step=compliance-docs')
-                    }
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {data.complianceDocuments.map((doc) => (
-                    <div
-                      key={doc.type}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium">
-                          {doc.type
-                            .replace(/_/g, ' ')
-                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </span>
-                      </div>
-                      {doc.status === 'UPLOADED' ? (
-                        <Badge
-                          variant="secondary"
-                          className="bg-green-100 text-green-800"
-                        >
-                          <Check className="h-3 w-3 mr-1" />
-                          Uploaded
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">Pending</Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Catalog */}
-          {data.catalog && data.catalog.length > 0 && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Product Catalog
-                </CardTitle>
-                {statusDetails.showEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/seller/onboarding?step=catalog')}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {data.catalog.map((item) => (
-                    <div
-                      key={item.category}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{item.category}</p>
-                        <p className="text-sm text-gray-600">
-                          Grades: {item.grades.join(', ')}
-                        </p>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="bg-green-100 text-green-800"
-                      >
-                        <Check className="h-3 w-3 mr-1" />
-                        Active
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              </Card>
+            ))}
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center mt-8">
-          <Button variant="outline" onClick={() => navigate('/seller/dashboard')}>
+        {/* ========== HELPFUL INFO ========== */}
+        <Card className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-6">
+          <div className="flex gap-4">
+            <AlertCircle className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
+            <div>
+              <h3 className="font-bold text-blue-900 dark:text-blue-300 mb-2">Need Help?</h3>
+              <p className="text-blue-800 dark:text-blue-200 text-sm mb-3">
+                If you have any questions about the KYC process or your application status, please contact our support
+                team.
+              </p>
+              <div className="space-y-2 text-sm">
+                <p className="text-blue-800 dark:text-blue-200">
+                  📧 Email:{" "}
+                  <a href="mailto:support@bulkmandi.com" className="font-semibold hover:underline">
+                    support@bulkmandi.com
+                  </a>
+                </p>
+                <p className="text-blue-800 dark:text-blue-200">
+                  📞 Phone:{" "}
+                  <a href="tel:+919876543210" className="font-semibold hover:underline">
+                    +91 9876543210
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* ========== QUICK ACTIONS ========== */}
+        <div className="flex flex-wrap gap-4">
+          <Button onClick={() => navigate("/seller/onboarding")} className="bg-blue-600 hover:bg-blue-700 text-white">
+            {isKYCApproved ? "View Onboarding" : "Complete KYC"}
+          </Button>
+          <Button
+            onClick={() => navigate("/seller/dashboard")}
+            variant="outline"
+            className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"
+          >
             Back to Dashboard
           </Button>
-          {statusDetails.showEdit && (
-            <Button onClick={() => navigate('/seller/onboarding')}>
-              <Edit2 className="h-4 w-4 mr-2" />
-              {data.kycStatus === 'REJECTED' ? 'Update KYC' : 'Continue KYC'}
-            </Button>
-          )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

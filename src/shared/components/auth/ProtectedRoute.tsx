@@ -3,7 +3,7 @@
  * Wrapper for routes that require authentication
  */
 
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {

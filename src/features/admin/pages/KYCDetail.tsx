@@ -1,364 +1,555 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useToast } from '@/hooks/use-toast';
+/**
+ * KYC Detail Page
+ * Path: src/features/admin/pages/KYCDetail.tsx
+ */
+
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Label } from '@/shared/components/ui/label';
+import { Card } from '@/shared/components/ui/card';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { useToast } from '@/shared/hooks/use-toast';
 import {
+  AlertCircle,
   ArrowLeft,
   Building2,
-  CheckCircle,
+  CheckCircle2,
+  Clock,
   CreditCard,
+  Eye,
   FileText,
+  History,
   Loader2,
+  Mail,
+  Phone,
+  User,
   XCircle
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import adminService from '../services/admin.service';
+import RiskBadge from '../components/RiskBadge';
+import adminKYCService from '../services/admin-kyc.service';
+import { KYCCaseDetail } from '../types/admin-kyc.types';
 
 export default function KYCDetail() {
-  const { orgId } = useParams<{ orgId: string }>();
+  const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [caseDetail, setCaseDetail] = useState<KYCCaseDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [organization, setOrganization] = useState<any>(null);
-  const [remarks, setRemarks] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Action states
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [approveRemarks, setApproveRemarks] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
-    if (orgId) {
-      loadKYCDetails();
+    if (caseId) {
+      loadCaseDetail();
     }
-  }, [orgId]);
+  }, [caseId]);
 
-  const loadKYCDetails = async () => {
-    if (!orgId) return;
-    
+  const loadCaseDetail = async () => {
     try {
-      const data = await adminService.getKYCDetails(orgId);
-      setOrganization(data);
-    } catch (error) {
+      setIsLoading(true);
+      const data = await adminKYCService.getKYCCaseDetail(caseId!);
+      setCaseDetail(data);
+    } catch (error: any) {
+      console.error('Failed to load case detail:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load KYC details',
+        description: 'Failed to load case details',
         variant: 'destructive',
       });
-      navigate('/admin/kyc');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleApprove = async () => {
-    if (!remarks.trim()) {
-      toast({
-        title: 'Remarks Required',
-        description: 'Please provide approval remarks',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsProcessing(true);
     try {
-      await adminService.approveKYC(orgId!, remarks);
-      
+      setIsSubmitting(true);
+      await adminKYCService.approveKYC(caseId!, {
+        remarks: approveRemarks || 'All documents verified successfully',
+      });
+
       toast({
         title: 'KYC Approved',
-        description: 'Organization has been successfully verified',
+        description: 'Organization has been verified and activated',
       });
-      
-      navigate('/admin/kyc');
-    } catch (error) {
+
+      navigate('/admin/kyc/queue');
+    } catch (error: any) {
+      console.error('Failed to approve KYC:', error);
       toast({
         title: 'Error',
-        description: 'Failed to approve KYC',
+        description: error.message || 'Failed to approve KYC',
         variant: 'destructive',
       });
     } finally {
-      setIsProcessing(false);
+      setIsSubmitting(false);
+      setShowApproveModal(false);
     }
   };
 
   const handleReject = async () => {
-    if (!remarks.trim()) {
+    if (!rejectionReason.trim()) {
       toast({
-        title: 'Remarks Required',
-        description: 'Please provide rejection reason',
+        title: 'Rejection Reason Required',
+        description: 'Please provide a detailed reason for rejection',
         variant: 'destructive',
       });
       return;
     }
 
-    setIsProcessing(true);
     try {
-      await adminService.rejectKYC(orgId!, remarks);
-      
+      setIsSubmitting(true);
+      await adminKYCService.rejectKYC(caseId!, {
+        rejectionReason: rejectionReason,
+      });
+
       toast({
         title: 'KYC Rejected',
-        description: 'Organization has been notified',
+        description: 'Seller has been notified and can resubmit',
       });
-      
-      navigate('/admin/kyc');
-    } catch (error) {
+
+      navigate('/admin/kyc/queue');
+    } catch (error: any) {
+      console.error('Failed to reject KYC:', error);
       toast({
         title: 'Error',
-        description: 'Failed to reject KYC',
+        description: error.message || 'Failed to reject KYC',
         variant: 'destructive',
       });
     } finally {
-      setIsProcessing(false);
+      setIsSubmitting(false);
+      setShowRejectModal(false);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-600" />
+          <p className="text-gray-600">Loading case details...</p>
+        </div>
       </div>
     );
   }
 
-  if (!organization) {
+  if (!caseDetail) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Organization not found</p>
+      <div className="p-8 text-center">
+        <p className="text-gray-600">Case not found</p>
+        <Button onClick={() => navigate('/admin/kyc/queue')} className="mt-4">
+          Back to Queue
+        </Button>
       </div>
     );
   }
 
-  const { orgKyc, primaryBankAccount } = organization;
+  const { case: caseInfo, organization, contacts, bankAccount, complianceDocuments, autoChecks, riskAssessment } = caseDetail;
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/kyc')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{organization.legalName}</h1>
-            <p className="text-muted-foreground">KYC Case Review</p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/admin/kyc/queue')}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Queue
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{organization.legalName}</h1>
+                <p className="text-sm text-gray-600">{caseInfo.submissionNumber}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <RiskBadge level={riskAssessment.level} score={riskAssessment.score} />
+              <span className="text-sm text-gray-600">
+                Submitted {caseInfo.age} ago • SLA: {caseInfo.sla.tat}
+              </span>
+            </div>
           </div>
         </div>
-        <Badge variant={organization.kycStatus === 'SUBMITTED' ? 'default' : 'secondary'}>
-          {organization.kycStatus}
-        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Organization Details */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Organization KYC
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* LEFT COLUMN - Main Details */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Auto Checks Summary */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Automated Checks</h2>
               <div className="grid grid-cols-2 gap-4">
+                {Object.entries(autoChecks).map(([key, value]) => (
+                  <div key={key} className="flex items-center gap-2">
+                    {value ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-600" />
+                    )}
+                    <span className="text-sm text-gray-700">
+                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Organization Details */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Organization Information
+              </h2>
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <Label className="text-muted-foreground">Legal Name</Label>
-                  <p className="font-medium">{orgKyc?.legalName}</p>
+                  <p className="text-gray-600">Legal Name</p>
+                  <p className="font-medium text-gray-900">{organization.legalName}</p>
+                </div>
+                {organization.tradeName && (
+                  <div>
+                    <p className="text-gray-600">Trade Name</p>
+                    <p className="font-medium text-gray-900">{organization.tradeName}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-gray-600">GSTIN</p>
+                  <p className="font-mono text-gray-900">{organization.gstin}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Trade Name</Label>
-                  <p className="font-medium">{orgKyc?.tradeName || 'N/A'}</p>
+                  <p className="text-gray-600">PAN</p>
+                  <p className="font-mono text-gray-900">{organization.pan}</p>
+                </div>
+                {organization.cin && (
+                  <div>
+                    <p className="text-gray-600">CIN</p>
+                    <p className="font-mono text-gray-900">{organization.cin}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-gray-600">Business Type</p>
+                  <p className="font-medium text-gray-900">{organization.businessType}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">GSTIN</Label>
-                  <p className="font-medium">{orgKyc?.gstin}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">PAN</Label>
-                  <p className="font-medium">{orgKyc?.pan}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Business Type</Label>
-                  <p className="font-medium">{orgKyc?.businessType}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Incorporation Date</Label>
-                  <p className="font-medium">
-                    {orgKyc?.incorporationDate ? new Date(orgKyc.incorporationDate).toLocaleDateString() : 'N/A'}
+                  <p className="text-gray-600">Incorporation Date</p>
+                  <p className="font-medium text-gray-900">
+                    {new Date(organization.incorporationDate).toLocaleDateString()}
                   </p>
                 </div>
+                <div className="col-span-2">
+                  <p className="text-gray-600">Registered Address</p>
+                  <p className="font-medium text-gray-900">{organization.registeredAddress}</p>
+                </div>
               </div>
+            </Card>
 
-              <div>
-                <Label className="text-muted-foreground">Registered Address</Label>
-                <p className="font-medium">{orgKyc?.registeredAddress}</p>
-              </div>
-
-              {orgKyc?.primaryContact && (
+            {/* Contacts */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Contact Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-muted-foreground">Primary Contact</Label>
-                  <div className="mt-2 space-y-1">
-                    <p className="font-medium">{orgKyc.primaryContact.name}</p>
-                    <p className="text-sm">{orgKyc.primaryContact.email}</p>
-                    <p className="text-sm">{orgKyc.primaryContact.mobile}</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Primary Contact</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-500" />
+                      <span>{contacts.primary.name}</span>
+                      <Badge variant="outline">{contacts.primary.role}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <span>{contacts.primary.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-500" />
+                      <span>{contacts.primary.mobile}</span>
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {orgKyc?.plantLocations && orgKyc.plantLocations.length > 0 && (
+                {contacts.secondary && (
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Secondary Contact</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span>{contacts.secondary.name}</span>
+                        <Badge variant="outline">{contacts.secondary.role}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-gray-500" />
+                        <span>{contacts.secondary.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                        <span>{contacts.secondary.mobile}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Bank Account */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Bank Account
+              </h2>
+              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div>
-                  <Label className="text-muted-foreground">Plant Locations</Label>
-                  <div className="mt-2 space-y-2">
-                    {orgKyc.plantLocations.map((plant: any, idx: number) => (
-                      <div key={idx} className="p-3 bg-muted/50 rounded-lg">
-                        <p className="font-medium">{plant.name || `Plant ${idx + 1}`}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {plant.city}, {plant.state} - {plant.pincode}
-                        </p>
+                  <p className="text-gray-600">Account Holder</p>
+                  <p className="font-medium text-gray-900">{bankAccount.accountHolderName}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Account Number</p>
+                  <p className="font-mono text-gray-900">****{bankAccount.accountNumber.slice(-4)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">IFSC Code</p>
+                  <p className="font-mono text-gray-900">{bankAccount.ifsc}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Bank Name</p>
+                  <p className="font-medium text-gray-900">{bankAccount.bankName}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Account Type</p>
+                  <p className="font-medium text-gray-900">{bankAccount.accountType}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Penny Drop Status</p>
+                  <div className="flex items-center gap-2">
+                    {bankAccount.pennyDropStatus === 'VERIFIED' ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span className="text-green-700 font-medium">Verified ({bankAccount.pennyDropScore})</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4 text-yellow-600" />
+                        <span className="text-yellow-700 font-medium">{bankAccount.pennyDropStatus}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {bankAccount.documents.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Bank Documents</p>
+                  <div className="space-y-2">
+                    {bankAccount.documents.map((doc, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          <span>{doc.type.replace(/_/g, ' ')}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => window.open(doc.fileUrl, '_blank')}
+                          className="gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          View
+                        </Button>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Bank Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {primaryBankAccount ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground">Account Holder</Label>
-                      <p className="font-medium">{primaryBankAccount.accountHolderName}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Account Number</Label>
-                      <p className="font-medium">{primaryBankAccount.accountNumber}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">IFSC Code</Label>
-                      <p className="font-medium">{primaryBankAccount.ifsc}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Bank Name</Label>
-                      <p className="font-medium">{primaryBankAccount.bankName}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Penny Drop Status</Label>
-                      <Badge variant={primaryBankAccount.pennyDropStatus === 'VERIFIED' ? 'default' : 'secondary'}>
-                        {primaryBankAccount.pennyDropStatus}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {primaryBankAccount.documents && primaryBankAccount.documents.length > 0 && (
-                    <div>
-                      <Label className="text-muted-foreground">Documents</Label>
-                      <div className="mt-2 space-y-2">
-                        {primaryBankAccount.documents.map((doc: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4" />
-                              <div>
-                                <p className="font-medium text-sm">{doc.type}</p>
-                                <p className="text-xs text-muted-foreground">{doc.fileName}</p>
-                              </div>
-                            </div>
-                            <Badge variant="secondary">{doc.status}</Badge>
-                          </div>
-                        ))}
+            {/* Compliance Documents */}
+            {complianceDocuments.length > 0 && (
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Compliance Documents
+                </h2>
+                <div className="space-y-2">
+                  {complianceDocuments.map((doc, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{doc.type.replace(/_/g, ' ')}</p>
+                          <p className="text-xs text-gray-600">{doc.fileName}</p>
+                        </div>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(doc.fileUrl, '_blank')}
+                        className="gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Document
+                      </Button>
                     </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-muted-foreground">No bank details provided</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  ))}
+                </div>
+              </Card>
+            )}
 
-        {/* Actions Panel */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Review Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="remarks">Remarks *</Label>
-                <Textarea
-                  id="remarks"
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  placeholder="Enter your review remarks..."
-                  rows={6}
-                  className="mt-2"
-                />
+          </div>
+
+          {/* RIGHT COLUMN - Actions & Summary */}
+          <div className="space-y-6">
+            
+            {/* Risk Assessment */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Assessment</h3>
+              <div className="space-y-3">
+                <RiskBadge level={riskAssessment.level} score={riskAssessment.score} />
+                <p className="text-sm text-gray-700">{riskAssessment.remarks}</p>
               </div>
+            </Card>
 
-              <div className="space-y-2">
-                <Button 
-                  onClick={handleApprove} 
-                  disabled={isProcessing}
-                  className="w-full"
+            {/* Action Buttons */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Actions</h3>
+              <div className="space-y-3">
+                <Button
+                  onClick={() => setShowApproveModal(true)}
+                  className="w-full gap-2 bg-green-600 hover:bg-green-700"
                 >
-                  {isProcessing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Approve KYC
-                    </>
-                  )}
+                  <CheckCircle2 className="h-4 w-4" />
+                  Approve KYC
                 </Button>
-                <Button 
-                  onClick={handleReject} 
-                  disabled={isProcessing}
+
+                <Button
+                  onClick={() => setShowRejectModal(true)}
                   variant="destructive"
-                  className="w-full"
+                  className="w-full gap-2"
                 >
-                  {isProcessing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Reject KYC
-                    </>
-                  )}
+                  <XCircle className="h-4 w-4" />
+                  Reject KYC
+                </Button>
+
+                <Button variant="outline" className="w-full gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Request More Info
+                </Button>
+
+                <Button variant="outline" className="w-full gap-2">
+                  <History className="h-4 w-4" />
+                  View History
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Submission Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div>
-                <Label className="text-muted-foreground">Submitted At</Label>
-                <p>{new Date(organization.submittedAt || organization.updatedAt).toLocaleString()}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Organization ID</Label>
-                <p className="font-mono text-xs">{organization._id}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Completed Steps</Label>
-                <p>{organization.completedSteps?.join(', ') || 'None'}</p>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
+
         </div>
       </div>
+
+      {/* Approve Modal */}
+      {showApproveModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Approve KYC Application</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This will activate the organization and grant full platform access.
+            </p>
+            <Textarea
+              placeholder="Optional remarks (e.g., All documents verified successfully)"
+              value={approveRemarks}
+              onChange={(e) => setApproveRemarks(e.target.value)}
+              rows={3}
+              className="mb-4"
+            />
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowApproveModal(false)}
+                variant="outline"
+                className="flex-1"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleApprove}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Approving...
+                  </>
+                ) : (
+                  'Confirm Approval'
+                )}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Reject KYC Application</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide a detailed reason for rejection. The seller will be notified.
+            </p>
+            <Textarea
+              placeholder="Rejection reason (required)"
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows={4}
+              className="mb-4"
+              required
+            />
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowRejectModal(false)}
+                variant="outline"
+                className="flex-1"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleReject}
+                variant="destructive"
+                className="flex-1"
+                disabled={isSubmitting || !rejectionReason.trim()}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Rejecting...
+                  </>
+                ) : (
+                  'Confirm Rejection'
+                )}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
     </div>
   );
 }

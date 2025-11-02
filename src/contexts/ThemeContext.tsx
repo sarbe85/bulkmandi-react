@@ -1,5 +1,5 @@
+import { storage } from '@/features/auth/utils/storage.util';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { storage } from '@/utils/storage.util';
 
 type Theme = 'light' | 'dark';
 

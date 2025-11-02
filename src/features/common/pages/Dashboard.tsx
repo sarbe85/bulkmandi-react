@@ -1,6 +1,6 @@
 import AdminDashboard from "@/features/admin/pages/Dashboard";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import SellerDashboard from "@/features/seller/pages/Dashboard";
-import { useAuth } from "@/shared/hooks/useAuth";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 

@@ -3,7 +3,7 @@
  * Displays all quotes submitted by the seller
  */
 
-import { quoteService } from '@/services/quote.service';
+import { quoteService } from '@/api/services/quote.service';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';

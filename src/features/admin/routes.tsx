@@ -1,50 +1,22 @@
-// src/features/admin/routes.tsx
-import { Route } from 'react-router-dom';
+/**
+ * Admin Routes Configuration
+ * Path: src/features/admin/routes.tsx
+ */
 
-import { AdminRoute } from '@/shared/components/auth/AdminRoute';
-import { ProtectedRoute } from '@/shared/components/auth/ProtectedRoute';
-import DashboardLayout from '@/shared/components/layout/DashboardLayout';
+import { Navigate, Route } from 'react-router-dom';
+import AdminLayout from './layout/AdminLayout';
 import Dashboard from './pages/Dashboard';
 import KYCDetail from './pages/KYCDetail';
 import KYCQueue from './pages/KYCQueue';
 
 export const adminRoutes = (
-  <>
-    <Route
-      path="dashboard"
-      element={
-        <ProtectedRoute>
-          <AdminRoute>
-            <DashboardLayout>
-              <Dashboard />
-            </DashboardLayout>
-          </AdminRoute>
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="kyc-queue"
-      element={
-        <ProtectedRoute>
-          <AdminRoute>
-            <DashboardLayout>
-              <KYCQueue />
-            </DashboardLayout>
-          </AdminRoute>
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="kyc-detail/:id"
-      element={
-        <ProtectedRoute>
-          <AdminRoute>
-            <DashboardLayout>
-              <KYCDetail />
-            </DashboardLayout>
-          </AdminRoute>
-        </ProtectedRoute>
-      }
-    />
-  </>
+  <Route path="/admin" element={<AdminLayout />}>
+    <Route path="dashboard" element={<Dashboard />} />
+    <Route path="kyc">
+      <Route path="queue" element={<KYCQueue />} />
+      <Route path="case/:caseId" element={<KYCDetail />} />
+    </Route>
+    {/* Default redirect */}
+    <Route index element={<Navigate to="dashboard" replace />} />
+  </Route>
 );

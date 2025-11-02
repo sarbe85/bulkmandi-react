@@ -1,340 +1,369 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Seller Dashboard
+ * Path: src/features/seller/pages/Dashboard.tsx
+ * 
+ * Uses useOnboardingData hook from SellerLayout context
+ * - No API calls directly in component
+ * - Data provided by parent SellerLayout
+ * - Clean and simple UI
+ */
+
+import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Card } from '@/shared/components/ui/card';
 import {
   AlertCircle,
-  ArrowUpRight,
+  ArrowUp,
   CheckCircle2,
   Clock,
-  DollarSign,
-  FileText,
   Package,
+  Star,
+  TrendingUp,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SellerHeader from '../components/SellerHeader';
-import { onboardingService } from '../services/onboarding.service';
-
-interface Stats {
-  pendingRFQs: number;
-  activeQuotes: number;
-  totalOrders: number;
-  revenue: number;
-  kycStatus: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  completedSteps: string[];
-}
-
-interface Activity {
-  id: string;
-  title: string;
-  description: string;
-  time: string;
-  type: 'rfq' | 'quote' | 'order' | 'kyc';
-}
+import { useOnboardingData } from '../hooks/useOnboardingData';
 
 export default function SellerDashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<Stats>({
-    pendingRFQs: 0,
-    activeQuotes: 0,
-    totalOrders: 0,
-    revenue: 0,
-    kycStatus: 'DRAFT',
-    completedSteps: [],
-  });
-  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // ✅ Get data from hook - no useEffect needed!
+  const { onboarding, refreshData, error } = useOnboardingData();
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  const loadDashboard = async () => {
-    try {
-      const status = await onboardingService.getOnboardingStatus();
-      
-      setStats({
-        pendingRFQs: 5,
-        activeQuotes: 8,
-        totalOrders: 23,
-        revenue: 450000,
-        kycStatus: status.kycStatus as any,
-        completedSteps: status.completedSteps || [],
-      });
-
-      setRecentActivity([
-        {
-          id: '1',
-          title: 'New RFQ Received',
-          description: 'Wheat Grade A - 1000 MT',
-          time: '2 hours ago',
-          type: 'rfq',
-        },
-        {
-          id: '2',
-          title: 'Quote Accepted',
-          description: 'Rice Grade B - 500 MT',
-          time: '1 day ago',
-          type: 'quote',
-        },
-        {
-          id: '3',
-          title: 'Order Completed',
-          description: 'Pulses Mixed - 200 MT',
-          time: '3 days ago',
-          type: 'order',
-        },
-      ]);
-    } catch (error) {
-      console.error('Failed to load dashboard:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getKYCStatusDetails = () => {
-    switch (stats.kycStatus) {
-      case 'APPROVED':
-        return {
-          color: 'bg-green-50 border-green-200',
-          icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
-          title: 'KYC Approved ✅',
-          description: 'Your account is fully verified. You can access all features.',
-          showAction: false,
-        };
-      case 'SUBMITTED':
-        return {
-          color: 'bg-blue-50 border-blue-200',
-          icon: <Clock className="h-5 w-5 text-blue-600" />,
-          title: 'KYC Under Review',
-          description: 'Your application is being reviewed. You can still use basic features.',
-          showAction: true,
-          actionText: 'View Status',
-        };
-      case 'REJECTED':
-        return {
-          color: 'bg-red-50 border-red-200',
-          icon: <AlertCircle className="h-5 w-5 text-red-600" />,
-          title: 'KYC Rejected',
-          description: 'Your application was rejected. Please update and resubmit.',
-          showAction: true,
-          actionText: 'Update KYC',
-        };
-      default:
-        return {
-          color: 'bg-yellow-50 border-yellow-200',
-          icon: <AlertCircle className="h-5 w-5 text-yellow-600" />,
-          title: 'Complete Your KYC',
-          description: 'Complete your onboarding to start receiving RFQs and orders.',
-          showAction: true,
-          actionText: 'Start KYC',
-        };
-    }
-  };
-
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <SellerHeader kycStatus={stats.kycStatus} />
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900" />
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <div className="flex-1">
+                <h2 className="font-bold text-red-900 dark:text-red-300">
+                  Error Loading Dashboard
+                </h2>
+                <p className="text-red-800 dark:text-red-400 text-sm mt-1">
+                  {error}
+                </p>
+              </div>
+              <Button
+                onClick={refreshData}
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  const kycDetails = getKYCStatusDetails();
+  if (!onboarding) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">No data available</p>
+      </div>
+    );
+  }
+
+  // ========== HELPERS ==========
+  const isKYCApproved = onboarding.kycStatus === 'APPROVED';
+  const isKYCSubmitted = onboarding.kycStatus === 'SUBMITTED';
+  const isKYCDraft = onboarding.kycStatus === 'DRAFT';
+  const isKYCRejected = onboarding.kycStatus === 'REJECTED';
+
+  // KYC Status Details
+  const getKYCDetails = () => {
+    if (isKYCApproved) {
+      return {
+        title: 'KYC Verified ✓',
+        description: 'Your account is fully verified and ready to trade',
+        bgColor: 'bg-green-50 dark:bg-green-900/20',
+        borderColor: 'border-green-200 dark:border-green-700',
+        textColor: 'text-green-900 dark:text-green-300',
+        icon: <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />,
+        actionButton: null,
+      };
+    }
+    if (isKYCSubmitted) {
+      return {
+        title: 'KYC Under Review',
+        description:
+          'Your application is being reviewed. Please wait for approval.',
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+        borderColor: 'border-blue-200 dark:border-blue-700',
+        textColor: 'text-blue-900 dark:text-blue-300',
+        icon: <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
+        actionButton: null,
+      };
+    }
+    if (isKYCRejected) {
+      return {
+        title: 'KYC Rejected',
+        description: 'Your KYC was rejected. Please resubmit with correct information.',
+        bgColor: 'bg-red-50 dark:bg-red-900/20',
+        borderColor: 'border-red-200 dark:border-red-700',
+        textColor: 'text-red-900 dark:text-red-300',
+        icon: <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />,
+        actionButton: 'Resubmit KYC',
+      };
+    }
+    // DRAFT or INCOMPLETE
+    return {
+      title: 'KYC Incomplete',
+      description: 'Complete your KYC to unlock all features',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+      borderColor: 'border-yellow-200 dark:border-yellow-700',
+      textColor: 'text-yellow-900 dark:text-yellow-300',
+      icon: <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />,
+      actionButton: 'Complete KYC',
+    };
+  };
+
+  const kycDetails = getKYCDetails();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <SellerHeader kycStatus={stats.kycStatus} showKYCBadge />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back!
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Here's what's happening with your business today.
-          </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* ========== PAGE HEADER ========== */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Welcome back!
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Here's what's happening with your business today.
+            </p>
+          </div>
+          <Button
+            onClick={refreshData}
+            variant="outline"
+            size="sm"
+            className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"
+          >
+            Refresh
+          </Button>
         </div>
 
-        {/* KYC Status Alert */}
-        {stats.kycStatus !== 'APPROVED' && (
-          <Card className={`mb-8 border-2 ${kycDetails.color}`}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4">
-                  {kycDetails.icon}
-                  <div>
-                    <h3 className="font-semibold text-lg">{kycDetails.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {kycDetails.description}
-                    </p>
-                  </div>
-                </div>
-                {kycDetails.showAction && (
-                  <Button
-                    onClick={() =>
-                      navigate(
-                        stats.kycStatus === 'SUBMITTED'
-                          ? '/seller/kyc-status'
-                          : '/seller/onboarding'
-                      )
-                    }
-                  >
-                    {kycDetails.actionText}
-                  </Button>
-                )}
+        {/* ========== KYC STATUS SECTION ========== */}
+        <Card
+          className={`${kycDetails.bgColor} ${kycDetails.borderColor} border-2 p-6 dark:bg-opacity-50`}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4 flex-1">
+              <div className="mt-1">{kycDetails.icon}</div>
+              <div className="flex-1">
+                <h2 className={`text-xl font-bold ${kycDetails.textColor} mb-2`}>
+                  {kycDetails.title}
+                </h2>
+                <p className={`${kycDetails.textColor} opacity-80`}>
+                  {kycDetails.description}
+                </p>
               </div>
-            </CardContent>
+            </div>
+
+            {/* Action Button */}
+            {kycDetails.actionButton && !isKYCApproved && (
+              <Button
+                onClick={() => navigate('/seller/onboarding')}
+                className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {kycDetails.actionButton}
+              </Button>
+            )}
+          </div>
+        </Card>
+
+        {/* ========== KYC PROGRESS SECTION ========== */}
+        {onboarding.completedSteps && onboarding.completedSteps.length > 0 && (
+          <Card className="bg-white dark:bg-slate-800 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              Onboarding Progress
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {onboarding.completedSteps.map((step) => (
+                <Badge
+                  key={step}
+                  className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-300 dark:border-green-700"
+                >
+                  ✓ {step}
+                </Badge>
+              ))}
+            </div>
           </Card>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Pending RFQs</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingRFQs}</div>
-              <p className="text-xs text-muted-foreground">+2 from yesterday</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Active Quotes</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeQuotes}</div>
-              <p className="text-xs text-muted-foreground">+1 from yesterday</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalOrders}</div>
-              <p className="text-xs text-muted-foreground">+5 this month</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Revenue (₹)</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ₹{(stats.revenue / 100000).toFixed(1)}L
+        {/* ========== STATS GRID ========== */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Active RFQs Card */}
+          <Card className="bg-white dark:bg-slate-800 p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-xs text-muted-foreground">+12% from last month</p>
-            </CardContent>
+              <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-semibold">
+                <ArrowUp className="w-4 h-4" />
+                +2
+              </div>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+              Active RFQs
+            </p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              24
+            </p>
+          </Card>
+
+          {/* Total Orders Card */}
+          <Card className="bg-white dark:bg-slate-800 p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-semibold">
+                <ArrowUp className="w-4 h-4" />
+                +1
+              </div>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+              Total Orders
+            </p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              156
+            </p>
+          </Card>
+
+          {/* Seller Rating Card */}
+          <Card className="bg-white dark:bg-slate-800 p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                <Star className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-semibold">
+                <ArrowUp className="w-4 h-4" />
+                +5
+              </div>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+              Your Rating
+            </p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              4.8★
+            </p>
+          </Card>
+
+          {/* Revenue Card */}
+          <Card className="bg-white dark:bg-slate-800 p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-semibold">
+                <ArrowUp className="w-4 h-4" />
+                +12%
+              </div>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+              This Month Revenue
+            </p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              ₹45.2K
+            </p>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Recent Activity
-                <Button variant="ghost" size="sm">
-                  View All
-                  <ArrowUpRight className="h-4 w-4 ml-1" />
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentActivity.length > 0 ? (
-                <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          activity.type === 'rfq'
-                            ? 'bg-blue-100 text-blue-600'
-                            : activity.type === 'quote'
-                            ? 'bg-green-100 text-green-600'
-                            : activity.type === 'order'
-                            ? 'bg-purple-100 text-purple-600'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {activity.type === 'rfq' && <Package className="h-4 w-4" />}
-                        {activity.type === 'quote' && <FileText className="h-4 w-4" />}
-                        {activity.type === 'order' && <CheckCircle2 className="h-4 w-4" />}
-                        {activity.type === 'kyc' && <AlertCircle className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{activity.title}</p>
-                        <p className="text-sm text-gray-600">{activity.description}</p>
-                        <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No recent activity</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* ========== RECENT ACTIVITY SECTION ========== */}
+        <Card className="bg-white dark:bg-slate-800 p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+            Recent Activity
+          </h3>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                className="w-full justify-start"
-                variant="outline"
-                onClick={() => navigate('/seller/rfqs')}
-              >
-                <Package className="h-4 w-4 mr-2" />
-                View RFQs
-              </Button>
-              <Button
-                className="w-full justify-start"
-                variant="outline"
-                onClick={() => navigate('/seller/quotes')}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Manage Quotes
-              </Button>
-              <Button
-                className="w-full justify-start"
-                variant="outline"
-                onClick={() => navigate('/seller/orders')}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Track Orders
-              </Button>
-              {stats.kycStatus !== 'APPROVED' && (
-                <Button
-                  className="w-full justify-start"
-                  variant="outline"
-                  onClick={() => navigate('/seller/kyc-status')}
-                >
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Complete KYC
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            {/* Activity Item 1 */}
+            <div className="flex items-start gap-4 pb-4 border-b dark:border-slate-700 last:border-b-0 last:pb-0">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  New RFQ Received
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  You received a new RFQ for industrial components
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                  2 hours ago
+                </p>
+              </div>
+            </div>
+
+            {/* Activity Item 2 */}
+            <div className="flex items-start gap-4 pb-4 border-b dark:border-slate-700 last:border-b-0 last:pb-0">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  Order Confirmed
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Your quote was accepted by Acme Corp
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                  1 day ago
+                </p>
+              </div>
+            </div>
+
+            {/* Activity Item 3 */}
+            <div className="flex items-start gap-4 pb-4 border-b dark:border-slate-700 last:border-b-0 last:pb-0">
+              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <Star className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  New Rating Received
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  SteelCorp Industries gave you a 5-star rating
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                  3 days ago
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* No Activity Message */}
+          {/* Uncomment if no activity */}
+          {/* <div className="text-center py-8">
+            <p className="text-gray-500 dark:text-gray-400">No recent activity</p>
+          </div> */}
+        </Card>
+
+        {/* ========== QUICK ACTIONS ========== */}
+        <div className="flex flex-wrap gap-4">
+          <Button
+            onClick={() => navigate('/seller/onboarding')}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Complete KYC
+          </Button>
+          <Button
+            onClick={() => navigate('/seller/rfqs')}
+            variant="outline"
+            className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"
+          >
+            View RFQs
+          </Button>
+          <Button
+            onClick={() => navigate('/seller/kyc-status')}
+            variant="outline"
+            className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"
+          >
+            KYC Status
+          </Button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

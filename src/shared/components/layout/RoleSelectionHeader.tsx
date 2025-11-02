@@ -1,5 +1,5 @@
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/shared/components/ui/button';
-import { useAuth } from '@/shared/hooks/useAuth';
 import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

@@ -1,5 +1,5 @@
+import { quoteService } from '@/api/services/quote.service';
 import { mockRFQs } from '@/data/mockData';
-import { quoteService } from '@/services/quote.service';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';

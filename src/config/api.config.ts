@@ -1,74 +1,84 @@
 /**
  * API Configuration
- * Centralized API configuration that can be easily adapted for different environments
- * This file can be reused in React Native with minimal changes
+ * Centralized API configuration for different environments
+ * This file can be easily reused in React Native with minimal changes
  */
 
 export const API_CONFIG = {
-  // Base URL - can be set via environment variables
-  BASE_URL: import.meta.env.VITE_API_URL || "http://localhost:3002/api/v1",
+  // Base URL - configured via environment variables
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1',
+  
   // Timeouts
   TIMEOUT: 30000, // 30 seconds
 
   // API Endpoints
   ENDPOINTS: {
-    // Auth
-    LOGIN: "/auth/login",
-    REGISTER: "/auth/register",
-    REFRESH_TOKEN: "/auth/refresh",
-    LOGOUT: "/auth/logout",
+    // ========== Auth ==========
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    REFRESH_TOKEN: '/auth/refresh',
+    LOGOUT: '/auth/logout',
 
-    // Onboarding - Seller
-    ONBOARDING_STATUS: "/organizations/my-organization/onboarding",
-    ONBOARDING_KYC_UPDATE: "/organizations/my-organization/onboarding/kyc",
-    ONBOARDING_BANK_UPDATE: "/organizations/my-organization/onboarding/bank",
-    ONBOARDING_SUBMIT: "/organizations/my-organization/onboarding/submit",
-    GSTIN_FETCH: "/seller/onboarding/gstin-fetch",
-    PENNY_DROP: "/seller/onboarding/penny-drop",
-    UPLOAD_DOCUMENT: "/seller/onboarding/upload-document",
+    // ========== Onboarding ==========
+    ONBOARDING_STATUS: '/seller/onboarding/status',
+    ONBOARDING_ORG_KYC: '/seller/onboarding/org-kyc',
+    ONBOARDING_BANK_DETAILS: '/seller/onboarding/bank-details',
+    ONBOARDING_BANK_DOCS: '/seller/onboarding/bank-docs',
+    ONBOARDING_COMPLIANCE_DOCS: '/seller/onboarding/compliance-docs',
+    ONBOARDING_CATALOG: '/seller/onboarding/catalog',
+    ONBOARDING_SUBMIT: '/seller/onboarding/submit',
 
-    // Onboarding - Admin
-    ADMIN_PENDING_KYC: "/organizations/admin/kyc/pending",
-    ADMIN_KYC_APPROVE: (orgId: string) =>
-      `/organizations/admin/kyc/${orgId}/approve`,
-    ADMIN_KYC_REJECT: (orgId: string) =>
-      `/organizations/admin/kyc/${orgId}/reject`,
+    // ========== Dashboard ==========
+    DASHBOARD: '/seller/dashboard',
+    KYC_STATUS: '/seller/kyc-status',
 
-    // Legacy endpoints (kept for compatibility)
-    KYC_STATUS: "/seller/kyc-status",
-    KYC_REFRESH: "/seller/kyc-status/refresh",
+    // ========== Organization (Admin) ==========
+    ADMIN_PENDING_KYC: '/organizations/admin/kyc/pending',
+    ADMIN_KYC_APPROVE: (orgId: string) => `/organizations/admin/kyc/${orgId}/approve`,
+    ADMIN_KYC_REJECT: (orgId: string) => `/organizations/admin/kyc/${orgId}/reject`,
 
-    // Dashboard
-    DASHBOARD: "/seller/dashboard",
-
-    // RFQ
-    RFQ_INBOX: "/rfq/inbox",
+    // ========== RFQ ==========
+    RFQ_INBOX: '/rfq/inbox',
     RFQ_DETAIL: (id: string) => `/rfq/${id}`,
+    RFQ_CREATE: '/rfq',
 
-    // Quotes
-    CREATE_QUOTE: "/quotes",
-    MY_QUOTES: "/quotes/my-quotes",
+    // ========== Quotes ==========
+    CREATE_QUOTE: '/quotes',
+    MY_QUOTES: '/quotes/my-quotes',
     QUOTE_DETAIL: (id: string) => `/quotes/${id}`,
+    QUOTE_UPDATE: (id: string) => `/quotes/${id}`,
 
-    // Orders
-    ORDERS: "/orders",
+    // ========== Orders ==========
+    ORDERS: '/orders',
     ORDER_DETAIL: (id: string) => `/orders/${id}`,
     DISPATCH_PREP: (id: string) => `/orders/${id}/dispatch-prep`,
 
-    // Catalog
-    CATALOG: "/catalog",
+    // ========== Catalog ==========
+    CATALOG: '/catalog',
+    CATALOG_UPDATE: '/catalog',
+
+    // ========== Upload ==========
+    UPLOAD_FILE: '/upload',
+    UPLOAD_DOCUMENT: '/upload/document',
   },
 
   // Headers
   HEADERS: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 } as const;
 
 // Storage keys for tokens and user data
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: "access_token",
-  REFRESH_TOKEN: "refresh_token",
-  USER: "user_data",
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
+  USER: 'user_data',
+} as const;
+
+// Environment helper
+export const ENV = {
+  isDevelopment: import.meta.env.MODE === 'development',
+  isProduction: import.meta.env.MODE === 'production',
+  apiUrl: import.meta.env.VITE_API_URL,
 } as const;

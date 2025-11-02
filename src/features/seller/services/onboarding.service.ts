@@ -1,91 +1,41 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { API_CONFIG, STORAGE_KEYS } from "@/config/api.config";
+import apiClient from "@/api/api.client";
 import {
-  BankDocData,
+  BankDetails,
+  bankDetailsSchema,
+  OrgKycData,
+} from "../schemas/onboarding.schema";
+import {
   CatalogData,
-  ComplianceDocsData,
   OnboardingResponse,
-  OnboardingReviewResponse,
-  OrgKYCData,
+  SubmitOnboardingResponse,
 } from "../types/onboarding.types";
 
-// Get auth token from localStorage
-const getAuthToken = (): string | null => {
-  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-};
+class OnboardingService {
+  private baseUrl = "/organizations/my-organization/onboarding";
 
-// Make API requests with proper headers and error handling
-const apiRequest = async (
-  method: string,
-  endpoint: string,
-  body?: any
-): Promise<any> => {
-  const token = getAuthToken();
-  if (!token) {
-    throw new Error("Authentication required. Please login again.");
-  }
-
-  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
-
-  const options: RequestInit = {
-    method,
-    headers: {
-      ...API_CONFIG.HEADERS,
-      Authorization: `Bearer ${token}`,
-    },
-    signal: controller.signal,
-  };
-
-  if (body && method !== "GET") {
-    options.body = JSON.stringify(body);
-  }
-
-  try {
-    const response = await fetch(url, options);
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message ||
-          `API Error: ${response.status} ${response.statusText}`
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        throw new Error("Request timeout. Please try again.");
-      }
-      throw error;
-    }
-    throw new Error("Network error. Please try again.");
-  }
-};
-
-// Export service object with all methods
-export const onboardingService = {
-  // Get current onboarding status
+  /**
+   * API: Get Onboarding Status
+   */
   async getOnboardingStatus(): Promise<OnboardingResponse> {
     try {
-      const response = await apiRequest(
-        "GET",
+      const response = await apiClient.get(
         "/organizations/my-organization/onboarding"
       );
-      return response;
-    } catch (error) {
-      console.error("Failed to fetch onboarding status:", error);
-      throw error;
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Failed to get onboarding status"
+      );
     }
-  },
+  }
 
-  // Update Organization KYC
-  async updateOrgKYC(data: OrgKYCData): Promise<OnboardingResponse> {
+  /**
+   * API 1: Update Organization KYC
+   */
+  /**
+   * API 1: Update Organization KYC
+   */
+  async updateOrgKYC(data: OrgKycData): Promise<OnboardingResponse> {
     try {
       const payload = {
         legalName: data.legalName,
@@ -99,8 +49,9 @@ export const onboardingService = {
         plantLocations: data.plantLocations?.map((plant) => ({
           street: plant.street || plant.name || `${plant.city} Plant`,
           city: plant.city,
-          state: plant.state || "",
-          pin: plant.pincode || plant.pin || "",
+          state: plant.state,
+          pin: plant.pincode || plant.pin,
+          country: plant.country || "India",
         })),
         primaryContact: {
           name: data.primaryContact.name,
@@ -110,221 +61,272 @@ export const onboardingService = {
         },
       };
 
-      const response = await apiRequest(
-        "PUT",
-        "/organizations/my-organization/onboarding/kyc",
-        payload
-      );
-      return response;
-    } catch (error) {
-      console.error("Failed to update organization KYC:", error);
-      throw error;
+      console.log("📤 Sending payload to backend:", payload);
+
+      const response = await apiClient.put(`${this.baseUrl}/kyc`, payload);
+
+      return response.data;
+    } catch (error: any) {
+      // ✅ Only log if it's a REAL error (not success)
+      console.error("❌ Real API Error:", error.message);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to update organization KYC";
+
+      throw new Error(errorMessage);
     }
-  },
+  }
 
-  // Update Bank Details
-  async updateBankDetails(data: BankDocData): Promise<OnboardingResponse> {
-    try {
-      const payload = {
-        accountNumber: data.accountNumber,
-        ifsc: data.ifscCode,
-        bankName: data.bankName || "Bank",
-        accountHolderName: data.accountName,
-        accountType: data.accountType || "Current",
-        pennyDropStatus: data.isPennyDropVerified ? "VERIFIED" : "PENDING",
-        pennyDropScore: data.isPennyDropVerified ? 100 : 0,
-        documents: (data.documents || []).map((doc) => ({
-          type: doc.type,
-          fileName: doc.fileName,
-          fileUrl: doc.fileUrl,
-          uploadedAt: doc.uploadedAt,
-          status: doc.status,
-        })),
-      };
+  /**
+   * API 2: Update Bank Details WITH FILE UPLOAD
+   * PUT /organizations/my-organization/onboarding/bank
+   */
 
-      const response = await apiRequest(
-        "PUT",
-        "/organizations/my-organization/onboarding/bank",
-        payload
-      );
-      return response;
-    } catch (error) {
-      console.error("Failed to update bank details:", error);
-      throw error;
-    }
-  },
-
-  // Upload Compliance Documents
-  async uploadComplianceDocs(
-    data: ComplianceDocsData
+  // ✅ YOUR EXACT FUNCTION - Just with schema import at top
+  async updateBankDetails(
+    bankData: BankDetails,
+    files: File[] = []
   ): Promise<OnboardingResponse> {
     try {
-      const payload = {
-        complianceDocuments: data.complianceDocuments.map((doc) => ({
-          type: doc.type,
-          fileName: doc.fileName,
-          fileUrl: doc.fileUrl,
-          uploadedAt: doc.uploadedAt,
-          status: doc.status,
-        })),
-      };
+      // ✅ ADD THIS: Validate before sending (optional but recommended)
+      const validatedData = bankDetailsSchema.parse(bankData);
 
-      const response = await apiRequest(
-        "PUT",
-        "/organizations/my-organization/onboarding/docs",
-        payload
+      const formData = new FormData();
+
+      // Add form fields
+      formData.append("accountNumber", validatedData.accountNumber);
+      formData.append("ifsc", validatedData.ifsc);
+      formData.append("bankName", validatedData.bankName);
+      formData.append("accountHolderName", validatedData.accountHolderName);
+      formData.append("accountType", validatedData.accountType);
+      formData.append(
+        "pennyDropStatus",
+        validatedData.pennyDropStatus || "PENDING"
       );
-      return response;
-    } catch (error) {
-      console.error("Failed to upload compliance documents:", error);
-      throw error;
-    }
-  },
+      formData.append(
+        "pennyDropScore",
+        String(validatedData.pennyDropScore || 0)
+      );
 
-  // Update Product Catalog
+      // Add files with field name "bankDocs"
+      files.forEach((file) => {
+        formData.append("bankDocs", file);
+      });
+
+      const response = await apiClient.put(`${this.baseUrl}/bank`, formData);
+
+      // ✅ ADD THIS: Validate response (optional but recommended)
+      const validatedResponse = bankDetailsSchema.parse(
+        response.data.primaryBankAccount
+      );
+
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update bank details");
+    }
+  }
+
+  /**
+   * API 3: Update Compliance Documents WITH FILE UPLOAD
+   * PUT /organizations/my-organization/onboarding/docs
+   * ✅ CRITICAL: Backend expects BOOLEAN values converted to strings
+   */
+  async updateComplianceDocs(
+    declarations: {
+      warrantyAssurance: boolean;
+      termsAccepted: boolean;
+      amlCompliance: boolean;
+    },
+    files: File[] = []
+  ): Promise<OnboardingResponse> {
+    try {
+      const formData = new FormData();
+
+      // ✅ Append declarations as STRING ("true" or "false")
+      // Backend Nest.js DTO transformer will convert to boolean
+      formData.append(
+        "warrantyAssurance",
+        String(declarations.warrantyAssurance)
+      );
+      formData.append("termsAccepted", String(declarations.termsAccepted));
+      formData.append("amlCompliance", String(declarations.amlCompliance));
+
+      // ✅ Append each file individually with field name 'complianceDocs'
+      files.forEach((file) => {
+        formData.append("complianceDocs", file);
+      });
+
+      console.log("📤 FormData being sent to API:");
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(
+            ` ${key}: [File] ${(value as File).name} (${
+              (value as File).size
+            } bytes)`
+          );
+        } else {
+          console.log(` ${key}: ${value}`);
+        }
+      }
+
+      // ✅ Send to API using apiClient
+      const response = await apiClient.put(
+        `${this.baseUrl}/docs`,
+        formData
+        // Note: Do NOT include Content-Type header - browser sets it automatically with boundary
+      );
+
+      console.log("✅ API Response:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ API Error Response:", error.response?.data);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update compliance documents"
+      );
+    }
+  }
+
+  /**
+   * API 4: Update Catalog & Pricing
+   */
   async updateCatalog(data: CatalogData): Promise<OnboardingResponse> {
     try {
-      const response = await apiRequest(
-        "PUT",
-        "/organizations/my-organization/onboarding/catalog",
-        data
+      const response = await apiClient.put(`${this.baseUrl}/catalog`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Failed to update catalog"
       );
-      return response;
-    } catch (error) {
-      console.error("Failed to update catalog:", error);
-      throw error;
     }
-  },
+  }
 
-  // Get Onboarding Review Data
-  async getOnboardingReview(): Promise<OnboardingReviewResponse> {
-    try {
-      const response = await apiRequest(
-        "GET",
-        "/organizations/my-organization/onboarding"
-      );
-      return response;
-    } catch (error) {
-      console.error("Failed to get onboarding review:", error);
-      throw error;
-    }
-  },
-
-  // Submit Onboarding for Review
-  async submitOnboarding(): Promise<any> {
-    try {
-      const response = await apiRequest(
-        "POST",
-        "/organizations/my-organization/onboarding/submit"
-      );
-      return {
-        success: true,
-        message: "Onboarding submitted successfully for review",
-        data: response,
-      };
-    } catch (error) {
-      console.error("Failed to submit onboarding:", error);
-      throw error;
-    }
-  },
-
-  // Get KYC Status
-  async getKYCStatus(): Promise<any> {
-    try {
-      const response = await apiRequest(
-        "GET",
-        "/organizations/my-organization/onboarding"
-      );
-      return {
-        overallStatus: response.kycStatus?.toLowerCase() || "draft",
-        completionPercentage: Math.round(
-          (response.completedSteps?.length / 4) * 100
-        ),
-        checks: {
-          gstin: response.orgKyc?.gstin ? "validated" : "pending",
-          pan: response.orgKyc?.pan ? "validated" : "pending",
-          bank: response.primaryBankAccount ? "validated" : "pending",
-          watchlist: "pending",
-          factoryLicense: "pending",
-        },
-        lastUpdated: response.updatedAt,
-      };
-    } catch (error) {
-      console.error("Failed to fetch KYC status:", error);
-      throw error;
-    }
-  },
-
-  // Refresh KYC Status
-  async refreshKYCStatus(): Promise<any> {
-    return this.getKYCStatus();
-  },
-
-  // Check if all steps completed
-  isOnboardingComplete(completedSteps: string[]): boolean {
-    const requiredSteps = [
-      "orgKyc",
-      "bankDetails",
-      "complianceDocs",
-      "catalog",
-    ];
-    return requiredSteps.every((step) => completedSteps.includes(step));
-  },
-
-  // Get completion percentage
-  getCompletionPercentage(completedSteps: string[]): number {
-    const requiredSteps = [
-      "orgKyc",
-      "bankDetails",
-      "complianceDocs",
-      "catalog",
-    ];
-    const completed = completedSteps.filter((step) =>
-      requiredSteps.includes(step)
-    ).length;
-    return Math.round((completed / requiredSteps.length) * 100);
-  },
   /**
-   * Verify Penny Drop - Check if account number and IFSC match
+   * API 5: Submit for Admin Review
+   */
+  async submitOnboarding(): Promise<SubmitOnboardingResponse> {
+    try {
+      const response = await apiClient.post(`${this.baseUrl}/submit`, {});
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Failed to submit onboarding"
+      );
+    }
+  }
+
+  /**
+   * Helper: Penny Drop Verification
    */
   async verifyPennyDrop(
     accountNumber: string,
     ifsc: string
   ): Promise<{ verified: boolean; accountName: string }> {
     try {
-      const response = await apiRequest(
-        "POST",
-        "/seller/onboarding/penny-drop",
-        {
-          accountNumber,
-          ifsc,
-        }
-      );
-      return response;
+      const response = await apiClient.post<{
+        verified: boolean;
+        accountName: string;
+      }>("/organizations/verify-penny-drop", {
+        accountNumber,
+        ifsc,
+      });
+      return response.data;
     } catch (error: any) {
-      console.error("Failed to verify penny drop:", error);
       throw new Error(
         error.message || "Account verification failed. Please check details."
       );
     }
-  },
+  }
+
   /**
-   * Fetch GSTIN details
+   * Helper: Upload Document (S3 pre-signed URL flow)
+   */
+  async uploadDocument(
+    file: File,
+    documentType: string
+  ): Promise<{ fileUrl: string }> {
+    try {
+      const { data: uploadData } = await apiClient.post<{
+        uploadUrl: string;
+        fileUrl: string;
+      }>("/organizations/get-upload-url", {
+        fileName: file.name,
+        fileType: file.type,
+        documentType,
+      });
+
+      await fetch(uploadData.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      return { fileUrl: uploadData.fileUrl };
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to upload document");
+    }
+  }
+
+  /**
+   * Helper: Fetch GSTIN details
    */
   async fetchGSTIN(gstin: string): Promise<any> {
     try {
-      const response = await apiRequest(
-        "GET",
-        `/seller/onboarding/gstin-fetch?gstin=${gstin}`
+      const response = await apiClient.get(
+        `/organizations/gstin-fetch?gstin=${gstin}`
       );
-      return response;
+      return response.data;
     } catch (error: any) {
-      console.error("Failed to fetch GSTIN details:", error);
-      throw new Error(
-        error.message || "Failed to fetch GSTIN details. Please enter manually."
-      );
+      throw new Error("Failed to fetch GSTIN details. Please enter manually.");
     }
-  },
-};
+  }
 
-export default onboardingService;
+  /**
+   * API 7: Download Document (Secure)
+   */
+  async downloadDocument(fileName: string): Promise<void> {
+    try {
+      const response = await apiClient.get(
+        `/organizations/my-organization/documents/${fileName}`,
+        { responseType: "blob" }
+      );
+
+      const blob = response.data as Blob;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to download document");
+    }
+  }
+
+  /**
+   * API 8: Preview Document (Inline)
+   */
+  async previewDocument(fileName: string): Promise<string> {
+    try {
+      const response = await apiClient.get(
+        `/organizations/my-organization/documents-preview/${fileName}`,
+        { responseType: "blob" }
+      );
+
+      const blob = response.data as Blob;
+      return window.URL.createObjectURL(blob);
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to preview document");
+    }
+  }
+}
+
+export default new OnboardingService();

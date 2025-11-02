@@ -1,6 +1,6 @@
  
 
-import { orderService } from '@/services/order.service';
+import { orderService } from '@/api/services/order.service';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';

@@ -1,8 +1,8 @@
 
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import { useAuth } from '@/shared/hooks/useAuth';
 import {
   ArrowRight,
   BarChart3,

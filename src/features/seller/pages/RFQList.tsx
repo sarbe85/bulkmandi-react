@@ -1,4 +1,4 @@
-import { rfqService } from '@/services/rfq.service';
+import { rfqService } from '@/api/services/rfq.service';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';

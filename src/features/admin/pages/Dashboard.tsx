@@ -1,302 +1,219 @@
-// import { AdminDashboardData, adminService } from '@/services/admin.service';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+/**
+ * Admin Dashboard Page
+ * Path: src/features/admin/pages/Dashboard.tsx
+ */
+
+import { Button } from '@/shared/components/ui/button';
+import { Card } from '@/shared/components/ui/card';
+import { useToast } from '@/shared/hooks/use-toast';
+import {
+  AlertTriangle,
+  Clock,
+  DollarSign,
+  FileCheck,
+  Loader2,
+  Scale,
+  TrendingUp,
+  Users
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/shared/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle, Clock, FileText, ShoppingCart, TrendingUp, Users } from 'lucide-react';
-import adminService from '../services/admin.service';
+import StatsCard from '../components/StatsCard';
+import adminKYCService from '../services/admin-kyc.service';
+import { DashboardStats } from '../types/admin-kyc.types';
 
-interface AdminDashboardData {
-  kpis: {
-    totalUsers: number;
-    totalOrders: number;
-    totalRfqs: number;
-    platformRevenue: number;
-  };
-  userStats: {
-    sellers: number;
-    buyers: number;
-    threepl: number;
-    admins: number;
-  };
-  pendingApprovals: {
-    kycPending: number;
-    catalogPending: number;
-  };
-  recentActivity: Array<{
-    id: string;
-    type: string;
-    user: string;
-    details: string;
-    timestamp: string;
-  }>;
-}
-
-const AdminDashboard = () => {
+export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [data, setData] = useState<AdminDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboard();
+    loadDashboardStats();
   }, []);
 
-  const loadDashboard = async () => {
+  const loadDashboardStats = async () => {
     try {
-      setLoading(true);
-      // Mock dashboard data for now
-      const dashboardData: AdminDashboardData = {
-        kpis: {
-          totalUsers: 150,
-          totalOrders: 342,
-          totalRfqs: 89,
-          platformRevenue: 12500000,
-        },
-        userStats: {
-          sellers: 67,
-          buyers: 78,
-          threepl: 3,
-          admins: 2,
-        },
-        pendingApprovals: {
-          kycPending: 5,
-          catalogPending: 3,
-        },
-        recentActivity: [
-          {
-            id: '1',
-            type: 'USER_REGISTERED',
-            user: 'ABC Steel Industries',
-            details: 'New seller registration',
-            timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          },
-          {
-            id: '2',
-            type: 'ORDER_PLACED',
-            user: 'XYZ Manufacturing',
-            details: 'Placed order for 50MT TMT Bars',
-            timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-          },
-          {
-            id: '3',
-            type: 'KYC_APPROVED',
-            user: 'Steel Corp India',
-            details: 'KYC verification completed',
-            timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-          },
-        ],
-      };
-      setData(dashboardData);
-    } catch (error) {
-      console.error('Failed to load admin dashboard:', error);
+      setIsLoading(true);
+      const data = await adminKYCService.getDashboardStats();
+      setStats(data);
+    } catch (error: any) {
+      console.error('Failed to load dashboard stats:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load dashboard statistics',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'USER_REGISTERED':
-        return <Users className="h-4 w-4" />;
-      case 'ORDER_PLACED':
-        return <ShoppingCart className="h-4 w-4" />;
-      case 'RFQ_CREATED':
-        return <FileText className="h-4 w-4" />;
-      case 'KYC_APPROVED':
-        return <CheckCircle className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
-    }
-  };
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'USER_REGISTERED':
-        return 'bg-blue-500/10 text-blue-500';
-      case 'ORDER_PLACED':
-        return 'bg-green-500/10 text-green-500';
-      case 'RFQ_CREATED':
-        return 'bg-purple-500/10 text-purple-500';
-      case 'KYC_APPROVED':
-        return 'bg-emerald-500/10 text-emerald-500';
-      default:
-        return 'bg-gray-500/10 text-gray-500';
-    }
-  };
-
-  if (loading || !data) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto p-6 space-y-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-muted rounded"></div>
-            ))}
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-600" />
+          <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
+  if (!stats) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-gray-600">Unable to load dashboard data</p>
+        <Button onClick={loadDashboardStats} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Platform overview and management</p>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.kpis.totalUsers}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {data.userStats.sellers} sellers, {data.userStats.buyers} buyers
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.kpis.totalOrders.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all sellers</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total RFQs</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.kpis.totalRfqs.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">Platform-wide</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Platform Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(data.kpis.platformRevenue)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Total transaction value</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Approvals */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Approvals</CardTitle>
-            <CardDescription>Items requiring admin attention</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-orange-500" />
-                </div>
-                <div>
-                  <p className="font-medium">KYC Verifications</p>
-                  <p className="text-sm text-muted-foreground">Pending review</p>
-                </div>
-              </div>
-              <Badge variant="secondary">{data.pendingApprovals.kycPending}</Badge>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Welcome back! Here's what's happening today.
+              </p>
             </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="font-medium">Catalog Approvals</p>
-                  <p className="text-sm text-muted-foreground">Pending review</p>
-                </div>
-              </div>
-              <Badge variant="secondary">{data.pendingApprovals.catalogPending}</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest platform events</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {data.recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center ${getActivityColor(activity.type)}`}>
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">{activity.user}</p>
-                    <p className="text-sm text-muted-foreground">{activity.details}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* User Statistics */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User Distribution</CardTitle>
-          <CardDescription>Breakdown by user type</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 border rounded-lg">
-              <p className="text-2xl font-bold text-blue-600">{data.userStats.sellers}</p>
-              <p className="text-sm text-muted-foreground mt-1">Sellers</p>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <p className="text-2xl font-bold text-green-600">{data.userStats.buyers}</p>
-              <p className="text-sm text-muted-foreground mt-1">Buyers</p>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <p className="text-2xl font-bold text-purple-600">{data.userStats.threepl}</p>
-              <p className="text-sm text-muted-foreground mt-1">3PL Partners</p>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <p className="text-2xl font-bold text-orange-600">{data.userStats.admins}</p>
-              <p className="text-sm text-muted-foreground mt-1">Admins</p>
-            </div>
+            <Button
+              onClick={() => navigate('/admin/kyc/queue')}
+              className="gap-2"
+            >
+              <FileCheck className="h-4 w-4" />
+              View KYC Queue
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* KYC Stats Section */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            KYC Verification
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatsCard
+              title="Pending KYC"
+              value={stats.kyc.pending}
+              icon={Clock}
+              color="yellow"
+              subtitle="Awaiting review"
+            />
+            <StatsCard
+              title="Sellers"
+              value={stats.kyc.breakdown.sellers}
+              icon={Users}
+              color="blue"
+              subtitle="Pending seller KYC"
+            />
+            <StatsCard
+              title="Buyers"
+              value={stats.kyc.breakdown.buyers}
+              icon={Users}
+              color="purple"
+              subtitle="Pending buyer KYC"
+            />
+            <StatsCard
+              title="3PL Partners"
+              value={stats.kyc.breakdown.threepl}
+              icon={Users}
+              color="red"
+              subtitle="Pending 3PL KYC"
+            />
+          </div>
+        </div>
+
+        {/* Price Flags & Disputes */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Operations Overview
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatsCard
+              title="Price Flags"
+              value={stats.priceFlags.total}
+              icon={AlertTriangle}
+              color="yellow"
+              subtitle={`${stats.priceFlags.rfqs} RFQs, ${stats.priceFlags.quotes} Quotes`}
+            />
+            <StatsCard
+              title="Open Disputes"
+              value={stats.disputes.open}
+              icon={Scale}
+              color="red"
+              subtitle={`${stats.disputes.new} new, ${stats.disputes.escalated} escalated`}
+            />
+            <StatsCard
+              title="Today's Payouts"
+              value={`₹${(stats.settlements.todayPayouts / 100000).toFixed(1)}L`}
+              icon={DollarSign}
+              color="green"
+              subtitle={`${stats.settlements.pendingBatches} batches pending`}
+            />
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2"
+              onClick={() => navigate('/admin/kyc/queue?status=SUBMITTED')}
+            >
+              <Clock className="h-5 w-5 text-yellow-600" />
+              <span className="font-semibold">Review Pending KYC</span>
+              <span className="text-xs text-gray-600">{stats.kyc.pending} waiting</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2"
+              onClick={() => navigate('/admin/disputes')}
+            >
+              <Scale className="h-5 w-5 text-red-600" />
+              <span className="font-semibold">Resolve Disputes</span>
+              <span className="text-xs text-gray-600">{stats.disputes.new} new cases</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2"
+              onClick={() => navigate('/admin/settlements')}
+            >
+              <TrendingUp className="h-5 w-5 text-green-600" />
+              <span className="font-semibold">Settlement Recon</span>
+              <span className="text-xs text-gray-600">
+                {stats.settlements.exceptions} exception(s)
+              </span>
+            </Button>
+          </div>
+        </Card>
+
+        {/* Recent Activity - Placeholder */}
+        <Card className="p-6 mt-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Recent Activity
+          </h2>
+          <p className="text-sm text-gray-600">
+            Activity log coming soon...
+          </p>
+        </Card>
+
+      </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}
