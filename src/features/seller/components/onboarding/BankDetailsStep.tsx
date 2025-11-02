@@ -106,7 +106,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
       } else {
         toast({
           title: 'Verification Failed',
-          description: result.message || 'Unable to verify bank account',
+          description: 'Unable to verify bank account',
           variant: 'destructive',
         });
       }

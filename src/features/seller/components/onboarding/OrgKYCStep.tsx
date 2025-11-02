@@ -9,8 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Loader2, Mail, Phone, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-
-// ✅ IMPORT SCHEMA & TYPE FROM SINGLE SOURCE
 import { useOnboardingData } from "../../hooks/useOnboardingData";
 import { OrgKycData, orgKycSchema } from "../../schemas/onboarding.schema";
 import onboardingService from "../../services/onboarding.service";
@@ -21,7 +19,6 @@ interface Props {
   onBack?: () => void;
 }
 
-// ========== COMPONENT ==========
 export default function OrgKYCStep({ data, onNext, onBack }: Props) {
   const { toast } = useToast();
   const { getCurrentUser } = useAuth();
@@ -43,7 +40,6 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     phone: "",
   });
 
-  // ✅ USE SCHEMA FOR BOTH VALIDATION & TYPING
   const {
     register,
     handleSubmit,
@@ -51,7 +47,7 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     setValue,
     watch,
   } = useForm<OrgKycData>({
-    resolver: zodResolver(orgKycSchema), // ✅ Use imported schema
+    resolver: zodResolver(orgKycSchema),
     defaultValues: {
       primaryContact: {
         role: "CEO",
@@ -59,14 +55,13 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     },
   });
 
-  // ✅ PRE-FILL FORM WITH USER ORG NAME & SAVED DATA
+  // Pre-fill form with data
   useEffect(() => {
-    // Step 1: Try to get organization name from useAuth hook
     const user = getCurrentUser();
     if (user?.organizationName) {
       setValue("legalName", user.organizationName);
     }
-    // Step 2: Override with saved OrgKYC data if it exists
+    
     if (data) {
       setValue("legalName", data.legalName || "");
       setValue("tradeName", data.tradeName || "");
@@ -83,7 +78,6 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         setValue("primaryContact.mobile", data.primaryContact.mobile || "");
         setValue("primaryContact.role", data.primaryContact.role || "CEO");
 
-        // Mark email and phone as verified if they exist
         if (data.primaryContact.email) {
           setVerificationStatus((prev) => ({ ...prev, email: "verified" }));
         }
@@ -99,9 +93,7 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         setPlants(formattedLocations);
       }
     }
-  }, [data]);
-
-  // ========== HANDLERS ==========
+  }, [data, getCurrentUser, setValue]);
 
   const handleFetchGSTIN = async () => {
     const gstin = watch("gstin");
@@ -157,11 +149,10 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }));
 
     try {
-      // console.log(`📤 Sending OTP to ${type}:`, contactValue);
       await new Promise((resolve) => setTimeout(resolve, 1500));
       toast({
         title: "OTP Sent",
-        description: `OTP sent to your ${type}. Check your ${type} inbox.`,
+        description: `OTP sent to your ${type}`,
       });
       setVerificationStatus((prev) => ({
         ...prev,
@@ -188,7 +179,6 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }
 
     try {
-      // console.log(`✅ Verifying OTP for ${type}:`, otp);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setVerificationStatus((prev) => ({
         ...prev,
@@ -211,7 +201,6 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }
   };
 
-  // ✅ UPDATED onSubmit with OrgKycData type
   const onSubmit = async (formData: OrgKycData) => {
     try {
       if (plants.length === 0) {
@@ -247,7 +236,6 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         };
       });
 
-      // ✅ formData is already type OrgKycData
       const orgKycData: OrgKycData = {
         legalName: formData.legalName,
         tradeName: formData.tradeName,
@@ -273,11 +261,9 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         title: "Success",
         description: "Organization KYC saved successfully",
       });
-      // await refreshData();
 
       onNext();
     } catch (error: any) {
-      // console.error("❌ Error in onSubmit:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save organization KYC.",
@@ -288,43 +274,63 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }
   };
 
-  // ========== RENDER ==========
   return (
     <div className="space-y-6">
-      {/* ========== HEADER ========== */}
       <div>
-        <h2 className="text-2xl font-bold">Organization KYC</h2>
-        <p className="text-gray-600 mt-1">Provide your organization details and business information</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Organization KYC</h2>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          Provide your organization details and business information
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* ========== SECTION 1: BUSINESS INFORMATION ========== */}
-        <Card className="p-6">
+        {/* Business Information */}
+        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-6">
-            <Badge variant="default">1</Badge>
-            <h3 className="text-lg font-semibold">Business Information</h3>
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              1
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Business Information</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Legal Name */}
             <div>
-              <Label htmlFor="legalName">Legal Name *</Label>
-              <Input id="legalName" placeholder="Enter legal name" {...register("legalName")} className="mt-2" />
-              {errors.legalName && <p className="text-red-600 text-sm mt-1">{errors.legalName.message}</p>}
+              <Label htmlFor="legalName" className="text-gray-700 dark:text-gray-300">
+                Legal Name *
+              </Label>
+              <Input
+                id="legalName"
+                placeholder="e.g., Steel Corp India Pvt Ltd"
+                {...register("legalName")}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
+              {errors.legalName && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.legalName.message}</p>}
             </div>
 
-            {/* Trade Name */}
             <div>
-              <Label htmlFor="tradeName">Trade Name</Label>
-              <Input id="tradeName" placeholder="Enter trade name" {...register("tradeName")} className="mt-2" />
+              <Label htmlFor="tradeName" className="text-gray-700 dark:text-gray-300">
+                Trade Name
+              </Label>
+              <Input
+                id="tradeName"
+                placeholder="e.g., SteelCorp"
+                {...register("tradeName")}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
             </div>
 
-            {/* GSTIN */}
             <div>
-              <Label htmlFor="gstin">GSTIN *</Label>
+              <Label htmlFor="gstin" className="text-gray-700 dark:text-gray-300">
+                GSTIN *
+              </Label>
               <div className="flex gap-2 mt-2">
-                <Input id="gstin" placeholder="Enter GSTIN" {...register("gstin")} />
-                <Button type="button" onClick={handleFetchGSTIN} disabled={gstinFetching} variant="outline">
+                <Input
+                  id="gstin"
+                  placeholder="e.g., 27AABCT1234H1Z0"
+                  {...register("gstin")}
+                  className="dark:bg-slate-900 dark:border-slate-600"
+                />
+                <Button type="button" onClick={handleFetchGSTIN} disabled={gstinFetching} variant="outline" size="sm">
                   {gstinFetching ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -335,35 +341,48 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
                   )}
                 </Button>
               </div>
-              {errors.gstin && <p className="text-red-600 text-sm mt-1">{errors.gstin.message}</p>}
+              {errors.gstin && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.gstin.message}</p>}
               {gstinData && (
-                <p className="text-green-600 text-sm mt-1">
-                  <Check className="w-4 h-4 inline mr-1" />
+                <p className="text-green-600 dark:text-green-400 text-sm mt-1 flex items-center gap-1">
+                  <Check className="w-4 h-4" />
                   Verified: {(gstinData as any).legalName}
                 </p>
               )}
             </div>
 
-            {/* PAN */}
             <div>
-              <Label htmlFor="pan">PAN *</Label>
-              <Input id="pan" placeholder="Enter PAN" {...register("pan")} className="mt-2" />
-              {errors.pan && <p className="text-red-600 text-sm mt-1">{errors.pan.message}</p>}
+              <Label htmlFor="pan" className="text-gray-700 dark:text-gray-300">
+                PAN *
+              </Label>
+              <Input
+                id="pan"
+                placeholder="e.g., AAABP1234Q"
+                {...register("pan")}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
+              {errors.pan && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.pan.message}</p>}
             </div>
 
-            {/* CIN */}
             <div>
-              <Label htmlFor="cin">CIN (Optional)</Label>
-              <Input id="cin" placeholder="Enter CIN" {...register("cin")} className="mt-2" />
+              <Label htmlFor="cin" className="text-gray-700 dark:text-gray-300">
+                CIN (Optional)
+              </Label>
+              <Input
+                id="cin"
+                placeholder="e.g., U27200WB2015PTC213456"
+                {...register("cin")}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
             </div>
 
-            {/* Business Type */}
             <div>
-              <Label htmlFor="businessType">Business Type *</Label>
+              <Label htmlFor="businessType" className="text-gray-700 dark:text-gray-300">
+                Business Type *
+              </Label>
               <select
                 id="businessType"
                 {...register("businessType")}
-                className="w-full mt-2 px-3 py-2 border rounded-md"
+                className="w-full mt-2 px-3 py-2 border rounded-md dark:bg-slate-900 dark:border-slate-600 dark:text-gray-200"
               >
                 <option value="">Select business type</option>
                 <option value="Manufacturing">Manufacturing</option>
@@ -371,213 +390,222 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
                 <option value="Distribution">Distribution</option>
                 <option value="Service">Service</option>
               </select>
-              {errors.businessType && <p className="text-red-600 text-sm mt-1">{errors.businessType.message}</p>}
-            </div>
-
-            {/* Incorporation Date */}
-            <div>
-              <Label htmlFor="incorporationDate">Incorporation Date *</Label>
-              <Input id="incorporationDate" type="date" {...register("incorporationDate")} className="mt-2" />
-              {errors.incorporationDate && (
-                <p className="text-red-600 text-sm mt-1">{errors.incorporationDate.message}</p>
+              {errors.businessType && (
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.businessType.message}</p>
               )}
             </div>
 
-            {/* Registered Address */}
+            <div>
+              <Label htmlFor="incorporationDate" className="text-gray-700 dark:text-gray-300">
+                Incorporation Date *
+              </Label>
+              <Input
+                id="incorporationDate"
+                type="date"
+                placeholder="Select date"
+                {...register("incorporationDate")}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
+              {errors.incorporationDate && (
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.incorporationDate.message}</p>
+              )}
+            </div>
+
             <div className="md:col-span-2">
-              <Label htmlFor="registeredAddress">Registered Address *</Label>
+              <Label htmlFor="registeredAddress" className="text-gray-700 dark:text-gray-300">
+                Registered Address *
+              </Label>
               <Input
                 id="registeredAddress"
-                placeholder="Enter registered address"
+                placeholder="e.g., 123 Industrial Area, Mumbai, Maharashtra 400080"
                 {...register("registeredAddress")}
-                className="mt-2"
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
               />
               {errors.registeredAddress && (
-                <p className="text-red-600 text-sm mt-1">{errors.registeredAddress.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.registeredAddress.message}</p>
               )}
             </div>
           </div>
         </Card>
 
-        {/* ========== SECTION 2: PLANT LOCATIONS ========== */}
-        <Card className="p-6">
+        {/* Plant Locations */}
+        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-6">
-            <Badge variant="default">2</Badge>
-            <h3 className="text-lg font-semibold">Plant Locations</h3>
-          </div>
-
-          <div className="flex gap-2 mb-4">
-            <Input
-              value={newPlant}
-              onChange={(e) => setNewPlant(e.target.value)}
-              placeholder="e.g., Plot 5 MIDC, Pune, Maharashtra - 411001"
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddPlant();
-                }
-              }}
-            />
-            <Button type="button" onClick={handleAddPlant} variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-          </div>
-
-          {plants.length > 0 ? (
-            <div className="space-y-2">
-              {plants.map((plant, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                  <span>{plant}</span>
-                  <Button
-                    type="button"
-                    onClick={() => handleRemovePlant(index)}
-                    size="sm"
-                    variant="ghost"
-                    className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              2
             </div>
-          ) : (
-            <p className="text-yellow-600 text-sm">⚠️ Add at least one plant location</p>
-          )}
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Plant Locations</h3>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g., Plot 5, MIDC, Pune, Maharashtra - 411001"
+                value={newPlant}
+                onChange={(e) => setNewPlant(e.target.value)}
+                className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+              />
+              <Button type="button" onClick={handleAddPlant} variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Add
+              </Button>
+            </div>
+
+            {plants.length > 0 && (
+              <div className="space-y-2">
+                {plants.map((plant, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg"
+                  >
+                    <span className="text-sm text-green-800 dark:text-green-300">{plant}</span>
+                    <Button
+                      type="button"
+                      onClick={() => handleRemovePlant(index)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {plants.length === 0 && (
+              <p className="text-yellow-600 dark:text-yellow-400 text-sm">⚠️ Add at least one plant location</p>
+            )}
+          </div>
         </Card>
 
-        {/* ========== SECTION 3: PRIMARY CONTACT ========== */}
-        <Card className="p-6">
+        {/* Primary Contact */}
+        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-6">
-            <Badge variant="default">3</Badge>
-            <h3 className="text-lg font-semibold">Primary Contact Details</h3>
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              3
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Primary Contact</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Name */}
             <div>
-              <Label htmlFor="contactName">Name *</Label>
+              <Label htmlFor="primaryContactName" className="text-gray-700 dark:text-gray-300">
+                Name *
+              </Label>
               <Input
-                id="contactName"
-                placeholder="Enter contact name"
+                id="primaryContactName"
+                placeholder="e.g., Rajesh Kumar"
                 {...register("primaryContact.name")}
-                className="mt-2"
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
               />
               {errors.primaryContact?.name && (
-                <p className="text-red-600 text-sm mt-1">{errors.primaryContact.name.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.primaryContact.name.message}</p>
               )}
             </div>
 
-            {/* Role */}
             <div>
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="primaryContactRole" className="text-gray-700 dark:text-gray-300">
+                Role *
+              </Label>
               <Input
-                id="role"
-                placeholder="e.g., CEO, Director"
+                id="primaryContactRole"
+                placeholder="e.g., CEO"
                 {...register("primaryContact.role")}
-                className="mt-2"
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
               />
             </div>
 
-            {/* Email with OTP */}
-            <div className="md:col-span-2">
-              <Label htmlFor="email">Email *</Label>
+            <div>
+              <Label htmlFor="primaryContactEmail" className="text-gray-700 dark:text-gray-300">
+                Email *
+              </Label>
               <div className="flex gap-2 mt-2">
-                <Input id="email" type="email" placeholder="Enter email" {...register("primaryContact.email")} />
-                <Button
-                  type="button"
-                  onClick={() => handleSendOTP("email")}
-                  disabled={verificationStatus.email === "verified" || verificationStatus.email === "sending"}
-                  variant={verificationStatus.email === "verified" ? "default" : "outline"}
-                  size="sm"
-                >
-                  {verificationStatus.email === "verified" ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Verified
-                    </>
-                  ) : verificationStatus.email === "sending" ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <>
-                      <Mail className="w-4 h-4 mr-2" />
-                      Send OTP
-                    </>
-                  )}
-                </Button>
+                <Input
+                  id="primaryContactEmail"
+                  type="email"
+                  placeholder="e.g., rajesh@steelcorp.com"
+                  {...register("primaryContact.email")}
+                  className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+                />
+                {verificationStatus.email === "verified" ? (
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    <Check className="w-4 h-4 mr-1" /> Verified
+                  </Badge>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => handleSendOTP("email")}
+                    disabled={verificationStatus.email === "sending"}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Mail className="w-4 h-4 mr-1" />
+                    {verificationStatus.email === "sending" ? "Sending..." : "Verify"}
+                  </Button>
+                )}
               </div>
               {errors.primaryContact?.email && (
-                <p className="text-red-600 text-sm mt-1">{errors.primaryContact.email.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.primaryContact.email.message}</p>
               )}
 
               {verificationStatus.email === "pending" && (
-                <div className="flex gap-2 mt-2">
+                <div className="mt-2 flex gap-2">
                   <Input
-                    value={otpValues.email}
-                    onChange={(e) =>
-                      setOtpValues((prev) => ({
-                        ...prev,
-                        email: e.target.value,
-                      }))
-                    }
                     placeholder="Enter OTP"
-                    maxLength={6}
-                    className="flex-1"
+                    value={otpValues.email}
+                    onChange={(e) => setOtpValues({ ...otpValues, email: e.target.value })}
+                    className="flex-1 dark:bg-slate-900 dark:border-slate-600"
                   />
                   <Button type="button" onClick={() => handleVerifyOTP("email")} size="sm">
-                    Verify
+                    Verify OTP
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* Mobile with OTP */}
-            <div className="md:col-span-2">
-              <Label htmlFor="mobile">Mobile *</Label>
+            <div>
+              <Label htmlFor="primaryContactMobile" className="text-gray-700 dark:text-gray-300">
+                Mobile *
+              </Label>
               <div className="flex gap-2 mt-2">
-                <Input id="mobile" placeholder="Enter mobile number" {...register("primaryContact.mobile")} />
-                <Button
-                  type="button"
-                  onClick={() => handleSendOTP("phone")}
-                  disabled={verificationStatus.phone === "verified" || verificationStatus.phone === "sending"}
-                  variant={verificationStatus.phone === "verified" ? "default" : "outline"}
-                  size="sm"
-                >
-                  {verificationStatus.phone === "verified" ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Verified
-                    </>
-                  ) : verificationStatus.phone === "sending" ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <>
-                      <Phone className="w-4 h-4 mr-2" />
-                      Send OTP
-                    </>
-                  )}
-                </Button>
+                <Input
+                  id="primaryContactMobile"
+                  placeholder="e.g., 9876543210"
+                  {...register("primaryContact.mobile")}
+                  className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+                />
+                {verificationStatus.phone === "verified" ? (
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    <Check className="w-4 h-4 mr-1" /> Verified
+                  </Badge>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => handleSendOTP("phone")}
+                    disabled={verificationStatus.phone === "sending"}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Phone className="w-4 h-4 mr-1" />
+                    {verificationStatus.phone === "sending" ? "Sending..." : "Verify"}
+                  </Button>
+                )}
               </div>
               {errors.primaryContact?.mobile && (
-                <p className="text-red-600 text-sm mt-1">{errors.primaryContact.mobile.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.primaryContact.mobile.message}</p>
               )}
 
               {verificationStatus.phone === "pending" && (
-                <div className="flex gap-2 mt-2">
+                <div className="mt-2 flex gap-2">
                   <Input
-                    value={otpValues.phone}
-                    onChange={(e) =>
-                      setOtpValues((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
                     placeholder="Enter OTP"
-                    maxLength={6}
-                    className="flex-1"
+                    value={otpValues.phone}
+                    onChange={(e) => setOtpValues({ ...otpValues, phone: e.target.value })}
+                    className="flex-1 dark:bg-slate-900 dark:border-slate-600"
                   />
                   <Button type="button" onClick={() => handleVerifyOTP("phone")} size="sm">
-                    Verify
+                    Verify OTP
                   </Button>
                 </div>
               )}
@@ -585,14 +613,14 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
           </div>
         </Card>
 
-        {/* ========== FORM ACTIONS ========== */}
+        {/* Form Actions */}
         <div className="flex gap-4 justify-end">
           {onBack && (
-            <Button type="button" onClick={onBack} variant="outline">
+            <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting}>
               Back
             </Button>
           )}
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="min-w-[200px]">
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

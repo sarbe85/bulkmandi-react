@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 
 const RoleSelectionHeader = () => {
   const navigate = useNavigate();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { getCurrentUser, logout, isAuthenticated } = useAuth();
+  const user = getCurrentUser();
 
   const handleLogout = async () => {
     await logout();

@@ -1,3 +1,4 @@
+import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
@@ -10,27 +11,29 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import onboardingService from '../../services/onboarding.service';
 import { CatalogData, CatalogItem, PriceFloor } from '../../types/onboarding.types';
-// import { CatalogData,} from '../types/onboarding.types';
 
-// ✅ Schema
 const catalogSchema = z.object({
-  catalog: z.array(
-    z.object({
-      id: z.string().optional(),
-      category: z.string().min(1, 'Category name is required'),
-      isSelected: z.boolean().default(true),
-      grades: z.array(z.string()).default([]),
-      moqPerOrder: z.number().min(1).default(100),
-      stdLeadTime: z.number().min(1).default(5),
-    })
-  ).default([]),
-  priceFloors: z.array(
-    z.object({
-      category: z.string().min(1),
-      minPrice: z.number().min(0).default(0),
-      maxPrice: z.number().min(0).default(0),
-    })
-  ).default([]),
+  catalog: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        category: z.string().min(1, 'Category name is required'),
+        isSelected: z.boolean().default(true),
+        grades: z.array(z.string()).default([]),
+        moqPerOrder: z.number().min(1).default(100),
+        stdLeadTime: z.number().min(1).default(5),
+      })
+    )
+    .default([]),
+  priceFloors: z
+    .array(
+      z.object({
+        category: z.string().min(1),
+        minPrice: z.number().min(0).default(0),
+        maxPrice: z.number().min(0).default(0),
+      })
+    )
+    .default([]),
   usePlatform3PL: z.boolean().default(true),
   selfPickupAllowed: z.boolean().default(true),
 });
@@ -46,8 +49,8 @@ interface Props {
 const CATEGORY_GRADES: Record<string, string[]> = {
   'HR Coils': ['IS 2062 E250', 'IS 2062 E350', 'IS 2062 E500'],
   'TMT Bars': ['Fe500', 'Fe500D', 'Fe550'],
-  'Plates': ['Mild Steel', 'High Strength', 'Stainless Steel'],
-  'Structural': ['IPN', 'IPE', 'ISMB', 'ISJB'],
+  Plates: ['Mild Steel', 'High Strength', 'Stainless Steel'],
+  Structural: ['IPN', 'IPE', 'ISMB', 'ISJB'],
 };
 
 const CATEGORIES = Object.keys(CATEGORY_GRADES);
@@ -62,8 +65,12 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
     maxPrice: 0,
   });
 
-  // ✅ FIXED: Changed zodSchema to catalogSchema
-  const { handleSubmit, formState: { errors }, setValue, watch } = useForm<CatalogFormData>({
+  const {
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<CatalogFormData>({
     resolver: zodResolver(catalogSchema),
     defaultValues: {
       catalog: [],
@@ -75,7 +82,6 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
 
   const priceFloors = watch('priceFloors');
 
-  // ✅ PRE-FILL DATA
   useEffect(() => {
     if (data) {
       console.log('🎯 CatalogStep received data:', data);
@@ -106,8 +112,9 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
         stdLeadTime: 5,
         grades: [],
       };
-      setSelectedCategories([...selectedCategories, newCategory]);
-      setValue('catalog', [...selectedCategories, newCategory]);
+      const updated = [...selectedCategories, newCategory];
+      setSelectedCategories(updated);
+      setValue('catalog', updated);
       toast({
         title: 'Category Added',
         description: `${category} added to your catalog`,
@@ -121,14 +128,8 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
     setValue('catalog', updated);
   };
 
-  const handleUpdateCategory = (
-    category: string,
-    field: keyof CatalogItem,
-    value: any
-  ) => {
-    const updated = selectedCategories.map((c) =>
-      c.category === category ? { ...c, [field]: value } : c
-    );
+  const handleUpdateCategory = (category: string, field: keyof CatalogItem, value: any) => {
+    const updated = selectedCategories.map((c) => (c.category === category ? { ...c, [field]: value } : c));
     setSelectedCategories(updated);
     setValue('catalog', updated);
   };
@@ -210,7 +211,6 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
       });
 
       onNext();
-
     } catch (error: any) {
       console.error('❌ Submit error:', error);
       toast({
@@ -224,227 +224,274 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
   };
 
   return (
-    <Card className="p-8 max-w-4xl mx-auto">
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Catalog & Commercials</h1>
-          <p className="text-gray-600">Select categories, grades, pricing and logistics</p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Catalog & Commercials</h2>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          Select product categories, grades, pricing and logistics preferences
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* SECTION 1: Categories */}
-          <div className="border-b pb-8">
-            <h2 className="text-xl font-semibold mb-6">Categories</h2>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Categories Section */}
+        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              1
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Product Categories</h3>
+          </div>
 
-            <div className="mb-6">
-              <Label className="mb-3 block">Select Categories</Label>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => (
+          <div className="mb-6">
+            <Label className="mb-3 block text-gray-700 dark:text-gray-300">Select Categories to Offer</Label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => {
+                const isSelected = selectedCategories.some((c) => c.category === cat);
+                return (
                   <Button
                     key={cat}
                     type="button"
-                    variant={selectedCategories.some((c) => c.category === cat) ? 'default' : 'outline'}
-                    onClick={() => handleAddCategory(cat)}
+                    variant={isSelected ? 'default' : 'outline'}
+                    onClick={() => (isSelected ? handleRemoveCategory(cat) : handleAddCategory(cat))}
+                    className="transition-all"
                   >
-                    {cat} {selectedCategories.some((c) => c.category === cat) && '✓'}
+                    {cat} {isSelected && '✓'}
                   </Button>
-                ))}
-              </div>
+                );
+              })}
             </div>
+          </div>
 
-            {selectedCategories.length > 0 && (
-              <div className="space-y-6">
-                {selectedCategories.map((cat) => (
-                  <div key={cat.id || cat.category} className="border rounded-lg p-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold text-lg">{cat.category} ✓</h3>
-                      <Button
-                        type="button"
-                        onClick={() => handleRemoveCategory(cat.category)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+          {selectedCategories.length > 0 && (
+            <div className="space-y-4">
+              {selectedCategories.map((cat) => (
+                <div
+                  key={cat.id || cat.category}
+                  className="border border-gray-200 dark:border-slate-600 rounded-lg p-5 space-y-4 bg-gray-50 dark:bg-slate-900/50"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                        ✓ Selected
+                      </Badge>
+                      <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{cat.category}</h3>
                     </div>
+                    <Button
+                      type="button"
+                      onClick={() => handleRemoveCategory(cat.category)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-                    {/* Grades */}
-                    <div className="bg-gray-50 p-4 rounded space-y-3">
-                      <Label className="font-semibold">Grades</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {CATEGORY_GRADES[cat.category]?.map((grade) => (
+                  {/* Grades */}
+                  <div className="space-y-3">
+                    <Label className="font-semibold text-gray-700 dark:text-gray-300">Select Grades</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {CATEGORY_GRADES[cat.category]?.map((grade) => {
+                        const isGradeSelected = cat.grades.includes(grade);
+                        return (
                           <Button
                             key={grade}
                             type="button"
                             size="sm"
-                            variant={cat.grades.includes(grade) ? 'default' : 'outline'}
+                            variant={isGradeSelected ? 'default' : 'outline'}
                             onClick={() =>
-                              cat.grades.includes(grade)
+                              isGradeSelected
                                 ? handleRemoveGrade(cat.category, grade)
                                 : handleAddGrade(cat.category, grade)
                             }
                           >
-                            {grade} {cat.grades.includes(grade) && '✓'}
+                            {grade} {isGradeSelected && '✓'}
                           </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* MOQ & Lead Time */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>MOQ per Order (MT)</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={cat.moqPerOrder}
-                          onChange={(e) =>
-                            handleUpdateCategory(cat.category, 'moqPerOrder', parseInt(e.target.value))
-                          }
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Std Lead Time (days)</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={cat.stdLeadTime}
-                          onChange={(e) =>
-                            handleUpdateCategory(cat.category, 'stdLeadTime', parseInt(e.target.value))
-                          }
-                        />
-                      </div>
+                        );
+                      })}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
 
-            {selectedCategories.length === 0 && (
-              <p className="text-sm text-yellow-600">⚠️ Select at least one category</p>
-            )}
+                  {/* MOQ & Lead Time */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-gray-700 dark:text-gray-300">MOQ per Order (MT)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="e.g., 100"
+                        value={cat.moqPerOrder}
+                        onChange={(e) => handleUpdateCategory(cat.category, 'moqPerOrder', parseInt(e.target.value))}
+                        className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-gray-700 dark:text-gray-300">Standard Lead Time (days)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="e.g., 7"
+                        value={cat.stdLeadTime}
+                        onChange={(e) => handleUpdateCategory(cat.category, 'stdLeadTime', parseInt(e.target.value))}
+                        className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedCategories.length === 0 && (
+            <p className="text-yellow-600 dark:text-yellow-400 text-sm">⚠️ Select at least one category to continue</p>
+          )}
+        </Card>
+
+        {/* Price Floors Section */}
+        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              2
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Price Floors (Optional)</h3>
           </div>
 
-          {/* SECTION 2: Price Floors */}
-          <div className="border-b pb-8">
-            <h2 className="text-xl font-semibold mb-6">Price Floors (optional)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end">
+            <div className="md:col-span-4">
+              <Label className="text-gray-700 dark:text-gray-300">Category</Label>
+              <select
+                className="w-full mt-2 px-3 py-2 border rounded-md dark:bg-slate-900 dark:border-slate-600 dark:text-gray-200"
+                value={newPrice.category}
+                onChange={(e) => setNewPrice({ ...newPrice, category: e.target.value })}
+              >
+                <option value="">Select category</option>
+                {selectedCategories.map((c) => (
+                  <option key={c.category} value={c.category}>
+                    {c.category}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <div className="grid grid-cols-4 gap-4 mb-6 items-end">
-              <div>
-                <Label>Category</Label>
-                <select
-                  className="w-full px-3 py-2 border rounded-md"
-                  value={newPrice.category}
-                  onChange={(e) => setNewPrice({ ...newPrice, category: e.target.value })}
-                >
-                  <option value="">Select</option>
-                  {selectedCategories.map((c) => (
-                    <option key={c.category} value={c.category}>
-                      {c.category}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="md:col-span-3">
+              <Label className="text-gray-700 dark:text-gray-300">Min Price (₹/MT)</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="e.g., 45000"
+                value={newPrice.minPrice}
+                onChange={(e) => setNewPrice({ ...newPrice, minPrice: parseFloat(e.target.value) })}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
+            </div>
 
-              <div>
-                <Label>Min (₹/MT)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={newPrice.minPrice}
-                  onChange={(e) => setNewPrice({ ...newPrice, minPrice: parseFloat(e.target.value) })}
-                />
-              </div>
+            <div className="md:col-span-3">
+              <Label className="text-gray-700 dark:text-gray-300">Max Price (₹/MT)</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="e.g., 55000"
+                value={newPrice.maxPrice}
+                onChange={(e) => setNewPrice({ ...newPrice, maxPrice: parseFloat(e.target.value) })}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
+            </div>
 
-              <div>
-                <Label>Max (₹/MT)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={newPrice.maxPrice}
-                  onChange={(e) => setNewPrice({ ...newPrice, maxPrice: parseFloat(e.target.value) })}
-                />
-              </div>
-
+            <div className="md:col-span-2">
               <Button type="button" onClick={handleAddPriceFloor} className="w-full">
                 <Plus className="h-4 w-4 mr-2" />
-                Add +
+                Add
               </Button>
             </div>
-
-            {priceFloors.length > 0 && (
-              <div className="space-y-2">
-                {priceFloors.map((pf, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-medium">
-                      {pf.category} (₹/MT): {pf.minPrice} - {pf.maxPrice}
-                    </p>
-                    <Button
-                      type="button"
-                      onClick={() => handleRemovePriceFloor(index)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* SECTION 3: Logistics */}
-          <div className="border-b pb-8">
-            <h2 className="text-xl font-semibold mb-6">Logistics readiness</h2>
+          {priceFloors.length > 0 && (
+            <div className="space-y-2">
+              {priceFloors.map((pf, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-600 rounded-lg"
+                >
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {pf.category}: ₹{pf.minPrice.toLocaleString()} - ₹{pf.maxPrice.toLocaleString()} per MT
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => handleRemovePriceFloor(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
-                <input
-                  type="checkbox"
-                  id="usePlatform3PL"
-                  onChange={(e) => setValue('usePlatform3PL', e.target.checked)}
-                  defaultChecked={watch('usePlatform3PL')}
-                />
-                <Label htmlFor="usePlatform3PL" className="cursor-pointer flex-1 font-medium">
-                  Platform 3PL
-                </Label>
-              </div>
+        {/* Logistics Section */}
+        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              3
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Logistics Preferences</h3>
+          </div>
 
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
-                <input
-                  type="checkbox"
-                  id="selfPickup"
-                  onChange={(e) => setValue('selfPickupAllowed', e.target.checked)}
-                  defaultChecked={watch('selfPickupAllowed')}
-                />
-                <Label htmlFor="selfPickup" className="cursor-pointer flex-1 font-medium">
-                  Self pickup allowed
-                </Label>
-              </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-900/50 cursor-pointer">
+              <input
+                type="checkbox"
+                id="usePlatform3PL"
+                onChange={(e) => setValue('usePlatform3PL', e.target.checked)}
+                defaultChecked={watch('usePlatform3PL')}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="usePlatform3PL" className="cursor-pointer flex-1 font-medium text-gray-900 dark:text-white">
+                Use Platform 3PL Services
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-normal mt-1">
+                  Allow platform to arrange logistics and shipping
+                </p>
+              </Label>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-900/50 cursor-pointer">
+              <input
+                type="checkbox"
+                id="selfPickup"
+                onChange={(e) => setValue('selfPickupAllowed', e.target.checked)}
+                defaultChecked={watch('selfPickupAllowed')}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="selfPickup" className="cursor-pointer flex-1 font-medium text-gray-900 dark:text-white">
+                Allow Self Pickup
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-normal mt-1">
+                  Buyers can arrange their own pickup from your location
+                </p>
+              </Label>
             </div>
           </div>
+        </Card>
 
-          {/* Actions */}
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
-              Back
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save & Continue'
-              )}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </Card>
+        {/* Form Actions */}
+        <div className="flex gap-4 justify-end">
+          <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
+            Back
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="min-w-[200px]">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save & Continue'
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

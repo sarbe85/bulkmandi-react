@@ -45,13 +45,9 @@ export default function Onboarding() {
   }, [contextData]);
 
   const handleStepNext = async (nextStepName: OnboardingStep) => {
-    await refreshData();
-    console.log(`➡️ Proceeding from ${currentStep} to ${nextStepName}...`);
-
-    setCurrentStep(nextStepName);
-
-    // refreshData();
-
+    console.log(`➡️ Moving from ${currentStep} to ${nextStepName}...`);
+    
+    // Mark current step as completed
     const currentStepIndex = ONBOARDING_STEP_LIST.findIndex((step) => step === currentStep);
     if (currentStepIndex !== -1) {
       const newCompleted = [...completedSteps];
@@ -60,6 +56,12 @@ export default function Onboarding() {
         setCompletedSteps(newCompleted);
       }
     }
+
+    // Move to next step
+    setCurrentStep(nextStepName);
+    
+    // Refresh data from server
+    await refreshData();
   };
 
   const handleReviewSubmit = async () => {

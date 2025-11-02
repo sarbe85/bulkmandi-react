@@ -39,8 +39,9 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { getCurrentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const user = getCurrentUser();
 
   const handleLogout = async () => {
     await logout();

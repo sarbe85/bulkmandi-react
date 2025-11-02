@@ -5,15 +5,16 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { getCurrentUser, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const user = getCurrentUser();
 
   useEffect(() => {
     // Redirect if user is not authenticated
-    if (!user) {
+    if (!isAuthenticated()) {
       navigate("/auth/login");
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, navigate]);
 
   if (!user) {
     return null;

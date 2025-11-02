@@ -25,7 +25,7 @@ const Index = () => {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated()) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
