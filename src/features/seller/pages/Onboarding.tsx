@@ -92,10 +92,10 @@ export default function Onboarding() {
 
   if (contextLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center py-8 px-4">
-        <Card className="w-full max-w-md p-8 text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600 dark:text-gray-400 font-semibold">Loading your onboarding...</p>
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center py-8 px-4">
+        <Card className="w-full max-w-md p-8 text-center border border-gray-200 dark:border-slate-700 shadow-sm">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-700 dark:text-gray-400" />
+          <p className="text-gray-700 dark:text-gray-300 font-medium">Loading your onboarding...</p>
         </Card>
       </div>
     );
@@ -103,17 +103,17 @@ export default function Onboarding() {
 
   if (kycStatus === "SUBMITTED" || kycStatus === "APPROVED") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center py-8 px-4">
-        <Card className="w-full max-w-md p-8 text-center">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Onboarding In Progress</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center py-8 px-4">
+        <Card className="w-full max-w-md p-8 text-center border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div className="text-4xl mb-4">⏳</div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Onboarding In Progress</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
             Your onboarding process has been initiated and is pending review. You will be notified once the review is
             complete.
           </p>
           <button
             onClick={() => navigate("/seller/kyc-status")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+            className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium py-2 px-4 rounded transition-colors"
           >
             View KYC Status
           </button>
@@ -124,14 +124,14 @@ export default function Onboarding() {
 
   if (kycStatus === "REJECTED") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center py-8 px-4">
-        <Card className="w-full max-w-md p-8 text-center">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center py-8 px-4">
+        <Card className="w-full max-w-md p-8 text-center border border-gray-200 dark:border-slate-700 shadow-sm">
           <div className="text-4xl mb-4">❌</div>
-          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Application Rejected</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Application Rejected</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
             Your application was rejected. Please review and resubmit your application with the required corrections.
           </p>
-          <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 text-xs mb-6">
             For detailed feedback, please check the KYC Status page.
           </p>
           <button
@@ -139,7 +139,7 @@ export default function Onboarding() {
               setKycStatus("DRAFT");
               setCurrentStep(ONBOARDING_STEPS.ORG_KYC);
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+            className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium py-2 px-4 rounded transition-colors"
           >
             Restart Onboarding
           </button>
@@ -152,58 +152,48 @@ export default function Onboarding() {
   const totalSteps = ONBOARDING_STEP_LIST.length;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
+    <div className="min-h-screen bg-white dark:bg-slate-950 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* ========== PAGE HEADER ========== */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Seller Onboarding</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{ONBOARDING_STEP_DESCRIPTIONS[currentStep]}</p>
-          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-            Step {stepNumber}/{totalSteps}
-          </Badge>
-          <br />
-          {currentStep}
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Seller Onboarding</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{ONBOARDING_STEP_DESCRIPTIONS[currentStep]}</p>
+          <div className="mt-3 flex items-center gap-3">
+            <Badge className="bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-gray-300 font-medium text-xs">
+              Step {stepNumber} of {totalSteps}
+            </Badge>
+            <span className="text-xs text-gray-500 dark:text-gray-500">{currentStep}</span>
+          </div>
         </div>
 
         {/* ========== STEPPER INDICATOR ========== */}
-        <Card className="p-6 mb-8">
-          <div className="flex items-center justify-between gap-2 overflow-x-auto">
+        <div className="mb-8">
+          <div className="flex items-center gap-1 overflow-x-auto pb-3">
             {ONBOARDING_STEP_LIST.map((step, index) => {
               const isCompleted = completedSteps.includes(step);
               const isCurrent = step === currentStep;
               const isActive = isCurrent || isCompleted;
 
               return (
-                <div key={step} className="flex items-center gap-2">
+                <div key={step} className="flex items-center gap-1 flex-shrink-0">
                   {/* Step Circle */}
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 transition-all ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 transition-all ${
                       isCompleted
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                        ? "bg-gray-800 text-white dark:bg-slate-600 dark:text-white"
                         : isCurrent
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ring-2 ring-blue-400 dark:ring-blue-600"
+                        ? "bg-gray-700 text-white dark:bg-slate-500 dark:text-white ring-2 ring-gray-900 dark:ring-slate-400"
                         : "bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-gray-400"
                     }`}
                   >
-                    {isCompleted ? <Check className="w-6 h-6" /> : index + 1}
-                  </div>
-
-                  {/* Step Label - Hidden on mobile */}
-                  <div className="hidden sm:block">
-                    <p
-                      className={`text-sm font-semibold whitespace-nowrap ${
-                        isActive ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      {ONBOARDING_STEP_LABELS[step]}
-                    </p>
+                    {isCompleted ? <Check className="w-5 h-5" /> : index + 1}
                   </div>
 
                   {/* Connector Line */}
                   {index < ONBOARDING_STEP_LIST.length - 1 && (
                     <div
-                      className={`h-1 w-8 rounded ${
-                        isCompleted ? "bg-green-400 dark:bg-green-600" : "bg-gray-300 dark:bg-slate-600"
+                      className={`h-0.5 w-6 flex-shrink-0 transition-all ${
+                        isCompleted ? "bg-gray-800 dark:bg-slate-600" : "bg-gray-300 dark:bg-slate-700"
                       }`}
                     ></div>
                   )}
@@ -211,48 +201,76 @@ export default function Onboarding() {
               );
             })}
           </div>
-        </Card>
+
+          {/* Step Labels */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {ONBOARDING_STEP_LIST.map((step) => {
+              const isCompleted = completedSteps.includes(step);
+              const isCurrent = step === currentStep;
+
+              return (
+                <div
+                  key={step}
+                  className={`text-xs text-center font-medium transition-colors ${
+                    isCurrent
+                      ? "text-gray-900 dark:text-white"
+                      : isCompleted
+                      ? "text-gray-600 dark:text-gray-400"
+                      : "text-gray-400 dark:text-gray-600"
+                  }`}
+                >
+                  {ONBOARDING_STEP_LABELS[step]}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* ========== STEP CONTENT ========== */}
-        <div className="space-y-8">
-          {currentStep === ONBOARDING_STEPS.ORG_KYC && (
-            <OrgKYCStep
-              data={contextData?.orgKyc}
-              onNext={() => handleStepNext(ONBOARDING_STEPS.BANK_DETAILS)}
-              onBack={() => {}}
-            />
-          )}
+        <Card className="border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div className="p-6">
+            <div className="space-y-6">
+              {currentStep === ONBOARDING_STEPS.ORG_KYC && (
+                <OrgKYCStep
+                  data={contextData?.orgKyc}
+                  onNext={() => handleStepNext(ONBOARDING_STEPS.BANK_DETAILS)}
+                  onBack={() => {}}
+                />
+              )}
 
-          {currentStep === ONBOARDING_STEPS.BANK_DETAILS && (
-            <BankDetailsStep
-              data={contextData?.primaryBankAccount}
-              onNext={() => handleStepNext(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
-              onBack={() => setCurrentStep(ONBOARDING_STEPS.ORG_KYC)}
-            />
-          )}
+              {currentStep === ONBOARDING_STEPS.BANK_DETAILS && (
+                <BankDetailsStep
+                  data={contextData?.primaryBankAccount}
+                  onNext={() => handleStepNext(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
+                  onBack={() => setCurrentStep(ONBOARDING_STEPS.ORG_KYC)}
+                />
+              )}
 
-          {currentStep === ONBOARDING_STEPS.COMPLIANCE_DOCS && (
-            <ComplianceDocsStep
-              onNext={() => handleStepNext(ONBOARDING_STEPS.CATALOG_AND_PRICE)}
-              onBack={() => setCurrentStep(ONBOARDING_STEPS.BANK_DETAILS)}
-            />
-          )}
+              {currentStep === ONBOARDING_STEPS.COMPLIANCE_DOCS && (
+                <ComplianceDocsStep
+                  onNext={() => handleStepNext(ONBOARDING_STEPS.CATALOG_AND_PRICE)}
+                  onBack={() => setCurrentStep(ONBOARDING_STEPS.BANK_DETAILS)}
+                />
+              )}
 
-          {currentStep === ONBOARDING_STEPS.CATALOG_AND_PRICE && (
-            <CatalogStep
-              onNext={() => handleStepNext(ONBOARDING_STEPS.REVIEW)}
-              onBack={() => setCurrentStep(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
-            />
-          )}
+              {currentStep === ONBOARDING_STEPS.CATALOG_AND_PRICE && (
+                <CatalogStep
+                  onNext={() => handleStepNext(ONBOARDING_STEPS.REVIEW)}
+                  onBack={() => setCurrentStep(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
+                />
+              )}
 
-          {currentStep === ONBOARDING_STEPS.REVIEW && (
-            <ReviewStep
-              data={contextData}
-              onSubmit={handleReviewSubmit}
-              onBack={() => setCurrentStep(ONBOARDING_STEPS.CATALOG_AND_PRICE)}
-            />
-          )}
-        </div>
+              {currentStep === ONBOARDING_STEPS.REVIEW && (
+                <ReviewStep
+                  data={contextData}
+                  onSubmit={handleReviewSubmit}
+                  onBack={() => setCurrentStep(ONBOARDING_STEPS.CATALOG_AND_PRICE)}
+                  isSubmitting={saving}
+                />
+              )}
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

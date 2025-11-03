@@ -1,13 +1,7 @@
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
@@ -128,11 +122,7 @@ export default function Register() {
       });
 
       setTimeout(() => {
-        navigate(
-          formData.role === "SELLER"
-            ? "/seller/onboarding"
-            : "/seller/dashboard"
-        );
+        navigate(formData.role === "SELLER" ? "/seller/onboarding" : "/seller/dashboard");
       }, 500);
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -156,14 +146,12 @@ export default function Register() {
     }
   };
 
-  const handleChange =
-    (field: keyof typeof formData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
-      if (field !== "role") {
-        setErrors((prev) => ({ ...prev, [field]: "" }));
-      }
-    };
+  const handleChange = (field: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    if (field !== "role") {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
@@ -193,18 +181,8 @@ export default function Register() {
 
   const getRoleFeatures = (role: UserRole) => {
     const features = {
-      SELLER: [
-        "Post inventory",
-        "Respond to RFQs",
-        "Multi-location",
-        "Analytics",
-      ],
-      BUYER: [
-        "Create RFQs",
-        "Compare quotes",
-        "Track orders",
-        "Verified sellers",
-      ],
+      SELLER: ["Post inventory", "Respond to RFQs", "Multi-location", "Analytics"],
+      BUYER: ["Create RFQs", "Compare quotes", "Track orders", "Verified sellers"],
       "3PL": ["Bid on lanes", "Live tracking", "Upload POD", "Get paid fast"],
     };
     return features[role];
@@ -222,10 +200,7 @@ export default function Register() {
             <CardDescription className="text-base">
               {isRolePreselected ? (
                 <span className="flex items-center gap-2">
-                  Registering as{" "}
-                  <Badge variant="secondary">
-                    {getRoleLabel(formData.role)}
-                  </Badge>
+                  Registering as <Badge variant="secondary">{getRoleLabel(formData.role)}</Badge>
                 </span>
               ) : (
                 "Join the platform and start trading"
@@ -244,9 +219,7 @@ export default function Register() {
                     placeholder="Your Company Pvt Ltd"
                     value={formData.organizationName}
                     onChange={handleChange("organizationName")}
-                    className={`pl-10 ${
-                      errors.organizationName ? "border-red-500" : ""
-                    }`}
+                    className={`pl-10 ${errors.organizationName ? "border-red-500" : ""}`}
                     autoComplete="organization"
                   />
                 </div>
@@ -313,9 +286,7 @@ export default function Register() {
                     placeholder="Min 8 characters"
                     value={formData.password}
                     onChange={handleChange("password")}
-                    className={`pl-10 ${
-                      errors.password ? "border-red-500" : ""
-                    }`}
+                    className={`pl-10 ${errors.password ? "border-red-500" : ""}`}
                     autoComplete="new-password"
                   />
                 </div>
@@ -332,9 +303,7 @@ export default function Register() {
                   <Label>Account Type</Label>
                   <RadioGroup
                     value={formData.role}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, role: value as UserRole })
-                    }
+                    onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}
                     className="grid grid-cols-3 gap-2"
                   >
                     {(["SELLER", "BUYER", "3PL"] as const).map((role) => (
@@ -347,11 +316,7 @@ export default function Register() {
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
-                        <RadioGroupItem
-                          value={role}
-                          id={role}
-                          className="sr-only"
-                        />
+                        <RadioGroupItem value={role} id={role} className="sr-only" />
                         {getRoleLabel(role)}
                       </Label>
                     ))}
@@ -359,12 +324,7 @@ export default function Register() {
                 </div>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                 {isLoading ? (
                   <span className="animate-pulse">Creating account...</span>
                 ) : (
@@ -377,10 +337,7 @@ export default function Register() {
 
               <p className="text-center text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link
-                  to="/auth/login"
-                  className="text-blue-600 hover:underline font-medium"
-                >
+                <Link to="/auth/login" className="text-blue-600 hover:underline font-medium">
                   Sign in
                 </Link>
               </p>
@@ -395,9 +352,7 @@ export default function Register() {
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <RoleIcon className="h-6 w-6 text-blue-600" />
                 </div>
-                <CardTitle className="text-xl">
-                  {getRoleLabel(formData.role)} Benefits
-                </CardTitle>
+                <CardTitle className="text-xl">{getRoleLabel(formData.role)} Benefits</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">

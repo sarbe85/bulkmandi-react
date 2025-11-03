@@ -6,7 +6,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useToast } from "@/shared/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Loader2, Mail, Phone, Plus, X } from "lucide-react";
+import { Check, Loader2, Mail, MapPin, Phone, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useOnboardingData } from "../../hooks/useOnboardingData";
@@ -23,8 +23,9 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
   const { toast } = useToast();
   const { getCurrentUser } = useAuth();
   const { refreshData } = useOnboardingData();
+
   const [gstinFetching, setGstinFetching] = useState(false);
-  const [gstinData, setGstinData] = useState(null);
+  const [gstinData, setGstinData] = useState<any>(null);
   const [plants, setPlants] = useState<string[]>([]);
   const [newPlant, setNewPlant] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +36,7 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     email: "pending",
     phone: "pending",
   });
+
   const [otpValues, setOtpValues] = useState({
     email: "",
     phone: "",
@@ -49,19 +51,16 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
   } = useForm<OrgKycData>({
     resolver: zodResolver(orgKycSchema),
     defaultValues: {
-      primaryContact: {
-        role: "CEO",
-      },
+      primaryContact: { role: "CEO" },
     },
   });
 
-  // Pre-fill form with data
+  // Pre-fill form when data changes
   useEffect(() => {
     const user = getCurrentUser();
     if (user?.organizationName) {
       setValue("legalName", user.organizationName);
     }
-    
     if (data) {
       setValue("legalName", data.legalName || "");
       setValue("tradeName", data.tradeName || "");
@@ -93,12 +92,12 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         setPlants(formattedLocations);
       }
     }
-  }, [data, getCurrentUser, setValue]);
+  }, [data]);
 
+  // GSTIN fetch handler to load business info
   const handleFetchGSTIN = async () => {
     const gstin = watch("gstin");
     if (!gstin) return;
-
     setGstinFetching(true);
     try {
       const response = await onboardingService.fetchGSTIN(gstin);
@@ -120,6 +119,7 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }
   };
 
+  // Handlers for plant locations
   const handleAddPlant = () => {
     if (newPlant.trim()) {
       setPlants([...plants, newPlant.trim()]);
@@ -131,6 +131,7 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     setPlants(plants.filter((_, i) => i !== index));
   };
 
+  // Dummy OTP handlers (replace with actual API calls later)
   const handleSendOTP = async (type: "email" | "phone") => {
     const contactValue = type === "email" ? watch("primaryContact.email") : watch("primaryContact.mobile");
 
@@ -149,11 +150,14 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }));
 
     try {
+      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
+
       toast({
         title: "OTP Sent",
         description: `OTP sent to your ${type}`,
       });
+
       setVerificationStatus((prev) => ({
         ...prev,
         [type]: "pending",
@@ -169,6 +173,7 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
 
   const handleVerifyOTP = async (type: "email" | "phone") => {
     const otp = otpValues[type];
+
     if (!otp || otp.length < 4) {
       toast({
         title: "Invalid OTP",
@@ -179,15 +184,19 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }
 
     try {
+      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
       setVerificationStatus((prev) => ({
         ...prev,
         [type]: "verified",
       }));
+
       toast({
         title: "Verified",
         description: `${type} verified successfully`,
       });
+
       setOtpValues((prev) => ({
         ...prev,
         [type]: "",
@@ -201,6 +210,7 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     }
   };
 
+  // Submit handler with validation
   const onSubmit = async (formData: OrgKycData) => {
     try {
       if (plants.length === 0) {
@@ -211,7 +221,6 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         });
         return;
       }
-
       if (verificationStatus.email !== "verified" || verificationStatus.phone !== "verified") {
         toast({
           title: "Verification Required",
@@ -220,14 +229,12 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         });
         return;
       }
-
       setIsSubmitting(true);
 
       const plantLocations = plants.map((p) => {
         const parts = p.split(",").map((part) => part.trim());
         const lastPart = parts[parts.length - 1];
         const statePinMatch = lastPart.match(/^(.+?)\s*-\s*(.+)$/);
-
         return {
           street: parts[0] || "",
           city: parts[1] || "",
@@ -253,15 +260,11 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
           role: formData.primaryContact.role || "CEO",
         },
       };
-
-      console.log("📤 Saving OrgKYC:", orgKycData);
       await onboardingService.updateOrgKYC(orgKycData);
-
       toast({
         title: "Success",
         description: "Organization KYC saved successfully",
       });
-
       onNext();
     } catch (error: any) {
       toast({
@@ -277,260 +280,239 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Organization KYC</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Organization KYC</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Provide your organization details and business information
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Business Information */}
-        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              1
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Business Information</h3>
+        {/* Legal Name & Trade Name */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="legalName" className="text-sm text-gray-700 dark:text-gray-300">
+              Legal Name *
+            </Label>
+            <Input
+              id="legalName"
+              placeholder="Enter legal name"
+              {...register("legalName")}
+              className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
+            />
+            {errors.legalName && (
+              <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.legalName.message}</p>
+            )}
           </div>
+          <div>
+            <Label htmlFor="tradeName" className="text-sm text-gray-700 dark:text-gray-300">
+              Trade Name
+            </Label>
+            <Input
+              id="tradeName"
+              placeholder="Enter trade name"
+              {...register("tradeName")}
+              className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
+            />
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label htmlFor="legalName" className="text-gray-700 dark:text-gray-300">
-                Legal Name *
-              </Label>
+        {/* GSTIN, PAN, CIN */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="gstin" className="text-sm text-gray-700 dark:text-gray-300">
+              GSTIN *
+            </Label>
+            <div className="flex gap-2 mt-1">
               <Input
-                id="legalName"
-                placeholder="e.g., Steel Corp India Pvt Ltd"
-                {...register("legalName")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                id="gstin"
+                placeholder="Enter GSTIN"
+                {...register("gstin")}
+                className="text-sm dark:bg-slate-900 dark:border-slate-600 flex-1"
               />
-              {errors.legalName && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.legalName.message}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="tradeName" className="text-gray-700 dark:text-gray-300">
-                Trade Name
-              </Label>
-              <Input
-                id="tradeName"
-                placeholder="e.g., SteelCorp"
-                {...register("tradeName")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="gstin" className="text-gray-700 dark:text-gray-300">
-                GSTIN *
-              </Label>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  id="gstin"
-                  placeholder="e.g., 27AABCT1234H1Z0"
-                  {...register("gstin")}
-                  className="dark:bg-slate-900 dark:border-slate-600"
-                />
-                <Button type="button" onClick={handleFetchGSTIN} disabled={gstinFetching} variant="outline" size="sm">
-                  {gstinFetching ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    "Verify"
-                  )}
-                </Button>
-              </div>
-              {errors.gstin && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.gstin.message}</p>}
-              {gstinData && (
-                <p className="text-green-600 dark:text-green-400 text-sm mt-1 flex items-center gap-1">
-                  <Check className="w-4 h-4" />
-                  Verified: {(gstinData as any).legalName}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="pan" className="text-gray-700 dark:text-gray-300">
-                PAN *
-              </Label>
-              <Input
-                id="pan"
-                placeholder="e.g., AAABP1234Q"
-                {...register("pan")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
-              />
-              {errors.pan && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.pan.message}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="cin" className="text-gray-700 dark:text-gray-300">
-                CIN (Optional)
-              </Label>
-              <Input
-                id="cin"
-                placeholder="e.g., U27200WB2015PTC213456"
-                {...register("cin")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="businessType" className="text-gray-700 dark:text-gray-300">
-                Business Type *
-              </Label>
-              <select
-                id="businessType"
-                {...register("businessType")}
-                className="w-full mt-2 px-3 py-2 border rounded-md dark:bg-slate-900 dark:border-slate-600 dark:text-gray-200"
+              <Button
+                type="button"
+                onClick={handleFetchGSTIN}
+                disabled={gstinFetching}
+                variant="outline"
+                size="sm"
+                className="text-xs whitespace-nowrap"
               >
-                <option value="">Select business type</option>
-                <option value="Manufacturing">Manufacturing</option>
-                <option value="Trading">Trading</option>
-                <option value="Distribution">Distribution</option>
-                <option value="Service">Service</option>
-              </select>
-              {errors.businessType && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.businessType.message}</p>
-              )}
+                {gstinFetching ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                    Verifying...
+                  </>
+                ) : (
+                  "Verify"
+                )}
+              </Button>
             </div>
-
-            <div>
-              <Label htmlFor="incorporationDate" className="text-gray-700 dark:text-gray-300">
-                Incorporation Date *
-              </Label>
-              <Input
-                id="incorporationDate"
-                type="date"
-                placeholder="Select date"
-                {...register("incorporationDate")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
-              />
-              {errors.incorporationDate && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.incorporationDate.message}</p>
-              )}
-            </div>
-
-            <div className="md:col-span-2">
-              <Label htmlFor="registeredAddress" className="text-gray-700 dark:text-gray-300">
-                Registered Address *
-              </Label>
-              <Input
-                id="registeredAddress"
-                placeholder="e.g., 123 Industrial Area, Mumbai, Maharashtra 400080"
-                {...register("registeredAddress")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
-              />
-              {errors.registeredAddress && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.registeredAddress.message}</p>
-              )}
-            </div>
+            {errors.gstin && <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.gstin.message}</p>}
+            {gstinData && (
+              <Badge className="mt-1 text-xs bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                Verified: {gstinData?.legalName || ""}
+              </Badge>
+            )}
           </div>
-        </Card>
+          <div>
+            <Label htmlFor="pan" className="text-sm text-gray-700 dark:text-gray-300">
+              PAN *
+            </Label>
+            <Input
+              id="pan"
+              placeholder="Enter PAN"
+              {...register("pan")}
+              className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
+            />
+            {errors.pan && <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.pan.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="cin" className="text-sm text-gray-700 dark:text-gray-300">
+              CIN (Optional)
+            </Label>
+            <Input
+              id="cin"
+              placeholder="Enter CIN"
+              {...register("cin")}
+              className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
+            />
+          </div>
+        </div>
+
+        {/* Business Type & Incorporation Date */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="businessType" className="text-sm text-gray-700 dark:text-gray-300">
+              Business Type *
+            </Label>
+            <select
+              id="businessType"
+              {...register("businessType")}
+              className="w-full mt-1 px-3 py-2 text-sm border rounded-md dark:bg-slate-900 dark:border-slate-600 dark:text-gray-200"
+            >
+              <option value="">Select business type</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Trading">Trading</option>
+              <option value="Distribution">Distribution</option>
+              <option value="Service">Service</option>
+            </select>
+            {errors.businessType && (
+              <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.businessType.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="incorporationDate" className="text-sm text-gray-700 dark:text-gray-300">
+              Incorporation Date *
+            </Label>
+            <Input
+              id="incorporationDate"
+              type="date"
+              {...register("incorporationDate")}
+              className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
+            />
+            {errors.incorporationDate && (
+              <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.incorporationDate.message}</p>
+            )}
+          </div>
+        </div>
 
         {/* Plant Locations */}
-        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              2
+        <Card className="p-5 border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-700 dark:text-gray-300">
+              <MapPin className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Plant Locations</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Plant Locations</h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex gap-2">
               <Input
                 placeholder="e.g., Plot 5, MIDC, Pune, Maharashtra - 411001"
                 value={newPlant}
                 onChange={(e) => setNewPlant(e.target.value)}
-                className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+                className="flex-1 text-sm dark:bg-slate-900 dark:border-slate-600"
               />
-              <Button type="button" onClick={handleAddPlant} variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button
+                type="button"
+                onClick={handleAddPlant}
+                disabled={!newPlant.trim()}
+                variant="outline"
+                size="sm"
+                className="text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" />
                 Add
               </Button>
             </div>
-
-            {plants.length > 0 && (
-              <div className="space-y-2">
-                {plants.map((plant, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg"
-                  >
-                    <span className="text-sm text-green-800 dark:text-green-300">{plant}</span>
-                    <Button
-                      type="button"
-                      onClick={() => handleRemovePlant(index)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
+            {plants.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {plants.map((plant, i) => (
+                  <Badge variant="outline" key={i} className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    {plant}
+                    <X className="cursor-pointer" size={16} onClick={() => handleRemovePlant(i)} />
+                  </Badge>
                 ))}
               </div>
-            )}
-
-            {plants.length === 0 && (
-              <p className="text-yellow-600 dark:text-yellow-400 text-sm">⚠️ Add at least one plant location</p>
+            ) : (
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Add at least one plant location</p>
             )}
           </div>
         </Card>
 
         {/* Primary Contact */}
-        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              3
+        <Card className="p-5 border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-700 dark:text-gray-300">
+              <Mail className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Primary Contact</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Primary Contact</h3>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="primaryContactName" className="text-gray-700 dark:text-gray-300">
+              <Label htmlFor="primaryContactName" className="text-sm text-gray-700 dark:text-gray-300">
                 Name *
               </Label>
               <Input
                 id="primaryContactName"
-                placeholder="e.g., Rajesh Kumar"
+                placeholder="Enter full name"
                 {...register("primaryContact.name")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
               />
               {errors.primaryContact?.name && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.primaryContact.name.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.primaryContact.name.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="primaryContactRole" className="text-gray-700 dark:text-gray-300">
+              <Label htmlFor="primaryContactRole" className="text-sm text-gray-700 dark:text-gray-300">
                 Role *
               </Label>
               <Input
                 id="primaryContactRole"
-                placeholder="e.g., CEO"
+                placeholder="Enter role"
                 {...register("primaryContact.role")}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
               />
             </div>
 
             <div>
-              <Label htmlFor="primaryContactEmail" className="text-gray-700 dark:text-gray-300">
-                Email *
+              <Label htmlFor="primaryContactEmail" className="text-sm text-gray-700 dark:text-gray-300">
+                Email Address *
               </Label>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-1">
                 <Input
                   id="primaryContactEmail"
                   type="email"
-                  placeholder="e.g., rajesh@steelcorp.com"
+                  placeholder="Enter email"
                   {...register("primaryContact.email")}
-                  className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+                  className="flex-1 text-sm dark:bg-slate-900 dark:border-slate-600"
                 />
                 {verificationStatus.email === "verified" ? (
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                    <Check className="w-4 h-4 mr-1" /> Verified
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 text-xs h-fit whitespace-nowrap flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    Verified
                   </Badge>
                 ) : (
                   <Button
@@ -539,25 +521,22 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
                     disabled={verificationStatus.email === "sending"}
                     variant="outline"
                     size="sm"
+                    className="text-xs"
                   >
-                    <Mail className="w-4 h-4 mr-1" />
+                    <Mail className="w-3 h-3 mr-1" />
                     {verificationStatus.email === "sending" ? "Sending..." : "Verify"}
                   </Button>
                 )}
               </div>
-              {errors.primaryContact?.email && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.primaryContact.email.message}</p>
-              )}
-
               {verificationStatus.email === "pending" && (
                 <div className="mt-2 flex gap-2">
                   <Input
                     placeholder="Enter OTP"
                     value={otpValues.email}
                     onChange={(e) => setOtpValues({ ...otpValues, email: e.target.value })}
-                    className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+                    className="flex-1 text-sm dark:bg-slate-900 dark:border-slate-600"
                   />
-                  <Button type="button" onClick={() => handleVerifyOTP("email")} size="sm">
+                  <Button type="button" onClick={() => handleVerifyOTP("email")} size="sm" className="text-xs">
                     Verify OTP
                   </Button>
                 </div>
@@ -565,19 +544,20 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
             </div>
 
             <div>
-              <Label htmlFor="primaryContactMobile" className="text-gray-700 dark:text-gray-300">
-                Mobile *
+              <Label htmlFor="primaryContactMobile" className="text-sm text-gray-700 dark:text-gray-300">
+                Mobile Number *
               </Label>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-1">
                 <Input
                   id="primaryContactMobile"
-                  placeholder="e.g., 9876543210"
+                  placeholder="Enter mobile number"
                   {...register("primaryContact.mobile")}
-                  className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+                  className="flex-1 text-sm dark:bg-slate-900 dark:border-slate-600"
                 />
                 {verificationStatus.phone === "verified" ? (
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                    <Check className="w-4 h-4 mr-1" /> Verified
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 text-xs h-fit whitespace-nowrap flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    Verified
                   </Badge>
                 ) : (
                   <Button
@@ -586,25 +566,22 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
                     disabled={verificationStatus.phone === "sending"}
                     variant="outline"
                     size="sm"
+                    className="text-xs"
                   >
-                    <Phone className="w-4 h-4 mr-1" />
+                    <Phone className="w-3 h-3 mr-1" />
                     {verificationStatus.phone === "sending" ? "Sending..." : "Verify"}
                   </Button>
                 )}
               </div>
-              {errors.primaryContact?.mobile && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.primaryContact.mobile.message}</p>
-              )}
-
               {verificationStatus.phone === "pending" && (
                 <div className="mt-2 flex gap-2">
                   <Input
                     placeholder="Enter OTP"
                     value={otpValues.phone}
                     onChange={(e) => setOtpValues({ ...otpValues, phone: e.target.value })}
-                    className="flex-1 dark:bg-slate-900 dark:border-slate-600"
+                    className="flex-1 text-sm dark:bg-slate-900 dark:border-slate-600"
                   />
-                  <Button type="button" onClick={() => handleVerifyOTP("phone")} size="sm">
+                  <Button type="button" onClick={() => handleVerifyOTP("phone")} size="sm" className="text-xs">
                     Verify OTP
                   </Button>
                 </div>
@@ -614,16 +591,16 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         </Card>
 
         {/* Form Actions */}
-        <div className="flex gap-4 justify-end">
+        <div className="flex gap-4 justify-end mt-6">
           {onBack && (
-            <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={onBack}>
               Back
             </Button>
           )}
-          <Button type="submit" disabled={isSubmitting} className="min-w-[200px]">
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 Saving...
               </>
             ) : (

@@ -1,9 +1,9 @@
 import {
-    emailRule,
-    gstinRule,
-    minLengthRule,
-    mobileRule,
-    panRule
+  emailRule,
+  gstinRule,
+  minLengthRule,
+  mobileRule,
+  panRule
 } from '@/shared/schemas/rules';
 import { z } from 'zod';
 
@@ -39,7 +39,6 @@ export const orgKycSchema = z.object({
   incorporationDate: z.string().min(1, 'Incorporation date is required'),
   plantLocations: z.array(plantLocationSchema).optional(),
   primaryContact: contactPersonSchema,
-  secondaryContact: contactPersonSchema.optional(),
 });
 
 // ========== BANK DETAILS SCHEMA (ALL FIELDS) ==========
@@ -49,15 +48,24 @@ export const bankDetailsSchema = z.object({
   accountNumber: minLengthRule(9),
   accountHolderName: minLengthRule(1),
   ifsc: z.string().length(11, 'IFSC must be 11 characters'),
-  bankName: minLengthRule(1),
-  accountType: z.enum(['Current', 'Savings']),
+  bankName: minLengthRule(3),
+  branchName: minLengthRule(3),
 
-  // ← API response fields (optional during form submission)
+  isPennyDropVerified: z.boolean().optional(),
   pennyDropStatus: z.enum(['VERIFIED', 'PENDING', 'FAILED']).optional(),
   pennyDropScore: z.number().optional(),
   payoutMethod: z.string().optional(),
-  isPennyDropVerified: z.boolean().optional(),
-  documents: z.array(z.any()).optional(), // Files
+  upiDetails: z.string().optional(),
+   documents: z.array(
+    z.object({
+      type: z.string(),
+      fileName: z.string(),
+      fileUrl: z.string(),
+      uploadedAt: z.string(),
+      status: z.enum(['UPLOADED', 'PENDING', 'VERIFIED', 'REJECTED']),
+      comments: z.string().optional(),
+    })
+  ).optional(),
   declarations: z.object({
     warrantyAssurance: z.boolean().optional(),
     termsAccepted: z.boolean().optional(),

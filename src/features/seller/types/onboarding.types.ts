@@ -39,6 +39,22 @@ export const ONBOARDING_STEP_DESCRIPTIONS: Record<(typeof ONBOARDING_STEPS)[keyo
 
 // ===== ORG KYC TYPES =====
 
+export interface OrgKYCResponse {
+  legalName: string;
+  tradeName?: string;
+  gstin: string;
+  pan: string;
+  cin?: string;
+  registeredAddress: string;
+  businessType: string;
+  incorporationDate: string;
+  plantLocations?: PlantLocation[];
+  primaryContactPerson?: ContactPerson;
+  accountsContactPerson?: ContactPerson;
+  techContactPerson?: ContactPerson;
+  documents?: Record<string, string>;
+}
+
 export interface PlantLocation {
   id?: string;
   street?: string;
@@ -58,21 +74,7 @@ export interface ContactPerson {
   role?: string;
 }
 
-export interface OrgKYCResponse {
-  legalName: string;
-  tradeName?: string;
-  gstin: string;
-  pan: string;
-  cin?: string;
-  registeredAddress: string;
-  businessType: string;
-  incorporationDate: string;
-  plantLocations?: PlantLocation[];
-  primaryContactPerson?: ContactPerson;
-  accountsContactPerson?: ContactPerson;
-  techContactPerson?: ContactPerson;
-  documents?: Record<string, string>;
-}
+
 
 // ===== BANK DETAILS TYPES =====
 
@@ -86,6 +88,20 @@ export interface BankDetailsResponse {
   benificiaryName?: string;
   cancelledCheque?: string;
   bankStatements?: string[];
+}
+
+// export interface DocumentUpload {
+//   type: string;
+//   fileName: string;
+//   fileUrl: string;
+//   uploadedAt: string;
+//   status: 'UPLOADED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+//   comments?: string;
+// }
+export interface Declarations {
+  warrantyAssurance: boolean;
+  termsAccepted: boolean;
+  amlCompliance: boolean;
 }
 
 // ===== COMPLIANCE DOCS TYPES =====
@@ -149,20 +165,7 @@ export interface CatalogResponse {
 
 export type KYCStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
-export interface OnboardingResponse1 {
-  id: string;
-  sellerId: string;
-  kycStatus: KYCStatus;
-  completedSteps: OnboardingStep[];
-  orgKyc?: OrgKYCResponse;
-  bankDetails?: BankDetailsResponse;
-  complianceDocs?: ComplianceDocsResponse;
-  catalog?: CatalogResponse;
-  submittedDate?: string;
-  approvedDate?: string;
-  rejectionReason?: string;
-  lastUpdated?: string;
-}
+ 
 
 export interface OnboardingRequest {
   orgKyc?: OrgKycData;
@@ -171,19 +174,7 @@ export interface OnboardingRequest {
   catalog?: CatalogProduct[];
 }
 
-export interface DocumentUpload {
-  type: DocumentType;
-  fileName: string;
-  fileUrl: string;
-  storagePath?: string;
-  uploadedAt: string;
-  status: 'UPLOADED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
-}
-export interface Declarations {
-  warrantyAssurance: boolean;
-  termsAccepted: boolean;
-  amlCompliance: boolean;
-}
+
 
 export interface OnboardingResponse {
   organizationId: string;
@@ -195,7 +186,7 @@ export interface OnboardingResponse {
   completedSteps: string[];
   orgKyc?: any;
   primaryBankAccount?: any;
-  complianceDocuments?: DocumentUpload[];
+  complianceDocuments?: [];
   catalog?: CatalogItem[];
   priceFloors?: PriceFloor[];
   logisticsPreference?: LogisticsPreference;

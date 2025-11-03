@@ -1,14 +1,6 @@
 import apiClient from "@/api/api.client";
-import {
-  BankDetails,
-  bankDetailsSchema,
-  OrgKycData,
-} from "../schemas/onboarding.schema";
-import {
-  CatalogData,
-  OnboardingResponse,
-  SubmitOnboardingResponse,
-} from "../types/onboarding.types";
+import { BankDetails, bankDetailsSchema, OrgKycData } from "../schemas/onboarding.schema";
+import { CatalogData, OnboardingResponse, SubmitOnboardingResponse } from "../types/onboarding.types";
 
 class OnboardingService {
   private baseUrl = "/organizations/my-organization/onboarding";
@@ -18,14 +10,10 @@ class OnboardingService {
    */
   async getOnboardingStatus(): Promise<OnboardingResponse> {
     try {
-      const response = await apiClient.get(
-        "/organizations/my-organization/onboarding"
-      );
+      const response = await apiClient.get("/organizations/my-organization/onboarding");
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to get onboarding status"
-      );
+      throw new Error(error.response?.data?.message || "Failed to get onboarding status");
     }
   }
 
@@ -82,16 +70,75 @@ class OnboardingService {
 
   /**
    * API 2: Update Bank Details WITH FILE UPLOAD
-   * PUT /organizations/my-organization/onboarding/bank
    */
 
-  // ✅ YOUR EXACT FUNCTION - Just with schema import at top
-  async updateBankDetails(
+  async updateBankDetails(bankData: BankDetails, files: File[] = []): Promise<OnboardingResponse> {
+  console.log("📤 updateBankDetails called with:", { bankData, files });
+    try {
+    // ✅ VALIDATION: Parse and validate data first
+    const validatedData = bankDetailsSchema.parse(bankData);
+
+    // ✅ BUILD FormData - do NOT set manual Content-Type header
+    const formData = new FormData();
+
+    // Add form fields
+    formData.append("accountNumber", validatedData.accountNumber);
+    formData.append("ifsc", validatedData.ifsc);
+    formData.append("bankName", validatedData.bankName);
+    formData.append("accountHolderName", validatedData.accountHolderName);
+    formData.append("pennyDropStatus", validatedData.pennyDropStatus || "PENDING");
+    formData.append("pennyDropScore", String(validatedData.pennyDropScore || 0));
+
+    // ✅ CRITICAL: Include file type metadata
+    files.forEach((file, index) => {
+      formData.append(`bankDocs`, file);
+      formData.append(`bankDocsType`, file.type); // Add file type for backend validation
+    });
+
+    // ✅ Don't set Content-Type manually - axios/fetch will handle it
+    const response = await apiClient.put(`${this.baseUrl}/bank`, formData, {
+      headers: {
+        // REMOVED: "Content-Type": "multipart/form-data" - axios sets this automatically
+      },
+    });
+
+    // ✅ VALIDATION: Check response structure before parsing
+    if (!response.data) {
+      throw new Error("Empty response from server");
+    }
+
+    // ✅ Response validation with fallback
+    const responseData = response.data.primaryBankAccount || response.data;
+    const validatedResponse = bankDetailsSchema.parse(responseData);
+
+    return response.data;
+  } catch (error: any) {
+    // ✅ IMPROVED: Differentiate error types
+    // if (error instanceof z.ZodError) {
+    //   const fieldErrors = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
+    //   throw new Error(`Validation error: ${fieldErrors}`);
+    // }
+
+    if (error.response) {
+      // ✅ Backend error with details
+      throw new Error(
+        error.response.data?.message || 
+        error.response.statusText || 
+        "Server error"
+      );
+    }
+
+    throw new Error(error.message || "Failed to update bank details");
+  }
+}
+
+
+  async updateBankDetails1(
     bankData: BankDetails,
-    files: File[] = []
+    filesArray: File[] = [],
+    documentMetadata: Array<{ type: string; fileName: string }> = []
   ): Promise<OnboardingResponse> {
     try {
-      // ✅ ADD THIS: Validate before sending (optional but recommended)
       const validatedData = bankDetailsSchema.parse(bankData);
 
       const formData = new FormData();
@@ -101,30 +148,42 @@ class OnboardingService {
       formData.append("ifsc", validatedData.ifsc);
       formData.append("bankName", validatedData.bankName);
       formData.append("accountHolderName", validatedData.accountHolderName);
-      formData.append("accountType", validatedData.accountType);
-      formData.append(
-        "pennyDropStatus",
-        validatedData.pennyDropStatus || "PENDING"
-      );
-      formData.append(
-        "pennyDropScore",
-        String(validatedData.pennyDropScore || 0)
-      );
+      formData.append("isPennyDropVerified", String(validatedData.isPennyDropVerified || false));
 
-      // Add files with field name "bankDocs"
-      files.forEach((file) => {
-        formData.append("bankDocs", file);
+      if (validatedData.payoutMethod) {
+        formData.append("payoutMethod", validatedData.payoutMethod);
+      }
+      if (validatedData.upiDetails) {
+        formData.append("upiDetails", validatedData.upiDetails);
+      }
+
+      // Add all files under the same field name 'documents'
+      filesArray.forEach((file) => {
+        formData.append("documents", file);
       });
 
-      const response = await apiClient.put(`${this.baseUrl}/bank`, formData);
+      // Send metadata as JSON string
+      if (documentMetadata.length > 0) {
+        formData.append("documentMetadata", JSON.stringify(documentMetadata));
+      }
 
-      // ✅ ADD THIS: Validate response (optional but recommended)
-      const validatedResponse = bankDetailsSchema.parse(
-        response.data.primaryBankAccount
-      );
+      console.log("📤 Sending to backend:", {
+        accountNumber: validatedData.accountNumber,
+        filesCount: filesArray.length,
+        metadataCount: documentMetadata.length,
+      });
+
+      const response = await apiClient.put(`${this.baseUrl}/bank`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log("✅ Response from backend:", response.data);
 
       return response.data;
     } catch (error: any) {
+      console.error("❌ Service error:", error);
       throw new Error(error.message || "Failed to update bank details");
     }
   }
@@ -147,10 +206,7 @@ class OnboardingService {
 
       // ✅ Append declarations as STRING ("true" or "false")
       // Backend Nest.js DTO transformer will convert to boolean
-      formData.append(
-        "warrantyAssurance",
-        String(declarations.warrantyAssurance)
-      );
+      formData.append("warrantyAssurance", String(declarations.warrantyAssurance));
       formData.append("termsAccepted", String(declarations.termsAccepted));
       formData.append("amlCompliance", String(declarations.amlCompliance));
 
@@ -162,11 +218,7 @@ class OnboardingService {
       console.log("📤 FormData being sent to API:");
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
-          console.log(
-            ` ${key}: [File] ${(value as File).name} (${
-              (value as File).size
-            } bytes)`
-          );
+          console.log(` ${key}: [File] ${(value as File).name} (${(value as File).size} bytes)`);
         } else {
           console.log(` ${key}: ${value}`);
         }
@@ -183,11 +235,7 @@ class OnboardingService {
       return response.data;
     } catch (error: any) {
       console.error("❌ API Error Response:", error.response?.data);
-      throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to update compliance documents"
-      );
+      throw new Error(error.response?.data?.message || error.message || "Failed to update compliance documents");
     }
   }
 
@@ -199,9 +247,7 @@ class OnboardingService {
       const response = await apiClient.put(`${this.baseUrl}/catalog`, data);
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to update catalog"
-      );
+      throw new Error(error.response?.data?.message || "Failed to update catalog");
     }
   }
 
@@ -213,19 +259,14 @@ class OnboardingService {
       const response = await apiClient.post(`${this.baseUrl}/submit`, {});
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to submit onboarding"
-      );
+      throw new Error(error.response?.data?.message || "Failed to submit onboarding");
     }
   }
 
   /**
    * Helper: Penny Drop Verification
    */
-  async verifyPennyDrop(
-    accountNumber: string,
-    ifsc: string
-  ): Promise<{ verified: boolean; accountName: string }> {
+  async verifyPennyDrop(accountNumber: string, ifsc: string): Promise<{ verified: boolean; accountName: string }> {
     try {
       const response = await apiClient.post<{
         verified: boolean;
@@ -236,19 +277,14 @@ class OnboardingService {
       });
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.message || "Account verification failed. Please check details."
-      );
+      throw new Error(error.message || "Account verification failed. Please check details.");
     }
   }
 
   /**
    * Helper: Upload Document (S3 pre-signed URL flow)
    */
-  async uploadDocument(
-    file: File,
-    documentType: string
-  ): Promise<{ fileUrl: string }> {
+  async uploadDocument(file: File, documentType: string): Promise<{ fileUrl: string }> {
     try {
       const { data: uploadData } = await apiClient.post<{
         uploadUrl: string;
@@ -278,9 +314,7 @@ class OnboardingService {
    */
   async fetchGSTIN(gstin: string): Promise<any> {
     try {
-      const response = await apiClient.get(
-        `/organizations/gstin-fetch?gstin=${gstin}`
-      );
+      const response = await apiClient.get(`/organizations/gstin-fetch?gstin=${gstin}`);
       return response.data;
     } catch (error: any) {
       throw new Error("Failed to fetch GSTIN details. Please enter manually.");
@@ -292,10 +326,9 @@ class OnboardingService {
    */
   async downloadDocument(fileName: string): Promise<void> {
     try {
-      const response = await apiClient.get(
-        `/organizations/my-organization/documents/${fileName}`,
-        { responseType: "blob" }
-      );
+      const response = await apiClient.get(`/organizations/my-organization/documents/${fileName}`, {
+        responseType: "blob",
+      });
 
       const blob = response.data as Blob;
       const url = window.URL.createObjectURL(blob);
@@ -316,10 +349,9 @@ class OnboardingService {
    */
   async previewDocument(fileName: string): Promise<string> {
     try {
-      const response = await apiClient.get(
-        `/organizations/my-organization/documents-preview/${fileName}`,
-        { responseType: "blob" }
-      );
+      const response = await apiClient.get(`/organizations/my-organization/documents-preview/${fileName}`, {
+        responseType: "blob",
+      });
 
       const blob = response.data as Blob;
       return window.URL.createObjectURL(blob);
