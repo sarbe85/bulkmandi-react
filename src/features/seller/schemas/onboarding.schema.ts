@@ -49,7 +49,7 @@ export const bankDetailsSchema = z.object({
   accountHolderName: minLengthRule(1),
   ifsc: z.string().length(11, 'IFSC must be 11 characters'),
   bankName: minLengthRule(3),
-  branchName: minLengthRule(3),
+  branchName: z.string().optional(),
 
   isPennyDropVerified: z.boolean().optional(),
   pennyDropStatus: z.enum(['VERIFIED', 'PENDING', 'FAILED']).optional(),

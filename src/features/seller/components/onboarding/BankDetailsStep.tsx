@@ -502,58 +502,99 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
         </div>
       </Card>
 
-      {/* Bank Documents */}
-      <Card className="p-4 space-y-3">
-        <div className="font-medium">Bank Documents</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Bank Documents Card */}
+      <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all">
+        <div className="flex items-center gap-2 pb-4 border-b mb-4">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+            <span className="text-sm font-bold text-primary">4</span>
+          </div>
+          <h3 className="font-semibold text-lg">Bank Documents</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {BANK_DOC_TYPES.map((doc) => {
             const hasFile = selectedFiles.has(doc.type);
+            const file = selectedFiles.get(doc.type);
+            
             return (
-              <div key={doc.type} className="border rounded-md p-3 flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    <div className="font-medium text-sm">
-                      {doc.label} {doc.required && <span className="text-red-600">*</span>}
+              <div 
+                key={doc.type} 
+                className={`border-2 rounded-lg p-4 transition-all ${
+                  hasFile 
+                    ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20' 
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <FileText className={`h-5 w-5 ${hasFile ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`} />
+                      <div className="font-semibold text-sm">
+                        {doc.label} {doc.required && <span className="text-destructive">*</span>}
+                      </div>
                     </div>
+                    <div className="text-xs text-muted-foreground">
+                      {doc.required ? "Required" : "Optional"} • PDF, JPG, PNG (Max 5MB)
+                    </div>
+                    {hasFile ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Added</span>
+                        </div>
+                        {file && (
+                          <div className="text-xs text-muted-foreground truncate">
+                            {file.name}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">
+                        No file selected
+                      </div>
+                    )}
                   </div>
-                  <div className="text-xs text-gray-500">{doc.required ? "Required" : "Optional"} • PDF, JPG, PNG</div>
-                  {hasFile ? (
-                    <div className="text-green-600 text-xs flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4" />
-                      Added
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-500">Pending</div>
-                  )}
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={(el) => {
-                      fileInputRefs.current.set(doc.type, el);
-                    }}
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => handleFileSelect(e, doc.type)}
-                    style={{ display: "none" }}
-                  />
-                  <Button type="button" onClick={() => triggerFileInput(doc.type)} disabled={isSubmitting} variant="outline" size="sm" className="text-xs">
-                    {hasFile ? "Replace" : "Upload"}
-                    <Upload className="ml-1 h-3 w-3" />
-                  </Button>
-                  {hasFile && (
-                    <Button
-                      type="button"
-                      onClick={() => removeDocument(doc.type)}
-                      disabled={isSubmitting}
-                      variant="ghost"
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={(el) => {
+                        fileInputRefs.current.set(doc.type, el);
+                      }}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileSelect(e, doc.type)}
+                      style={{ display: "none" }}
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={() => triggerFileInput(doc.type)} 
+                      disabled={isSubmitting} 
+                      variant={hasFile ? "outline" : "default"}
                       size="sm"
-                      className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                      className="whitespace-nowrap"
                     >
-                      <X className="h-3 w-3" />
+                      {hasFile ? (
+                        <>Replace</>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-3 w-3" />
+                          Upload
+                        </>
+                      )}
                     </Button>
-                  )}
+                    {hasFile && (
+                      <Button
+                        type="button"
+                        onClick={() => removeDocument(doc.type)}
+                        disabled={isSubmitting}
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -561,63 +602,63 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
         </div>
       </Card>
 
-      {/* Declarations */}
-      <Card className="p-4 space-y-2">
-        <div className="font-medium">Declarations</div>
+      {/* Declarations Card */}
+      <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all">
+        <div className="flex items-center gap-2 pb-4 border-b mb-4">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+            <span className="text-sm font-bold text-primary">5</span>
+          </div>
+          <h3 className="font-semibold text-lg">Declarations</h3>
+        </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={declarations.warrantyAssurance}
-            onChange={(e) => setDeclarations({ ...declarations, warrantyAssurance: e.target.checked })}
-            className="w-4 h-4 rounded"
-          />
-          I confirm warranty and grade assurance compliance
-        </label>
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={declarations.termsAccepted}
-            onChange={(e) => setDeclarations({ ...declarations, termsAccepted: e.target.checked })}
-            className="w-4 h-4 rounded"
-          />
-        I agree to Terms & Conditions
-        </label>
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={declarations.amlCompliance}
-            onChange={(e) => setDeclarations({ ...declarations, amlCompliance: e.target.checked })}
-            className="w-4 h-4 rounded"
-          />
-          I confirm AML/CFT compliance
-        </label>
+        <div className="space-y-3">
+          {[
+            { key: 'warrantyAssurance', label: 'I confirm warranty and grade assurance compliance' },
+            { key: 'termsAccepted', label: 'I agree to Terms & Conditions' },
+            { key: 'amlCompliance', label: 'I confirm AML/CFT compliance' },
+          ].map((decl) => (
+            <label 
+              key={decl.key}
+              className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                declarations[decl.key as keyof typeof declarations]
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/30'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={declarations[decl.key as keyof typeof declarations]}
+                onChange={(e) => setDeclarations({ ...declarations, [decl.key]: e.target.checked })}
+                className="mt-1 w-5 h-5 rounded text-primary"
+              />
+              <span className="text-sm leading-relaxed">{decl.label}</span>
+            </label>
+          ))}
+        </div>
       </Card>
 
       {/* Form Actions */}
-      <div className="flex items-center justify-between">
-        <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
-          Back
+      <div className="flex items-center justify-between pt-4">
+        <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting} size="lg">
+          ← Back
         </Button>
 
-        <Button type="submit" disabled={!canSubmit || isSubmitting}>
+        <Button type="submit" disabled={!canSubmit || isSubmitting} size="lg" className="min-w-[200px]">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
             </>
           ) : (
-            <>Save & Continue</>
+            <>Save & Continue →</>
           )}
         </Button>
       </div>
 
-      {/* Read-only note */}
-      <div className="flex items-center gap-2 text-xs text-gray-500">
+      {/* Security Note */}
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
         <Lock className="h-3 w-3" />
-        Your bank details are securely processed.
+        <span>Your bank details are encrypted and securely processed</span>
       </div>
     </form>
   );

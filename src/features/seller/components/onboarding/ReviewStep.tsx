@@ -1,16 +1,19 @@
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 interface Props {
   data: any;
   onSubmit: () => Promise<void>;
   onBack: () => void;
+  isSubmitting?: boolean;
 }
 
 export default function ReviewStep({
   data,
   onSubmit,
   onBack,
+  isSubmitting = false,
 }: Props) {
   if (!data || !data.orgKyc) {
     return (
@@ -96,11 +99,18 @@ export default function ReviewStep({
 
         {/* Form Actions */}
         <div className="flex gap-3">
-          <Button type="button" variant="outline" onClick={onBack}>
+          <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
             Back
           </Button>
-          <Button type="button" onClick={onSubmit} className="flex-1">
-            Submit Application 📬
+          <Button type="button" onClick={onSubmit} className="flex-1" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>Submit Application 📬</>
+            )}
           </Button>
         </div>
       </div>

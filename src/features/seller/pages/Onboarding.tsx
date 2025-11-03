@@ -167,59 +167,50 @@ export default function Onboarding() {
         </div>
 
         {/* ========== STEPPER INDICATOR ========== */}
-        <div className="mb-8">
-          <div className="flex items-center gap-1 overflow-x-auto pb-3">
+        <div className="mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between overflow-x-auto pb-2 gap-4">
             {ONBOARDING_STEP_LIST.map((step, index) => {
               const isCompleted = completedSteps.includes(step);
               const isCurrent = step === currentStep;
-              const isActive = isCurrent || isCompleted;
 
               return (
-                <div key={step} className="flex items-center gap-1 flex-shrink-0">
-                  {/* Step Circle */}
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 transition-all ${
-                      isCompleted
-                        ? "bg-gray-800 text-white dark:bg-slate-600 dark:text-white"
-                        : isCurrent
-                        ? "bg-gray-700 text-white dark:bg-slate-500 dark:text-white ring-2 ring-gray-900 dark:ring-slate-400"
-                        : "bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-gray-400"
-                    }`}
-                  >
-                    {isCompleted ? <Check className="w-5 h-5" /> : index + 1}
+                <div key={step} className="flex items-center flex-shrink-0 min-w-0">
+                  {/* Step with Label */}
+                  <div className="flex flex-col items-center gap-2 min-w-[90px]">
+                    <div
+                      className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                        isCompleted
+                          ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+                          : isCurrent
+                          ? "bg-gradient-to-br from-primary to-primary/80 text-white ring-4 ring-primary/20 shadow-lg shadow-primary/30 scale-110"
+                          : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                      }`}
+                    >
+                      {isCompleted ? <Check className="w-6 h-6" /> : index + 1}
+                    </div>
+                    <div
+                      className={`text-[10px] sm:text-xs font-semibold text-center leading-tight transition-colors ${
+                        isCurrent
+                          ? "text-primary dark:text-primary"
+                          : isCompleted
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-slate-500 dark:text-slate-500"
+                      }`}
+                    >
+                      {ONBOARDING_STEP_LABELS[step]}
+                    </div>
                   </div>
 
                   {/* Connector Line */}
                   {index < ONBOARDING_STEP_LIST.length - 1 && (
                     <div
-                      className={`h-0.5 w-6 flex-shrink-0 transition-all ${
-                        isCompleted ? "bg-gray-800 dark:bg-slate-600" : "bg-gray-300 dark:bg-slate-700"
+                      className={`h-1 w-8 sm:w-12 mx-2 rounded-full flex-shrink-0 transition-all duration-300 ${
+                        isCompleted 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-400" 
+                          : "bg-slate-300 dark:bg-slate-700"
                       }`}
                     ></div>
                   )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Step Labels */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            {ONBOARDING_STEP_LIST.map((step) => {
-              const isCompleted = completedSteps.includes(step);
-              const isCurrent = step === currentStep;
-
-              return (
-                <div
-                  key={step}
-                  className={`text-xs text-center font-medium transition-colors ${
-                    isCurrent
-                      ? "text-gray-900 dark:text-white"
-                      : isCompleted
-                      ? "text-gray-600 dark:text-gray-400"
-                      : "text-gray-400 dark:text-gray-600"
-                  }`}
-                >
-                  {ONBOARDING_STEP_LABELS[step]}
                 </div>
               );
             })}
@@ -240,7 +231,7 @@ export default function Onboarding() {
 
               {currentStep === ONBOARDING_STEPS.BANK_DETAILS && (
                 <BankDetailsStep
-                  data={contextData?.primaryBankAccount}
+                  data={contextData}
                   onNext={() => handleStepNext(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
                   onBack={() => setCurrentStep(ONBOARDING_STEPS.ORG_KYC)}
                 />
