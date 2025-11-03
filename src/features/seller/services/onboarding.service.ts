@@ -73,74 +73,12 @@ class OnboardingService {
    */
 
   async updateBankDetails(bankData: BankDetails, files: File[] = []): Promise<OnboardingResponse> {
-  console.log("📤 updateBankDetails called with:", { bankData, files });
+    console.log("📤 updateBankDetails called with:", { bankData, files });
     try {
-    // ✅ VALIDATION: Parse and validate data first
-    const validatedData = bankDetailsSchema.parse(bankData);
-
-    // ✅ BUILD FormData - do NOT set manual Content-Type header
-    const formData = new FormData();
-
-    // Add form fields
-    formData.append("accountNumber", validatedData.accountNumber);
-    formData.append("ifsc", validatedData.ifsc);
-    formData.append("bankName", validatedData.bankName);
-    formData.append("accountHolderName", validatedData.accountHolderName);
-    formData.append("pennyDropStatus", validatedData.pennyDropStatus || "PENDING");
-    formData.append("pennyDropScore", String(validatedData.pennyDropScore || 0));
-
-    // ✅ CRITICAL: Include file type metadata
-    files.forEach((file, index) => {
-      formData.append(`bankDocs`, file);
-      formData.append(`bankDocsType`, file.type); // Add file type for backend validation
-    });
-
-    // ✅ Don't set Content-Type manually - axios/fetch will handle it
-    const response = await apiClient.put(`${this.baseUrl}/bank`, formData, {
-      headers: {
-        // REMOVED: "Content-Type": "multipart/form-data" - axios sets this automatically
-      },
-    });
-
-    // ✅ VALIDATION: Check response structure before parsing
-    if (!response.data) {
-      throw new Error("Empty response from server");
-    }
-
-    // ✅ Response validation with fallback
-    const responseData = response.data.primaryBankAccount || response.data;
-    const validatedResponse = bankDetailsSchema.parse(responseData);
-
-    return response.data;
-  } catch (error: any) {
-    // ✅ IMPROVED: Differentiate error types
-    // if (error instanceof z.ZodError) {
-    //   const fieldErrors = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
-    //   throw new Error(`Validation error: ${fieldErrors}`);
-    // }
-
-    if (error.response) {
-      // ✅ Backend error with details
-      throw new Error(
-        error.response.data?.message || 
-        error.response.statusText || 
-        "Server error"
-      );
-    }
-
-    throw new Error(error.message || "Failed to update bank details");
-  }
-}
-
-
-  async updateBankDetails1(
-    bankData: BankDetails,
-    filesArray: File[] = [],
-    documentMetadata: Array<{ type: string; fileName: string }> = []
-  ): Promise<OnboardingResponse> {
-    try {
+      // ✅ VALIDATION: Parse and validate data first
       const validatedData = bankDetailsSchema.parse(bankData);
 
+      // ✅ BUILD FormData - do NOT set manual Content-Type header
       const formData = new FormData();
 
       // Add form fields
@@ -148,42 +86,44 @@ class OnboardingService {
       formData.append("ifsc", validatedData.ifsc);
       formData.append("bankName", validatedData.bankName);
       formData.append("accountHolderName", validatedData.accountHolderName);
-      formData.append("isPennyDropVerified", String(validatedData.isPennyDropVerified || false));
+      formData.append("pennyDropStatus", validatedData.pennyDropStatus || "PENDING");
+      formData.append("pennyDropScore", String(validatedData.pennyDropScore || 0));
 
-      if (validatedData.payoutMethod) {
-        formData.append("payoutMethod", validatedData.payoutMethod);
-      }
-      if (validatedData.upiDetails) {
-        formData.append("upiDetails", validatedData.upiDetails);
-      }
-
-      // Add all files under the same field name 'documents'
-      filesArray.forEach((file) => {
-        formData.append("documents", file);
+      // ✅ CRITICAL: Include file type metadata
+      files.forEach((file, index) => {
+        formData.append(`bankDocs`, file);
+        formData.append(`bankDocsType`, file.type); // Add file type for backend validation
       });
 
-      // Send metadata as JSON string
-      if (documentMetadata.length > 0) {
-        formData.append("documentMetadata", JSON.stringify(documentMetadata));
-      }
-
-      console.log("📤 Sending to backend:", {
-        accountNumber: validatedData.accountNumber,
-        filesCount: filesArray.length,
-        metadataCount: documentMetadata.length,
-      });
-
+      // ✅ Don't set Content-Type manually - axios/fetch will handle it
       const response = await apiClient.put(`${this.baseUrl}/bank`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          // REMOVED: "Content-Type": "multipart/form-data" - axios sets this automatically
         },
       });
 
-      console.log("✅ Response from backend:", response.data);
+      // ✅ VALIDATION: Check response structure before parsing
+      if (!response.data) {
+        throw new Error("Empty response from server");
+      }
+
+      // ✅ Response validation with fallback
+      const responseData = response.data.primaryBankAccount || response.data;
+      const validatedResponse = bankDetailsSchema.parse(responseData);
 
       return response.data;
     } catch (error: any) {
-      console.error("❌ Service error:", error);
+      // ✅ IMPROVED: Differentiate error types
+      // if (error instanceof z.ZodError) {
+      //   const fieldErrors = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
+      //   throw new Error(`Validation error: ${fieldErrors}`);
+      // }
+
+      if (error.response) {
+        // ✅ Backend error with details
+        throw new Error(error.response.data?.message || error.response.statusText || "Server error");
+      }
+
       throw new Error(error.message || "Failed to update bank details");
     }
   }
