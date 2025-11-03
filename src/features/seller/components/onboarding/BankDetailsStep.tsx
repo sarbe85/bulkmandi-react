@@ -89,9 +89,23 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
             });
           }
         }
+        
+        // Pre-fill penny drop status if already verified
+        if (validated.pennyDropStatus === 'VERIFIED') {
+          setPennyDropStatus('verified');
+        }
       } catch (error) {
         console.error("Invalid bank details from API:", error);
       }
+    }
+    
+    // Pre-fill declarations if available
+    if (data?.declarations) {
+      setDeclarations({
+        warrantyAssurance: data.declarations.warrantyAssurance || false,
+        termsAccepted: data.declarations.termsAccepted || false,
+        amlCompliance: data.declarations.amlCompliance || false,
+      });
     }
   }, [data, setValue]);
 

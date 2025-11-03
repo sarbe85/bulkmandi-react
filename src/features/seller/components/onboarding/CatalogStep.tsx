@@ -224,22 +224,25 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Catalog & Commercials</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Catalog & Commercials</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Select product categories, grades, pricing and logistics preferences
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Categories Section */}
-        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
               1
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Product Categories</h3>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Product Categories</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Select categories you offer</p>
+            </div>
           </div>
 
           <div className="mb-6">
@@ -349,12 +352,15 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
         </Card>
 
         {/* Price Floors Section */}
-        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
               2
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Price Floors (Optional)</h3>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Price Floors (Optional)</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Set minimum and maximum prices</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end">
@@ -432,12 +438,15 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
         </Card>
 
         {/* Logistics Section */}
-        <Card className="p-6 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
               3
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Logistics Preferences</h3>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Logistics Preferences</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Choose your delivery preferences</p>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -476,11 +485,21 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
         </Card>
 
         {/* Form Actions */}
-        <div className="flex gap-4 justify-end">
-          <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
+        <div className="flex gap-3">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onBack} 
+            disabled={isSubmitting}
+            className="px-8"
+          >
             Back
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="min-w-[200px]">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="flex-1 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white shadow-md"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

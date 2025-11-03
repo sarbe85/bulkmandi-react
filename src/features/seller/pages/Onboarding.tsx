@@ -167,8 +167,8 @@ export default function Onboarding() {
         </div>
 
         {/* ========== STEPPER INDICATOR ========== */}
-        <div className="mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between overflow-x-auto pb-2 gap-4">
+        <div className="mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center justify-between overflow-x-auto pb-2 gap-2">
             {ONBOARDING_STEP_LIST.map((step, index) => {
               const isCompleted = completedSteps.includes(step);
               const isCurrent = step === currentStep;
@@ -176,24 +176,24 @@ export default function Onboarding() {
               return (
                 <div key={step} className="flex items-center flex-shrink-0 min-w-0">
                   {/* Step with Label */}
-                  <div className="flex flex-col items-center gap-2 min-w-[90px]">
+                  <div className="flex flex-col items-center gap-2 min-w-[100px]">
                     <div
-                      className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
                         isCompleted
-                          ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+                          ? "bg-slate-700 dark:bg-slate-600 text-white shadow-md"
                           : isCurrent
-                          ? "bg-gradient-to-br from-primary to-primary/80 text-white ring-4 ring-primary/20 shadow-lg shadow-primary/30 scale-110"
-                          : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                          ? "bg-slate-800 dark:bg-slate-700 text-white ring-4 ring-slate-300 dark:ring-slate-600 shadow-lg scale-105"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                       }`}
                     >
-                      {isCompleted ? <Check className="w-6 h-6" /> : index + 1}
+                      {isCompleted ? <Check className="w-5 h-5" /> : index + 1}
                     </div>
                     <div
-                      className={`text-[10px] sm:text-xs font-semibold text-center leading-tight transition-colors ${
+                      className={`text-[10px] sm:text-xs font-semibold text-center leading-tight transition-colors px-1 ${
                         isCurrent
-                          ? "text-primary dark:text-primary"
+                          ? "text-slate-800 dark:text-slate-200"
                           : isCompleted
-                          ? "text-emerald-600 dark:text-emerald-400"
+                          ? "text-slate-700 dark:text-slate-300"
                           : "text-slate-500 dark:text-slate-500"
                       }`}
                     >
@@ -204,9 +204,9 @@ export default function Onboarding() {
                   {/* Connector Line */}
                   {index < ONBOARDING_STEP_LIST.length - 1 && (
                     <div
-                      className={`h-1 w-8 sm:w-12 mx-2 rounded-full flex-shrink-0 transition-all duration-300 ${
+                      className={`h-1 w-6 sm:w-10 mx-1 rounded-full flex-shrink-0 transition-all duration-300 ${
                         isCompleted 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-400" 
+                          ? "bg-slate-600 dark:bg-slate-500" 
                           : "bg-slate-300 dark:bg-slate-700"
                       }`}
                     ></div>
