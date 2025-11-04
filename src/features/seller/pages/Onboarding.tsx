@@ -30,6 +30,7 @@ export default function Onboarding() {
   const [completedSteps, setCompletedSteps] = useState<OnboardingStep[]>([]);
   const [manualNavigation, setManualNavigation] = useState(false);
 
+  // Initialize step from context data only on first load
   useEffect(() => {
     if (contextData && !manualNavigation) {
       console.log("📋 Onboarding data from context:", contextData);
@@ -58,24 +59,24 @@ export default function Onboarding() {
       }
     }
 
-    // Enable manual navigation mode to prevent auto-skip
-    setManualNavigation(true);
-    
-    // Move to next step
+    // Move to the EXACT next step specified (sequential navigation)
     setCurrentStep(nextStepName);
     
     // Refresh data from server
     await refreshData();
+    
+    // Keep manual navigation active (don't auto-skip anymore)
+    setManualNavigation(true);
   };
 
   const handleStepBack = (previousStepName: OnboardingStep) => {
     console.log(`⬅️ Moving back from ${currentStep} to ${previousStepName}...`);
     
-    // Enable manual navigation mode
-    setManualNavigation(true);
-    
-    // Move to previous step
+    // Move to the EXACT previous step specified (sequential navigation)
     setCurrentStep(previousStepName);
+    
+    // Keep manual navigation active
+    setManualNavigation(true);
   };
 
   const handleReviewSubmit = async () => {

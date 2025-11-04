@@ -89,10 +89,11 @@ class OnboardingService {
       formData.append("pennyDropStatus", validatedData.pennyDropStatus || "PENDING");
       formData.append("pennyDropScore", String(validatedData.pennyDropScore || 0));
 
-      // ✅ CRITICAL: Include file type metadata
-      files.forEach((file, index) => {
+      // ✅ Append each file with its metadata
+      // Note: File name in FormData should contain document type info
+      // The backend should extract documentType from the file object's custom property or via separate field
+      files.forEach((file) => {
         formData.append(`bankDocs`, file);
-        formData.append(`bankDocsType`, file.type); // Add file type for backend validation
       });
 
       // ✅ Don't set Content-Type manually - axios/fetch will handle it
