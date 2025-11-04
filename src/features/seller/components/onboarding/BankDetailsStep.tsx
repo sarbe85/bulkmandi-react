@@ -46,12 +46,6 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
   const [payoutMethod, setPayoutMethod] = useState<"RTGS" | "NEFT" | "UPI">("RTGS");
   const [upiDetails, setUpiDetails] = useState("");
 
-  const [declarations, setDeclarations] = useState({
-    warrantyAssurance: false,
-    termsAccepted: false,
-    amlCompliance: false,
-  });
-
   const {
     register,
     handleSubmit,
@@ -90,32 +84,23 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
             });
           }
         }
-        
+
         // Pre-fill penny drop status if already verified
-        if (validated.pennyDropStatus === 'VERIFIED') {
-          setPennyDropStatus('verified');
+        if (validated.pennyDropStatus === "VERIFIED") {
+          setPennyDropStatus("verified");
         }
       } catch (error) {
         console.error("Invalid bank details from API:", error);
       }
     }
-    
-    // Pre-fill declarations if available
-    if (data?.declarations) {
-      setDeclarations({
-        warrantyAssurance: data.declarations.warrantyAssurance || false,
-        termsAccepted: data.declarations.termsAccepted || false,
-        amlCompliance: data.declarations.amlCompliance || false,
-      });
-    }
-    
+
     // Pre-fill existing bank documents
     if (data?.primaryBankAccount?.uploadedDocuments) {
       const filesMap = new Map<string, { name: string; url: string }>();
       data.primaryBankAccount.uploadedDocuments.forEach((file: any) => {
-        filesMap.set(file.documentType, { 
-          name: file.documentName || file.fileName || 'Bank Document',
-          url: file.documentUrl || file.fileUrl || ''
+        filesMap.set(file.documentType, {
+          name: file.documentName || file.fileName || "Bank Document",
+          url: file.documentUrl || file.fileUrl || "",
         });
       });
       setExistingFiles(filesMap);
@@ -261,14 +246,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
 
   // Button enablement gating
   const canSubmit =
-    !!accountNumber &&
-    !!accountHolderName &&
-    !!ifsc &&
-    ifscValidated &&
-    selectedFiles.has("CANCELLED_CHEQUE") &&
-    declarations.warrantyAssurance &&
-    declarations.termsAccepted &&
-    declarations.amlCompliance;
+    !!accountNumber && !!accountHolderName && !!ifsc && ifscValidated && selectedFiles.has("CANCELLED_CHEQUE");
 
   // Submit handler
   const onSubmit = async (formData: BankDetails) => {
@@ -289,15 +267,6 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
         toast({
           title: "Missing Documents",
           description: `Please upload: ${missingDocs.map((d) => d.label).join(", ")}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!declarations.warrantyAssurance || !declarations.termsAccepted || !declarations.amlCompliance) {
-        toast({
-          title: "Missing Declarations",
-          description: "Please agree to all declarations",
           variant: "destructive",
         });
         return;
@@ -442,11 +411,13 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
         <div className="flex items-center justify-between">
           <div>
             <div className="font-medium">Penny Drop Verification</div>
-            <div className="text-xs text-gray-500">
-              Verifies account holder name by sending a nominal amount
-            </div>
+            <div className="text-xs text-gray-500">Verifies account holder name by sending a nominal amount</div>
           </div>
-          <Button type="button" onClick={handlePennyDrop} disabled={isPennyDropping || isSubmitting || !ifsc || !accountNumber}>
+          <Button
+            type="button"
+            onClick={handlePennyDrop}
+            disabled={isPennyDropping || isSubmitting || !ifsc || !accountNumber}
+          >
             {isPennyDropping ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -532,9 +503,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
       {/* Bank Documents Card */}
       <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all">
         <div className="flex items-center gap-2 pb-4 border-b mb-4">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-            <span className="text-sm font-bold text-primary">4</span>
-          </div>
+          
           <h3 className="font-semibold text-lg">Bank Documents</h3>
         </div>
 
@@ -544,10 +513,10 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
             const hasExistingFile = existingFiles.has(doc.type);
             const newFile = selectedFiles.get(doc.type);
             const existingFile = existingFiles.get(doc.type);
-            
+
             return (
-              <div 
-                key={doc.type} 
+              <div
+                key={doc.type}
                 className="border-2 rounded-lg p-4 transition-all hover:border-primary/30 border-border"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -561,7 +530,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
                     <div className="text-xs text-muted-foreground">
                       {doc.required ? "Required" : "Optional"} • PDF, JPG, PNG (Max 5MB)
                     </div>
-                    
+
                     {/* Show existing file info */}
                     {hasExistingFile && !hasNewFile && (
                       <div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded">
@@ -569,14 +538,12 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
                           <CheckCircle className="h-3 w-3 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <div className="font-medium">Previously uploaded</div>
-                            <div className="truncate text-blue-600 dark:text-blue-400 mt-0.5">
-                              {existingFile?.name}
-                            </div>
+                            <div className="truncate text-blue-600 dark:text-blue-400 mt-0.5">{existingFile?.name}</div>
                           </div>
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Show new file selection */}
                     {hasNewFile && (
                       <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded">
@@ -603,10 +570,10 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
                       onChange={(e) => handleFileSelect(e, doc.type)}
                       style={{ display: "none" }}
                     />
-                    <Button 
-                      type="button" 
-                      onClick={() => triggerFileInput(doc.type)} 
-                      disabled={isSubmitting} 
+                    <Button
+                      type="button"
+                      onClick={() => triggerFileInput(doc.type)}
+                      disabled={isSubmitting}
                       variant={hasNewFile || hasExistingFile ? "outline" : "default"}
                       size="sm"
                       className="whitespace-nowrap"
@@ -637,41 +604,6 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
               </div>
             );
           })}
-        </div>
-      </Card>
-
-      {/* Declarations Card */}
-      <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all">
-        <div className="flex items-center gap-2 pb-4 border-b mb-4">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-            <span className="text-sm font-bold text-primary">5</span>
-          </div>
-          <h3 className="font-semibold text-lg">Declarations</h3>
-        </div>
-
-        <div className="space-y-3">
-          {[
-            { key: 'warrantyAssurance', label: 'I confirm warranty and grade assurance compliance' },
-            { key: 'termsAccepted', label: 'I agree to Terms & Conditions' },
-            { key: 'amlCompliance', label: 'I confirm AML/CFT compliance' },
-          ].map((decl) => (
-            <label 
-              key={decl.key}
-              className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                declarations[decl.key as keyof typeof declarations]
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/30'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={declarations[decl.key as keyof typeof declarations]}
-                onChange={(e) => setDeclarations({ ...declarations, [decl.key]: e.target.checked })}
-                className="mt-1 w-5 h-5 rounded text-primary"
-              />
-              <span className="text-sm leading-relaxed">{decl.label}</span>
-            </label>
-          ))}
         </div>
       </Card>
 

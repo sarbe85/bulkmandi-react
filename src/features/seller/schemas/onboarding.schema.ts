@@ -65,12 +65,7 @@ export const bankDetailsSchema = z.object({
       status: z.enum(['UPLOADED', 'PENDING', 'VERIFIED', 'REJECTED']),
       comments: z.string().optional(),
     })
-  ).optional(),
-  declarations: z.object({
-    warrantyAssurance: z.boolean().optional(),
-    termsAccepted: z.boolean().optional(),
-    amlCompliance: z.boolean().optional(),
-  }).optional(),
+  ).optional()
 });
 
 // ========== COMPLIANCE DOCS SCHEMA ==========
