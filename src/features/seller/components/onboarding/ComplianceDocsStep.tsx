@@ -62,11 +62,20 @@ export default function ComplianceDocsStep({
     },
   });
 
+  const [existingFiles, setExistingFiles] = useState<Map<string, { name: string; url: string }>>(new Map());
+
   // ✅ COMPLETE: Pre-fill form with saved data
   useEffect(() => {
     if (data?.complianceDocs?.uploadedFiles) {
       console.log('📋 Previously uploaded compliance docs:', data.complianceDocs.uploadedFiles);
-      // You can use this to show already uploaded files
+      const filesMap = new Map<string, { name: string; url: string }>();
+      data.complianceDocs.uploadedFiles.forEach((file: any) => {
+        filesMap.set(file.documentType, { 
+          name: file.documentName || file.fileName || 'Uploaded Document',
+          url: file.documentUrl || file.fileUrl || ''
+        });
+      });
+      setExistingFiles(filesMap);
     }
   }, [data]);
 
@@ -208,63 +217,98 @@ export default function ComplianceDocsStep({
           </div>
 
           <div className="space-y-4">
-            {COMPLIANCE_DOCS.map((doc) => (
-              <div
-                key={doc.type}
-                className="group flex items-center justify-between p-5 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {doc.label}
-                    {doc.required && <span className="text-red-600 ml-1">*</span>}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {doc.required ? 'Required' : 'Optional'} • PDF, JPG, PNG, DOC, DOCX (Max 5MB)
-                  </p>
-                </div>
+            {COMPLIANCE_DOCS.map((doc) => {
+              const hasNewFile = selectedFiles.has(doc.type);
+              const hasExistingFile = existingFiles.has(doc.type);
+              const newFile = selectedFiles.get(doc.type);
+              const existingFile = existingFiles.get(doc.type);
+              
+              return (
+                <div
+                  key={doc.type}
+                  className="group p-5 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {doc.label}
+                        {doc.required && <span className="text-red-600 ml-1">*</span>}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        {doc.required ? 'Required' : 'Optional'} • PDF, JPG, PNG, DOC, DOCX (Max 5MB)
+                      </p>
+                      
+                      {/* Show existing file info */}
+                      {hasExistingFile && !hasNewFile && (
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                          <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium">Previously uploaded</div>
+                              <div className="text-xs truncate text-blue-600 dark:text-blue-400 mt-0.5">
+                                {existingFile?.name}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Show new file selection */}
+                      {hasNewFile && (
+                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                          <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium">Selected for upload</div>
+                              <div className="text-xs truncate text-green-600 dark:text-green-400 mt-0.5">
+                                {newFile?.name} ({(newFile!.size / 1024).toFixed(1)} KB)
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                <input
-                  ref={(el) => {
-                    if (el) fileInputRefs.current.set(doc.type, el);
-                  }}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={(e) => handleFileSelect(e, doc.type)}
-                  className="hidden"
-                />
+                    <input
+                      ref={(el) => {
+                        if (el) fileInputRefs.current.set(doc.type, el);
+                      }}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      onChange={(e) => handleFileSelect(e, doc.type)}
+                      className="hidden"
+                    />
 
-                {!selectedFiles.has(doc.type) ? (
-                  <Button
-                    type="button"
-                    onClick={() => triggerFileInput(doc.type)}
-                    variant="outline"
-                    size="sm"
-                    disabled={isSubmitting}
-                    className="border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Select File
-                  </Button>
-                ) : (
-                  <div className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-lg border border-green-200 dark:border-green-800">
-                    <span className="text-sm text-green-700 dark:text-green-300 font-medium flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      {selectedFiles.get(doc.type)?.name}
-                    </span>
-                    <Button
-                      type="button"
-                      onClick={() => removeDocument(doc.type)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 w-8 p-0"
-                      disabled={isSubmitting}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => triggerFileInput(doc.type)}
+                        variant={hasNewFile || hasExistingFile ? "outline" : "default"}
+                        size="sm"
+                        disabled={isSubmitting}
+                        className="whitespace-nowrap"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {hasNewFile || hasExistingFile ? 'Replace' : 'Select File'}
+                      </Button>
+                      
+                      {hasNewFile && (
+                        <Button
+                          type="button"
+                          onClick={() => removeDocument(doc.type)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          disabled={isSubmitting}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-800 dark:text-blue-300 flex items-start gap-3">

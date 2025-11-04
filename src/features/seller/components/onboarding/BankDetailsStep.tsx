@@ -41,6 +41,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
   // Map<string, File>
   const [selectedFiles, setSelectedFiles] = useState<Map<string, File>>(new Map());
   const fileInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
+  const [existingFiles, setExistingFiles] = useState<Map<string, { name: string; url: string }>>(new Map());
 
   const [payoutMethod, setPayoutMethod] = useState<"RTGS" | "NEFT" | "UPI">("RTGS");
   const [upiDetails, setUpiDetails] = useState("");
@@ -106,6 +107,18 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
         termsAccepted: data.declarations.termsAccepted || false,
         amlCompliance: data.declarations.amlCompliance || false,
       });
+    }
+    
+    // Pre-fill existing bank documents
+    if (data?.primaryBankAccount?.uploadedDocuments) {
+      const filesMap = new Map<string, { name: string; url: string }>();
+      data.primaryBankAccount.uploadedDocuments.forEach((file: any) => {
+        filesMap.set(file.documentType, { 
+          name: file.documentName || file.fileName || 'Bank Document',
+          url: file.documentUrl || file.fileUrl || ''
+        });
+      });
+      setExistingFiles(filesMap);
     }
   }, [data, setValue]);
 
@@ -527,22 +540,20 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {BANK_DOC_TYPES.map((doc) => {
-            const hasFile = selectedFiles.has(doc.type);
-            const file = selectedFiles.get(doc.type);
+            const hasNewFile = selectedFiles.has(doc.type);
+            const hasExistingFile = existingFiles.has(doc.type);
+            const newFile = selectedFiles.get(doc.type);
+            const existingFile = existingFiles.get(doc.type);
             
             return (
               <div 
                 key={doc.type} 
-                className={`border-2 rounded-lg p-4 transition-all ${
-                  hasFile 
-                    ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20' 
-                    : 'border-border hover:border-primary/30'
-                }`}
+                className="border-2 rounded-lg p-4 transition-all hover:border-primary/30 border-border"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 space-y-2">
+                  <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center gap-2">
-                      <FileText className={`h-5 w-5 ${hasFile ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`} />
+                      <FileText className="h-5 w-5 text-muted-foreground" />
                       <div className="font-semibold text-sm">
                         {doc.label} {doc.required && <span className="text-destructive">*</span>}
                       </div>
@@ -550,21 +561,34 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
                     <div className="text-xs text-muted-foreground">
                       {doc.required ? "Required" : "Optional"} • PDF, JPG, PNG (Max 5MB)
                     </div>
-                    {hasFile ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                          <CheckCircle className="h-4 w-4" />
-                          <span>Added</span>
-                        </div>
-                        {file && (
-                          <div className="text-xs text-muted-foreground truncate">
-                            {file.name}
+                    
+                    {/* Show existing file info */}
+                    {hasExistingFile && !hasNewFile && (
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded">
+                        <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
+                          <CheckCircle className="h-3 w-3 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium">Previously uploaded</div>
+                            <div className="truncate text-blue-600 dark:text-blue-400 mt-0.5">
+                              {existingFile?.name}
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">
-                        No file selected
+                    )}
+                    
+                    {/* Show new file selection */}
+                    {hasNewFile && (
+                      <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded">
+                        <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300">
+                          <CheckCircle className="h-3 w-3 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium">Selected for upload</div>
+                            <div className="truncate text-emerald-600 dark:text-emerald-400 mt-0.5">
+                              {newFile?.name} ({(newFile!.size / 1024).toFixed(1)} KB)
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -583,11 +607,11 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
                       type="button" 
                       onClick={() => triggerFileInput(doc.type)} 
                       disabled={isSubmitting} 
-                      variant={hasFile ? "outline" : "default"}
+                      variant={hasNewFile || hasExistingFile ? "outline" : "default"}
                       size="sm"
                       className="whitespace-nowrap"
                     >
-                      {hasFile ? (
+                      {hasNewFile || hasExistingFile ? (
                         <>Replace</>
                       ) : (
                         <>
@@ -596,7 +620,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
                         </>
                       )}
                     </Button>
-                    {hasFile && (
+                    {hasNewFile && (
                       <Button
                         type="button"
                         onClick={() => removeDocument(doc.type)}

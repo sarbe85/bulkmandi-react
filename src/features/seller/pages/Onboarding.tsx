@@ -28,9 +28,10 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [kycStatus, setKycStatus] = useState("DRAFT");
   const [completedSteps, setCompletedSteps] = useState<OnboardingStep[]>([]);
+  const [manualNavigation, setManualNavigation] = useState(false);
 
   useEffect(() => {
-    if (contextData) {
+    if (contextData && !manualNavigation) {
       console.log("📋 Onboarding data from context:", contextData);
       setKycStatus(contextData.kycStatus || "DRAFT");
 
@@ -42,7 +43,7 @@ export default function Onboarding() {
       console.log("📍 Current step:", nextStep);
       setCurrentStep(nextStep);
     }
-  }, [contextData]);
+  }, [contextData, manualNavigation]);
 
   const handleStepNext = async (nextStepName: OnboardingStep) => {
     console.log(`➡️ Moving from ${currentStep} to ${nextStepName}...`);
@@ -57,11 +58,24 @@ export default function Onboarding() {
       }
     }
 
+    // Enable manual navigation mode to prevent auto-skip
+    setManualNavigation(true);
+    
     // Move to next step
     setCurrentStep(nextStepName);
     
     // Refresh data from server
     await refreshData();
+  };
+
+  const handleStepBack = (previousStepName: OnboardingStep) => {
+    console.log(`⬅️ Moving back from ${currentStep} to ${previousStepName}...`);
+    
+    // Enable manual navigation mode
+    setManualNavigation(true);
+    
+    // Move to previous step
+    setCurrentStep(previousStepName);
   };
 
   const handleReviewSubmit = async () => {
@@ -233,21 +247,26 @@ export default function Onboarding() {
                 <BankDetailsStep
                   data={contextData}
                   onNext={() => handleStepNext(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
-                  onBack={() => setCurrentStep(ONBOARDING_STEPS.ORG_KYC)}
+                  onBack={() => handleStepBack(ONBOARDING_STEPS.ORG_KYC)}
                 />
               )}
 
               {currentStep === ONBOARDING_STEPS.COMPLIANCE_DOCS && (
                 <ComplianceDocsStep
+                  data={contextData}
                   onNext={() => handleStepNext(ONBOARDING_STEPS.CATALOG_AND_PRICE)}
-                  onBack={() => setCurrentStep(ONBOARDING_STEPS.BANK_DETAILS)}
+                  onBack={() => handleStepBack(ONBOARDING_STEPS.BANK_DETAILS)}
                 />
               )}
 
               {currentStep === ONBOARDING_STEPS.CATALOG_AND_PRICE && (
                 <CatalogStep
+                  data={contextData?.catalog ? {
+                    catalog: contextData.catalog,
+                    priceFloors: contextData.priceFloors || []
+                  } : undefined}
                   onNext={() => handleStepNext(ONBOARDING_STEPS.REVIEW)}
-                  onBack={() => setCurrentStep(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
+                  onBack={() => handleStepBack(ONBOARDING_STEPS.COMPLIANCE_DOCS)}
                 />
               )}
 
@@ -255,7 +274,7 @@ export default function Onboarding() {
                 <ReviewStep
                   data={contextData}
                   onSubmit={handleReviewSubmit}
-                  onBack={() => setCurrentStep(ONBOARDING_STEPS.CATALOG_AND_PRICE)}
+                  onBack={() => handleStepBack(ONBOARDING_STEPS.CATALOG_AND_PRICE)}
                   isSubmitting={saving}
                 />
               )}
