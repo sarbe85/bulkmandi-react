@@ -1,6 +1,5 @@
 import AdminDashboard from "@/features/admin/pages/Dashboard";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import SellerDashboard from "@/features/seller/pages/Dashboard";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -13,8 +12,14 @@ const Dashboard = () => {
     // Redirect if user is not authenticated
     if (!isAuthenticated()) {
       navigate("/auth/login");
+      return;
     }
-  }, [isAuthenticated, navigate]);
+
+    // Redirect to role-specific dashboards
+    if (user?.role === "SELLER") {
+      navigate("/seller/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate, user?.role]);
 
   if (!user) {
     return null;
@@ -25,7 +30,8 @@ const Dashboard = () => {
     case "ADMIN":
       return <AdminDashboard />;
     case "SELLER":
-      return <SellerDashboard />;
+      // Will redirect via useEffect
+      return null;
     case "BUYER":
       return (
         <div className="container mx-auto p-6">
@@ -41,7 +47,7 @@ const Dashboard = () => {
         </div>
       );
     default:
-      return <SellerDashboard />;
+      return null;
   }
 };
 
