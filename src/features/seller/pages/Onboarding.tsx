@@ -26,12 +26,13 @@ export default function Onboarding() {
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(ONBOARDING_STEPS.ORG_KYC);
   const [saving, setSaving] = useState(false);
-  const isInitialMount = useRef(true);
+  const manualNavigationTarget = useRef<OnboardingStep | null>(null);
+  const hasInitialized = useRef(false);
 
   // ========== INITIALIZE FROM SERVER DATA (ONLY ON FIRST LOAD) ==========
   useEffect(() => {
-    // Only auto-calculate step on initial mount, not after manual navigation + refresh
-    if (onboarding && !contextLoading && isInitialMount.current) {
+    // Only auto-calculate step on initial load, never after manual navigation
+    if (onboarding && !contextLoading && !hasInitialized.current && !manualNavigationTarget.current) {
       const completedSteps = onboarding.completedSteps || [];
       
       // Find first incomplete step, or go to REVIEW if all complete
@@ -39,24 +40,35 @@ export default function Onboarding() {
         step => !completedSteps.includes(step)
       );
       
-      setCurrentStep(firstIncompleteStep || ONBOARDING_STEPS.REVIEW);
-      console.log(`[Onboarding] Initial step set to: ${firstIncompleteStep || ONBOARDING_STEPS.REVIEW}`);
-      isInitialMount.current = false;
+      const targetStep = firstIncompleteStep || ONBOARDING_STEPS.REVIEW;
+      setCurrentStep(targetStep);
+      console.log(`[Onboarding] Initial step set to: ${targetStep}`);
+      hasInitialized.current = true;
+    }
+    
+    // If there's a manual navigation target, use it and clear the ref
+    if (manualNavigationTarget.current) {
+      console.log(`[Onboarding] Applying manual navigation to: ${manualNavigationTarget.current}`);
+      setCurrentStep(manualNavigationTarget.current);
+      manualNavigationTarget.current = null;
     }
   }, [onboarding, contextLoading]);
 
   // ========== STEP NAVIGATION ==========
   const handleStepNext = async (targetStep: OnboardingStep) => {
     console.log(`[Onboarding] Manual navigation to: ${targetStep}`);
-    // Set step first, then refresh data
-    // The useEffect won't override because isInitialMount is now false
+    // Store the target step in ref so useEffect knows to apply it after refresh
+    manualNavigationTarget.current = targetStep;
+    // Immediately update UI
     setCurrentStep(targetStep);
-    await refreshData(); // Refresh to get latest completed steps
+    // Refresh data in background
+    await refreshData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStepBack = (targetStep: OnboardingStep) => {
     console.log(`[Onboarding] Navigate back to: ${targetStep}`);
+    manualNavigationTarget.current = targetStep;
     setCurrentStep(targetStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
