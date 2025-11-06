@@ -200,57 +200,31 @@ export default function ComplianceDocsStep({ data, onNext, onBack }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Compliance Documents</h3>
-        <p className="text-sm text-muted-foreground mb-6">Upload required compliance documents</p>
-
-        <div className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <h3 className="text-base font-semibold text-foreground">Compliance Documents</h3>
+        
+        <div className="space-y-1.5">
           {COMPLIANCE_DOC_TYPES.map((doc) => {
             const isUploading = uploadingFiles[doc.type] || false;
             const hasFile = uploadedDocs.has(doc.type);
             const uploadedDoc = uploadedDocs.get(doc.type);
 
             return (
-              <div key={doc.type} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <Label className="text-base">
-                      {doc.label} {doc.required && <span className="text-destructive">*</span>}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {doc.required ? 'Required' : 'Optional'} • PDF, JPG, PNG, DOC, DOCX (Max 5MB)
-                    </p>
-                  </div>
-                </div>
-
-                {hasFile && uploadedDoc && (
-                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200">
-                    <p className="text-sm font-medium text-green-800 mb-1">
-                      <CheckCircle className="inline h-4 w-4 mr-1" />
-                      Uploaded
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-green-600" />
-                        <span className="text-sm text-green-700">{uploadedDoc.fileName}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={() => removeDocument(doc.type)}
-                        disabled={isSubmitting || isUploading}
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+              <div key={doc.type} className="flex items-center gap-2 border rounded-md p-2">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm font-medium">
+                    {doc.label} {doc.required && <span className="text-destructive">*</span>}
+                  </Label>
+                  {hasFile && uploadedDoc ? (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-success flex-shrink-0" />
+                      <span className="text-xs text-success truncate">{uploadedDoc.fileName}</span>
                     </div>
-                    <p className="text-xs text-green-600 mt-1">
-                      {new Date(uploadedDoc.uploadedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-xs text-muted-foreground">PDF, JPG, PNG, DOC (Max 5MB)</p>
+                  )}
+                </div>
 
                 <input
                   ref={(el) => {
@@ -262,27 +236,40 @@ export default function ComplianceDocsStep({ data, onNext, onBack }: Props) {
                   style={{ display: 'none' }}
                 />
 
-                <div className="mt-3">
+                <div className="flex items-center gap-1">
+                  {hasFile && uploadedDoc && (
+                    <Button
+                      type="button"
+                      onClick={() => removeDocument(doc.type)}
+                      disabled={isSubmitting || isUploading}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     onClick={() => triggerFileInput(doc.type)}
                     disabled={isSubmitting || isUploading}
                     variant={hasFile ? 'outline' : 'default'}
                     size="sm"
+                    className="h-8 text-xs px-3"
                   >
                     {isUploading ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Uploading
                       </>
                     ) : hasFile ? (
                       <>
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="h-3 w-3 mr-1" />
                         Replace
                       </>
                     ) : (
                       <>
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="h-3 w-3 mr-1" />
                         Upload
                       </>
                     )}
@@ -292,27 +279,25 @@ export default function ComplianceDocsStep({ data, onNext, onBack }: Props) {
             );
           })}
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Declarations</h3>
+      <div className="border-t pt-3 space-y-2">
+        <h3 className="text-sm font-semibold text-foreground">Declarations</h3>
 
-        <div className="space-y-4">
+        <div className="space-y-2">
           <Controller
             control={control}
             name="warrantyAssurance"
             render={({ field }) => (
-              <div>
-                <label className="flex items-start gap-3">
-                  <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mt-1" />
-                  <span className="text-sm">
-                    <strong>Warranty & Assurance:</strong> All information provided is accurate and complete
-                  </span>
-                </label>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mt-0.5" />
+                <span className="text-xs">
+                  <strong className="font-medium">Warranty & Assurance:</strong> All information provided is accurate and complete
+                </span>
                 {errors.warrantyAssurance && (
-                  <p className="text-xs text-destructive mt-1 ml-7">{errors.warrantyAssurance.message}</p>
+                  <p className="text-xs text-destructive">{errors.warrantyAssurance.message}</p>
                 )}
-              </div>
+              </label>
             )}
           />
 
@@ -320,17 +305,15 @@ export default function ComplianceDocsStep({ data, onNext, onBack }: Props) {
             control={control}
             name="termsAccepted"
             render={({ field }) => (
-              <div>
-                <label className="flex items-start gap-3">
-                  <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mt-1" />
-                  <span className="text-sm">
-                    <strong>Terms & Conditions:</strong> I agree to the terms and conditions of this platform
-                  </span>
-                </label>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mt-0.5" />
+                <span className="text-xs">
+                  <strong className="font-medium">Terms & Conditions:</strong> I agree to the terms and conditions
+                </span>
                 {errors.termsAccepted && (
-                  <p className="text-xs text-destructive mt-1 ml-7">{errors.termsAccepted.message}</p>
+                  <p className="text-xs text-destructive">{errors.termsAccepted.message}</p>
                 )}
-              </div>
+              </label>
             )}
           />
 
@@ -338,30 +321,28 @@ export default function ComplianceDocsStep({ data, onNext, onBack }: Props) {
             control={control}
             name="amlCompliance"
             render={({ field }) => (
-              <div>
-                <label className="flex items-start gap-3">
-                  <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mt-1" />
-                  <span className="text-sm">
-                    <strong>AML Compliance:</strong> I comply with Anti-Money Laundering and KYC regulations
-                  </span>
-                </label>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mt-0.5" />
+                <span className="text-xs">
+                  <strong className="font-medium">AML Compliance:</strong> I comply with Anti-Money Laundering regulations
+                </span>
                 {errors.amlCompliance && (
-                  <p className="text-xs text-destructive mt-1 ml-7">{errors.amlCompliance.message}</p>
+                  <p className="text-xs text-destructive">{errors.amlCompliance.message}</p>
                 )}
-              </div>
+              </label>
             )}
           />
         </div>
-      </Card>
+      </div>
 
-      <div className="flex items-center justify-between pt-4">
-        <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting}>
+      <div className="flex items-center justify-between pt-3 border-t">
+        <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting} size="sm" className="h-9 text-sm">
           ← Back
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} size="sm" className="h-9 text-sm">
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
               Saving...
             </>
           ) : (
@@ -370,8 +351,8 @@ export default function ComplianceDocsStep({ data, onNext, onBack }: Props) {
         </Button>
       </div>
 
-      <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-        <Lock className="h-4 w-4" />
+      <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5 pt-2">
+        <Lock className="h-3 w-3" />
         Your compliance data is encrypted and securely processed
       </p>
     </form>

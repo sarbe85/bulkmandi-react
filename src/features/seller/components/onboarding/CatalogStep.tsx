@@ -224,120 +224,94 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Catalog & Commercials</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Select product categories, grades, pricing and logistics preferences
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Categories Section */}
-        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-              1
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Product Categories</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Select categories you offer</p>
-            </div>
-          </div>
+        <div className="space-y-3">
+          <h3 className="text-base font-semibold text-foreground">Product Categories</h3>
 
-          <div className="mb-6">
-            <Label className="mb-3 block text-gray-700 dark:text-gray-300">Select Categories to Offer</Label>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map((cat) => {
-                const isSelected = selectedCategories.some((c) => c.category === cat);
-                return (
-                  <Button
-                    key={cat}
-                    type="button"
-                    variant={isSelected ? 'default' : 'outline'}
-                    onClick={() => (isSelected ? handleRemoveCategory(cat) : handleAddCategory(cat))}
-                    className="transition-all"
-                  >
-                    {cat} {isSelected && '✓'}
-                  </Button>
-                );
-              })}
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((cat) => {
+              const isSelected = selectedCategories.some((c) => c.category === cat);
+              return (
+                <Button
+                  key={cat}
+                  type="button"
+                  variant={isSelected ? 'default' : 'outline'}
+                  onClick={() => (isSelected ? handleRemoveCategory(cat) : handleAddCategory(cat))}
+                  size="sm"
+                  className="h-8 text-xs"
+                >
+                  {cat} {isSelected && '✓'}
+                </Button>
+              );
+            })}
           </div>
 
           {selectedCategories.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {selectedCategories.map((cat) => (
                 <div
                   key={cat.id || cat.category}
-                  className="border border-gray-200 dark:border-slate-600 rounded-lg p-5 space-y-4 bg-gray-50 dark:bg-slate-900/50"
+                  className="border rounded-md p-3 space-y-2"
                 >
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                        ✓ Selected
-                      </Badge>
-                      <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{cat.category}</h3>
-                    </div>
+                    <h3 className="font-medium text-sm text-foreground">{cat.category}</h3>
                     <Button
                       type="button"
                       onClick={() => handleRemoveCategory(cat.category)}
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="h-7 w-7 p-0 text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
 
-                  {/* Grades */}
-                  <div className="space-y-3">
-                    <Label className="font-semibold text-gray-700 dark:text-gray-300">Select Grades</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORY_GRADES[cat.category]?.map((grade) => {
-                        const isGradeSelected = cat.grades.includes(grade);
-                        return (
-                          <Button
-                            key={grade}
-                            type="button"
-                            size="sm"
-                            variant={isGradeSelected ? 'default' : 'outline'}
-                            onClick={() =>
-                              isGradeSelected
-                                ? handleRemoveGrade(cat.category, grade)
-                                : handleAddGrade(cat.category, grade)
-                            }
-                          >
-                            {grade} {isGradeSelected && '✓'}
-                          </Button>
-                        );
-                      })}
-                    </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORY_GRADES[cat.category]?.map((grade) => {
+                      const isGradeSelected = cat.grades.includes(grade);
+                      return (
+                        <Button
+                          key={grade}
+                          type="button"
+                          size="sm"
+                          variant={isGradeSelected ? 'default' : 'outline'}
+                          onClick={() =>
+                            isGradeSelected
+                              ? handleRemoveGrade(cat.category, grade)
+                              : handleAddGrade(cat.category, grade)
+                          }
+                          className="h-7 text-xs px-2"
+                        >
+                          {grade} {isGradeSelected && '✓'}
+                        </Button>
+                      );
+                    })}
                   </div>
 
-                  {/* MOQ & Lead Time */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-gray-700 dark:text-gray-300">MOQ per Order (MT)</Label>
+                      <Label className="text-xs">MOQ (MT)</Label>
                       <Input
                         type="number"
                         min="1"
-                        placeholder="e.g., 100"
+                        placeholder="100"
                         value={cat.moqPerOrder}
                         onChange={(e) => handleUpdateCategory(cat.category, 'moqPerOrder', parseInt(e.target.value))}
-                        className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                        className="mt-1 h-8 text-sm"
                       />
                     </div>
 
                     <div>
-                      <Label className="text-gray-700 dark:text-gray-300">Standard Lead Time (days)</Label>
+                      <Label className="text-xs">Lead Time (days)</Label>
                       <Input
                         type="number"
                         min="1"
-                        placeholder="e.g., 7"
+                        placeholder="7"
                         value={cat.stdLeadTime}
                         onChange={(e) => handleUpdateCategory(cat.category, 'stdLeadTime', parseInt(e.target.value))}
-                        className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                        className="mt-1 h-8 text-sm"
                       />
                     </div>
                   </div>
@@ -347,31 +321,23 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
           )}
 
           {selectedCategories.length === 0 && (
-            <p className="text-yellow-600 dark:text-yellow-400 text-sm">⚠️ Select at least one category to continue</p>
+            <p className="text-xs text-warning">⚠️ Select at least one category to continue</p>
           )}
-        </Card>
+        </div>
 
         {/* Price Floors Section */}
-        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-              2
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Price Floors (Optional)</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Set minimum and maximum prices</p>
-            </div>
-          </div>
+        <div className="space-y-2 border-t pt-3">
+          <h3 className="text-base font-semibold text-foreground">Price Floors (Optional)</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end">
-            <div className="md:col-span-4">
-              <Label className="text-gray-700 dark:text-gray-300">Category</Label>
+          <div className="grid grid-cols-12 gap-2 items-end">
+            <div className="col-span-4">
+              <Label className="text-xs">Category</Label>
               <select
-                className="w-full mt-2 px-3 py-2 border rounded-md dark:bg-slate-900 dark:border-slate-600 dark:text-gray-200"
+                className="w-full mt-1 px-2 py-1.5 text-sm border rounded-md h-8"
                 value={newPrice.category}
                 onChange={(e) => setNewPrice({ ...newPrice, category: e.target.value })}
               >
-                <option value="">Select category</option>
+                <option value="">Select</option>
                 {selectedCategories.map((c) => (
                   <option key={c.category} value={c.category}>
                     {c.category}
@@ -380,76 +346,68 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
               </select>
             </div>
 
-            <div className="md:col-span-3">
-              <Label className="text-gray-700 dark:text-gray-300">Min Price (₹/MT)</Label>
+            <div className="col-span-3">
+              <Label className="text-xs">Min (₹/MT)</Label>
               <Input
                 type="number"
                 min="0"
-                placeholder="e.g., 45000"
+                placeholder="45000"
                 value={newPrice.minPrice}
                 onChange={(e) => setNewPrice({ ...newPrice, minPrice: parseFloat(e.target.value) })}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                className="mt-1 h-8 text-sm"
               />
             </div>
 
-            <div className="md:col-span-3">
-              <Label className="text-gray-700 dark:text-gray-300">Max Price (₹/MT)</Label>
+            <div className="col-span-3">
+              <Label className="text-xs">Max (₹/MT)</Label>
               <Input
                 type="number"
                 min="0"
-                placeholder="e.g., 55000"
+                placeholder="55000"
                 value={newPrice.maxPrice}
                 onChange={(e) => setNewPrice({ ...newPrice, maxPrice: parseFloat(e.target.value) })}
-                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                className="mt-1 h-8 text-sm"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <Button type="button" onClick={handleAddPriceFloor} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
+            <div className="col-span-2">
+              <Button type="button" onClick={handleAddPriceFloor} size="sm" className="w-full h-8 text-xs">
+                <Plus className="h-3 w-3 mr-1" />
                 Add
               </Button>
             </div>
           </div>
 
           {priceFloors.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {priceFloors.map((pf, index) => (
                 <div
                   key={index}
-                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-600 rounded-lg"
+                  className="flex justify-between items-center p-2 border rounded-md"
                 >
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {pf.category}: ₹{pf.minPrice } - ₹{pf.maxPrice } per MT
+                  <p className="text-xs font-medium">
+                    {pf.category}: ₹{pf.minPrice} - ₹{pf.maxPrice} per MT
                   </p>
                   <Button
                     type="button"
                     onClick={() => handleRemovePriceFloor(index)}
                     variant="ghost"
                     size="sm"
-                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="h-6 w-6 p-0 text-destructive"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
               ))}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Logistics Section */}
-        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-              3
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Logistics Preferences</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Choose your delivery preferences</p>
-            </div>
-          </div>
+        <div className="space-y-2 border-t pt-3">
+          <h3 className="text-base font-semibold text-foreground">Logistics Preferences</h3>
 
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-900/50 cursor-pointer">
               <input
                 type="checkbox"
@@ -482,34 +440,23 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
               </Label>
             </div>
           </div>
-        </Card>
-
-        {/* Form Actions */}
-        <div className="flex gap-3">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onBack} 
-            disabled={isSubmitting}
-            className="px-8"
-          >
-            Back
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting} 
-            className="flex-1 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white shadow-md"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save & Continue'
-            )}
-          </Button>
         </div>
+
+        <div className="flex items-center justify-between pt-3 border-t">
+        <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting} size="sm" className="h-9 text-sm">
+          ← Back
+        </Button>
+        <Button type="submit" disabled={isSubmitting} size="sm" className="h-9 text-sm">
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>Save & Continue →</>
+          )}
+        </Button>
+      </div>
       </form>
     </div>
   );

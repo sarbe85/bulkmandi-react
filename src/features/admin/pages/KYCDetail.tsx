@@ -360,7 +360,7 @@ export default function KYCDetail() {
                       <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                         <div className="flex items-center gap-2 text-sm">
                           <FileText className="h-4 w-4 text-gray-500" />
-                          <span>{doc.type.replace(/_/g, ' ')}</span>
+                          <span>{doc.docType.replace(/_/g, ' ')}</span>
                         </div>
                         <Button
                           size="sm"
@@ -391,7 +391,7 @@ export default function KYCDetail() {
                       <div className="flex items-center gap-3">
                         <FileText className="h-5 w-5 text-gray-500" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{doc.type.replace(/_/g, ' ')}</p>
+                          <p className="text-sm font-medium text-gray-900">{doc.docType.replace(/_/g, ' ')}</p>
                           <p className="text-xs text-gray-600">{doc.fileName}</p>
                         </div>
                       </div>

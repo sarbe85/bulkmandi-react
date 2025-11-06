@@ -328,105 +328,125 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Bank Account Details & Documents</h3>
-
-        <div className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Bank Account Information</h3>
+        
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="accountNumber">Account Number *</Label>
+            <Label htmlFor="accountNumber" className="text-sm">Account Number *</Label>
             <Input
               {...register('accountNumber')}
               id="accountNumber"
               placeholder="Enter account number"
               disabled={isSubmitting}
-              className="mt-1"
+              className="mt-1.5 h-9 text-sm"
             />
             {errors.accountNumber && (
-              <p className="text-sm text-destructive mt-1">{errors.accountNumber.message}</p>
+              <p className="text-xs text-destructive mt-1">{errors.accountNumber.message}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="accountHolderName">Account Holder Name *</Label>
+            <Label htmlFor="accountHolderName" className="text-sm">Account Holder Name *</Label>
             <Input
               {...register('accountHolderName')}
               id="accountHolderName"
               placeholder="As per bank records"
               disabled={isSubmitting}
-              className="mt-1"
+              className="mt-1.5 h-9 text-sm"
             />
             {errors.accountHolderName && (
-              <p className="text-sm text-destructive mt-1">{errors.accountHolderName.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="ifsc">IFSC Code *</Label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                {...register('ifsc')}
-                id="ifsc"
-                placeholder="e.g., SBIN0001234"
-                disabled={isSubmitting}
-                className="flex-1"
-              />
-              {isValidatingIfsc ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={handleValidateIfsc}
-                  disabled={isSubmitting || !ifsc}
-                  variant="outline"
-                >
-                  Validate
-                </Button>
-              )}
-            </div>
-            {ifscValidated && (
-              <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
-                <CheckCircle className="h-4 w-4" /> Validated
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label>Bank Name</Label>
-            <Input {...register('bankName')} disabled className="mt-1 bg-muted" />
-          </div>
-
-          <div className="border rounded-lg p-4 bg-muted/50">
-            <Label className="text-base">Penny Drop Verification</Label>
-            <Button
-              type="button"
-              onClick={handlePennyDrop}
-              disabled={isPennyDropping || !accountNumber || !ifsc}
-              variant="outline"
-              className="w-full mt-2"
-            >
-              {isPennyDropping ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Verifying...
-                </>
-              ) : (
-                <>💰 Verify Bank Account</>
-              )}
-            </Button>
-            {pennyDropStatus === 'verified' && (
-              <p className="text-green-600 text-sm mt-1">✅ Account verified</p>
+              <p className="text-xs text-destructive mt-1">{errors.accountHolderName.message}</p>
             )}
           </div>
         </div>
-      </Card>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Bank Documents</h3>
+        <div className="grid grid-cols-4 gap-3 items-start">
+          <div>
+            <Label htmlFor="ifsc" className="text-sm">IFSC Code *</Label>
+            <Input
+              {...register('ifsc')}
+              id="ifsc"
+              placeholder="SBIN0001234"
+              disabled={isSubmitting}
+              className="mt-1.5 h-9 text-sm"
+            />
+            {errors.ifsc && <p className="text-xs text-destructive mt-1">{errors.ifsc.message}</p>}
+          </div>
 
-        <div className="space-y-4">
+          <div className="flex items-end">
+            <Button
+              type="button"
+              onClick={handleValidateIfsc}
+              disabled={isSubmitting || !ifsc || isValidatingIfsc}
+              variant="outline"
+              size="sm"
+              className="h-9 w-full text-sm"
+            >
+              {isValidatingIfsc ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Validate'}
+            </Button>
+          </div>
+
+          <div className={`${ifscValidated ? '' : 'hidden'}`}>
+            <Label className="text-sm">Bank Name</Label>
+            <Input {...register('bankName')} disabled className="mt-1.5 h-9 bg-muted text-sm" />
+          </div>
+
+          <div className={`${ifscValidated ? '' : 'hidden'}`}>
+            <Label className="text-sm">Branch</Label>
+            <Input value={ifscBankDetails?.branchName || ''} disabled className="mt-1.5 h-9 bg-muted text-sm" />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 pt-2">
+          <Label className="text-sm font-medium">Payout Method *</Label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="payoutMethod" value="RTGS" defaultChecked className="h-3.5 w-3.5" />
+              <span className="text-sm">RTGS</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="payoutMethod" value="NEFT" className="h-3.5 w-3.5" />
+              <span className="text-sm">NEFT</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="payoutMethod" value="UPI" className="h-3.5 w-3.5" />
+              <span className="text-sm">UPI</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="border-t pt-3 mt-2">
+          <Button
+            type="button"
+            onClick={handlePennyDrop}
+            disabled={isPennyDropping || !accountNumber || !ifsc}
+            variant="outline"
+            size="sm"
+            className="h-9 text-sm"
+          >
+            {isPennyDropping ? (
+              <>
+                <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              '💰 Verify Bank Account'
+            )}
+          </Button>
+          {pennyDropStatus === 'verified' && (
+            <p className="text-xs text-green-600 mt-1.5 flex items-center gap-1">
+              <CheckCircle className="h-3 w-3" /> Verified
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2 pt-2 border-t">
+        <h3 className="text-base font-semibold text-foreground mb-1">Bank Documents</h3>
+        
+        <div className="grid grid-cols-2 gap-2">
           {BANK_DOC_TYPES.map((doc) => {
             const docTypeEnum = doc.type as BankDocType;
             const isUploading = uploadingFiles[docTypeEnum] || false;
@@ -434,44 +454,32 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
             const uploadedDoc = uploadedDocs.get(docTypeEnum);
 
             return (
-              <div key={doc.type} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <Label className="text-base">
-                      {doc.label} {doc.required && <span className="text-destructive">*</span>}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {doc.required ? 'Required' : 'Optional'} • PDF, JPG, PNG (Max 5MB)
-                    </p>
-                  </div>
+              <div key={doc.type} className="border rounded-md p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm font-medium">
+                    {doc.label} {doc.required && <span className="text-destructive">*</span>}
+                  </Label>
+                  {hasFile && uploadedDoc && (
+                    <Button
+                      type="button"
+                      onClick={() => removeDocument(docTypeEnum)}
+                      disabled={isSubmitting || isUploading}
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
 
-                {hasFile && uploadedDoc && (
-                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200">
-                    <p className="text-sm font-medium text-green-800 mb-1">
-                      <CheckCircle className="inline h-4 w-4 mr-1" />
-                      Uploaded
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-green-600" />
-                        <span className="text-sm text-green-700">{uploadedDoc.fileName}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={() => removeDocument(docTypeEnum)}
-                        disabled={isSubmitting || isUploading}
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-xs text-green-600 mt-1">
-                      {new Date(uploadedDoc.uploadedAt).toLocaleDateString()}
-                    </p>
+                {hasFile && uploadedDoc ? (
+                  <div className="flex items-center gap-2 p-2 bg-success/10 rounded-md border border-success/20">
+                    <CheckCircle className="h-3.5 w-3.5 text-success flex-shrink-0" />
+                    <span className="text-xs text-success truncate flex-1">{uploadedDoc.fileName}</span>
                   </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground mb-2">PDF, JPG, PNG (Max 5MB)</p>
                 )}
 
                 <input
@@ -484,46 +492,45 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
                   style={{ display: 'none' }}
                 />
 
-                <div className="mt-3">
-                  <Button
-                    type="button"
-                    onClick={() => triggerFileInput(docTypeEnum)}
-                    disabled={isSubmitting || isUploading}
-                    variant={hasFile ? 'outline' : 'default'}
-                    size="sm"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : hasFile ? (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Replace
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  onClick={() => triggerFileInput(docTypeEnum)}
+                  disabled={isSubmitting || isUploading}
+                  variant={hasFile ? 'outline' : 'default'}
+                  size="sm"
+                  className="w-full h-8 text-xs mt-1"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : hasFile ? (
+                    <>
+                      <Upload className="h-3 w-3 mr-1" />
+                      Replace
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-3 w-3 mr-1" />
+                      Upload
+                    </>
+                  )}
+                </Button>
               </div>
             );
           })}
         </div>
-      </Card>
+      </div>
 
-      <div className="flex items-center justify-between pt-4">
-        <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting}>
+      <div className="flex items-center justify-between pt-3 border-t">
+        <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting} size="sm" className="h-9 text-sm">
           ← Back
         </Button>
-        <Button type="submit" disabled={!canSubmit || isSubmitting}>
+        <Button type="submit" disabled={!canSubmit || isSubmitting} size="sm" className="h-9 text-sm">
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
               Saving...
             </>
           ) : (
@@ -532,9 +539,9 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
         </Button>
       </div>
 
-      <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-        <Lock className="h-4 w-4" />
-        Your bank details are encrypted and securely processed
+      <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5 pt-2">
+        <Lock className="h-3 w-3" />
+        Your banking information is encrypted and securely stored
       </p>
     </form>
   );
