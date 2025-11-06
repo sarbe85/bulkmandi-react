@@ -1,3 +1,4 @@
+import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
@@ -69,7 +70,7 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
     formState: { errors },
     setValue,
     watch,
-  } = useForm({
+  } = useForm<CatalogFormData>({
     resolver: zodResolver(catalogSchema),
     defaultValues: {
       catalog: [],
@@ -83,6 +84,8 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
 
   useEffect(() => {
     if (data) {
+      console.log('🎯 CatalogStep received data:', data);
+
       if (data.catalog && data.catalog.length > 0) {
         setSelectedCategories(data.catalog.filter((c) => c.isSelected));
         setValue('catalog', data.catalog);
@@ -126,9 +129,7 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
   };
 
   const handleUpdateCategory = (category: string, field: keyof CatalogItem, value: any) => {
-    const updated = selectedCategories.map((c) =>
-      c.category === category ? { ...c, [field]: value } : c
-    );
+    const updated = selectedCategories.map((c) => (c.category === category ? { ...c, [field]: value } : c));
     setSelectedCategories(updated);
     setValue('catalog', updated);
   };
@@ -182,6 +183,7 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
   const onSubmit = async (formData: CatalogFormData) => {
     try {
       setIsSubmitting(true);
+
       if (selectedCategories.length === 0) {
         toast({
           title: 'No Categories Selected',
@@ -200,13 +202,17 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
         },
       };
 
+      console.log('📤 Saving catalog data:', catalogData);
       await onboardingService.updateCatalog(catalogData);
+
       toast({
         title: 'Success',
         description: 'Catalog and pricing updated successfully',
       });
+
       onNext();
     } catch (error: any) {
+      console.error('❌ Submit error:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to save catalog',
@@ -218,281 +224,293 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-6">
-      <Card className="p-6 md:p-8 dark:bg-slate-950 dark:border-slate-700">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Catalog & Commercials</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Select product categories, grades, pricing and logistics preferences
-          </p>
-        </div>
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Catalog & Commercials</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Select product categories, grades, pricing and logistics preferences
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Product Categories Section */}
-          <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-900/30">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
-                1
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Product Categories</h3>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Categories Section */}
+        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
+              1
             </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Product Categories</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Select categories you offer</p>
+            </div>
+          </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400">Select categories you offer</p>
-
+          <div className="mb-6">
+            <Label className="mb-3 block text-gray-700 dark:text-gray-300">Select Categories to Offer</Label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => {
                 const isSelected = selectedCategories.some((c) => c.category === cat);
                 return (
-                  <button
+                  <Button
                     key={cat}
                     type="button"
+                    variant={isSelected ? 'default' : 'outline'}
                     onClick={() => (isSelected ? handleRemoveCategory(cat) : handleAddCategory(cat))}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isSelected
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:border-blue-400'
-                    }`}
+                    className="transition-all"
                   >
                     {cat} {isSelected && '✓'}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
-
-            {selectedCategories.length === 0 && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">⚠️ Select at least one category to continue</p>
-            )}
-
-            {/* Category Details Section */}
-            {selectedCategories.length > 0 && (
-              <div className="space-y-4 mt-4 pt-4 border-t border-blue-200 dark:border-blue-900/30">
-                {selectedCategories.map((cat) => (
-                  <div key={cat.category} className="space-y-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{cat.category}</h4>
-                      <Button
-                        type="button"
-                        onClick={() => handleRemoveCategory(cat.category)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-
-                    {/* Grades */}
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-slate-700 dark:text-slate-300">Select Grades</p>
-                      <div className="flex flex-wrap gap-1">
-                        {CATEGORY_GRADES[cat.category]?.map((grade) => {
-                          const isGradeSelected = cat.grades.includes(grade);
-                          return (
-                            <button
-                              key={grade}
-                              type="button"
-                              onClick={() =>
-                                isGradeSelected
-                                  ? handleRemoveGrade(cat.category, grade)
-                                  : handleAddGrade(cat.category, grade)
-                              }
-                              className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                                isGradeSelected
-                                  ? 'bg-green-600 text-white'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                              }`}
-                            >
-                              {grade} {isGradeSelected && '✓'}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* MOQ & Lead Time */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">MOQ per Order (MT)</Label>
-                        <Input
-                          type="number"
-                          value={cat.moqPerOrder}
-                          onChange={(e) =>
-                            handleUpdateCategory(cat.category, 'moqPerOrder', parseInt(e.target.value))
-                          }
-                          className="h-8 text-sm dark:bg-slate-800 dark:border-slate-600"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Lead Time (days)</Label>
-                        <Input
-                          type="number"
-                          value={cat.stdLeadTime}
-                          onChange={(e) =>
-                            handleUpdateCategory(cat.category, 'stdLeadTime', parseInt(e.target.value))
-                          }
-                          className="h-8 text-sm dark:bg-slate-800 dark:border-slate-600"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Price Floors Section */}
-          <div className="space-y-4 p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-900/30">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">
-                2
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Price Floors (Optional)</h3>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-400">Set minimum and maximum prices</p>
-
-            <div className="space-y-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Category</Label>
-                  <select
-                    value={newPrice.category}
-                    onChange={(e) => setNewPrice({ ...newPrice, category: e.target.value })}
-                    className="w-full h-8 text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded px-2"
-                  >
-                    <option value="">Select category</option>
-                    {selectedCategories.map((c) => (
-                      <option key={c.category} value={c.category}>
-                        {c.category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Min Price (₹/MT)</Label>
-                  <Input
-                    type="number"
-                    value={newPrice.minPrice}
-                    onChange={(e) => setNewPrice({ ...newPrice, minPrice: parseFloat(e.target.value) })}
-                    className="h-8 text-sm dark:bg-slate-800 dark:border-slate-600"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Max Price (₹/MT)</Label>
-                  <Input
-                    type="number"
-                    value={newPrice.maxPrice}
-                    onChange={(e) => setNewPrice({ ...newPrice, maxPrice: parseFloat(e.target.value) })}
-                    className="h-8 text-sm dark:bg-slate-800 dark:border-slate-600"
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="button"
-                onClick={handleAddPriceFloor}
-                className="w-full h-8 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add Price Floor
-              </Button>
-            </div>
-
-            {priceFloors.length > 0 && (
-              <div className="space-y-2">
-                {priceFloors.map((pf, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700"
-                  >
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {pf.category}: ₹{pf.minPrice } - ₹{pf.maxPrice } per MT
-                    </p>
+          {selectedCategories.length > 0 && (
+            <div className="space-y-4">
+              {selectedCategories.map((cat) => (
+                <div
+                  key={cat.id || cat.category}
+                  className="border border-gray-200 dark:border-slate-600 rounded-lg p-5 space-y-4 bg-gray-50 dark:bg-slate-900/50"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                        ✓ Selected
+                      </Badge>
+                      <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{cat.category}</h3>
+                    </div>
                     <Button
                       type="button"
-                      onClick={() => handleRemovePriceFloor(index)}
+                      onClick={() => handleRemoveCategory(cat.category)}
                       variant="ghost"
                       size="sm"
-                      className="text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
-                      <X className="w-3 h-3" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
+
+                  {/* Grades */}
+                  <div className="space-y-3">
+                    <Label className="font-semibold text-gray-700 dark:text-gray-300">Select Grades</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {CATEGORY_GRADES[cat.category]?.map((grade) => {
+                        const isGradeSelected = cat.grades.includes(grade);
+                        return (
+                          <Button
+                            key={grade}
+                            type="button"
+                            size="sm"
+                            variant={isGradeSelected ? 'default' : 'outline'}
+                            onClick={() =>
+                              isGradeSelected
+                                ? handleRemoveGrade(cat.category, grade)
+                                : handleAddGrade(cat.category, grade)
+                            }
+                          >
+                            {grade} {isGradeSelected && '✓'}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* MOQ & Lead Time */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-gray-700 dark:text-gray-300">MOQ per Order (MT)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="e.g., 100"
+                        value={cat.moqPerOrder}
+                        onChange={(e) => handleUpdateCategory(cat.category, 'moqPerOrder', parseInt(e.target.value))}
+                        className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-gray-700 dark:text-gray-300">Standard Lead Time (days)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="e.g., 7"
+                        value={cat.stdLeadTime}
+                        onChange={(e) => handleUpdateCategory(cat.category, 'stdLeadTime', parseInt(e.target.value))}
+                        className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedCategories.length === 0 && (
+            <p className="text-yellow-600 dark:text-yellow-400 text-sm">⚠️ Select at least one category to continue</p>
+          )}
+        </Card>
+
+        {/* Price Floors Section */}
+        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
+              2
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Price Floors (Optional)</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Set minimum and maximum prices</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end">
+            <div className="md:col-span-4">
+              <Label className="text-gray-700 dark:text-gray-300">Category</Label>
+              <select
+                className="w-full mt-2 px-3 py-2 border rounded-md dark:bg-slate-900 dark:border-slate-600 dark:text-gray-200"
+                value={newPrice.category}
+                onChange={(e) => setNewPrice({ ...newPrice, category: e.target.value })}
+              >
+                <option value="">Select category</option>
+                {selectedCategories.map((c) => (
+                  <option key={c.category} value={c.category}>
+                    {c.category}
+                  </option>
                 ))}
-              </div>
+              </select>
+            </div>
+
+            <div className="md:col-span-3">
+              <Label className="text-gray-700 dark:text-gray-300">Min Price (₹/MT)</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="e.g., 45000"
+                value={newPrice.minPrice}
+                onChange={(e) => setNewPrice({ ...newPrice, minPrice: parseFloat(e.target.value) })}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <Label className="text-gray-700 dark:text-gray-300">Max Price (₹/MT)</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="e.g., 55000"
+                value={newPrice.maxPrice}
+                onChange={(e) => setNewPrice({ ...newPrice, maxPrice: parseFloat(e.target.value) })}
+                className="mt-2 dark:bg-slate-900 dark:border-slate-600"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Button type="button" onClick={handleAddPriceFloor} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add
+              </Button>
+            </div>
+          </div>
+
+          {priceFloors.length > 0 && (
+            <div className="space-y-2">
+              {priceFloors.map((pf, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-600 rounded-lg"
+                >
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {pf.category}: ₹{pf.minPrice } - ₹{pf.maxPrice } per MT
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => handleRemovePriceFloor(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Logistics Section */}
+        <Card className="p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
+              3
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Logistics Preferences</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Choose your delivery preferences</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-900/50 cursor-pointer">
+              <input
+                type="checkbox"
+                id="usePlatform3PL"
+                onChange={(e) => setValue('usePlatform3PL', e.target.checked)}
+                defaultChecked={watch('usePlatform3PL')}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="usePlatform3PL" className="cursor-pointer flex-1 font-medium text-gray-900 dark:text-white">
+                Use Platform 3PL Services
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-normal mt-1">
+                  Allow platform to arrange logistics and shipping
+                </p>
+              </Label>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-900/50 cursor-pointer">
+              <input
+                type="checkbox"
+                id="selfPickup"
+                onChange={(e) => setValue('selfPickupAllowed', e.target.checked)}
+                defaultChecked={watch('selfPickupAllowed')}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="selfPickup" className="cursor-pointer flex-1 font-medium text-gray-900 dark:text-white">
+                Allow Self Pickup
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-normal mt-1">
+                  Buyers can arrange their own pickup from your location
+                </p>
+              </Label>
+            </div>
+          </div>
+        </Card>
+
+        {/* Form Actions */}
+        <div className="flex gap-3">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onBack} 
+            disabled={isSubmitting}
+            className="px-8"
+          >
+            Back
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="flex-1 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white shadow-md"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save & Continue'
             )}
-          </div>
-
-          {/* Logistics Section */}
-          <div className="space-y-4 p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-900/30">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center">
-                3
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Logistics Preferences</h3>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-400">Choose your delivery preferences</p>
-
-            <div className="space-y-3">
-              <label className="flex items-start gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-900 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={watch('usePlatform3PL')}
-                  onChange={(e) => setValue('usePlatform3PL', e.target.checked)}
-                  className="w-4 h-4 mt-0.5"
-                />
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Use Platform 3PL Services</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Allow platform to arrange logistics and shipping</p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-900 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={watch('selfPickupAllowed')}
-                  onChange={(e) => setValue('selfPickupAllowed', e.target.checked)}
-                  className="w-4 h-4 mt-0.5"
-                />
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Allow Self Pickup</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Buyers can arrange their own pickup from your location</p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <Button
-              type="button"
-              onClick={onBack}
-              variant="outline"
-              className="flex-1 h-10 text-sm font-semibold"
-            >
-              ← Back
-            </Button>
-            <Button
-              type="submit"
-              disabled={selectedCategories.length === 0 || isSubmitting}
-              className="flex-1 h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  Save & Continue →
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Card>
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
