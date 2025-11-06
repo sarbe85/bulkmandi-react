@@ -1,29 +1,33 @@
-import apiClient from "@/api/api.client";
-import { BankDetails, bankDetailsSchema, OrgKycData } from "../schemas/onboarding.schema";
-import { CatalogData, OnboardingResponse, SubmitOnboardingResponse } from "../types/onboarding.types";
+import apiClient from '@/api/api.client';
+import { BankDetails, OrgKycData } from '../schemas/onboarding.schema';
+import { CatalogData, DocumentUpload, OnboardingResponse, SubmitOnboardingResponse } from '../types/onboarding.types';
 
-interface FileWithDocType {
-  file: File;
+// ✅ File upload response interface - returned from Phase 1
+interface FileUploadResponse {
   docType: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status: string;
 }
 
 class OnboardingService {
-  private baseUrl = "/organizations/my-organization/onboarding";
+  private baseUrl = '/organizations/my-organization/onboarding';
 
   /**
    * API: Get Onboarding Status
    */
   async getOnboardingStatus(): Promise<OnboardingResponse> {
     try {
-      const response = await apiClient.get("/organizations/my-organization/onboarding");
+      const response = await apiClient.get(this.baseUrl);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to get onboarding status");
+      throw new Error(error.response?.data?.message || 'Failed to get onboarding status');
     }
   }
 
   /**
-   * API 1: Update Organization KYC
+   * API: Update Organization KYC
    */
   async updateOrgKYC(data: OrgKycData): Promise<OnboardingResponse> {
     try {
@@ -41,187 +45,215 @@ class OnboardingService {
           city: plant.city,
           state: plant.state,
           pin: plant.pincode || plant.pin,
-          country: plant.country || "India",
+          country: plant.country || 'India',
         })),
         primaryContact: {
           name: data.primaryContact.name,
           email: data.primaryContact.email,
           mobile: data.primaryContact.mobile,
-          role: data.primaryContact.role || "CEO",
+          role: data.primaryContact.role || 'CEO',
         },
       };
 
-      console.log("📤 Sending payload to backend:", payload);
       const response = await apiClient.put(`${this.baseUrl}/kyc`, payload);
       return response.data;
     } catch (error: any) {
-      console.error("❌ Real API Error:", error.message);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Failed to update organization KYC";
-      throw new Error(errorMessage);
+      throw new Error(error.response?.data?.message || 'Failed to update organization KYC');
     }
   }
 
-   async uploadSingleDocument(file: File, docType: string): Promise<{ fileName: string; fileUrl: string }> {
-    const formData = new FormData();
-    formData.append('document', file);
-    formData.append('docType', docType);
-    const response = await apiClient.post(`${this.baseUrl}/documents/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data; // expected { fileName, fileUrl }
-  }
+  // ===========================
+  // PHASE 1: FILE UPLOAD (No DB)
+  // ===========================
 
-  // General delete function
-  async deleteDocument(docType: string): Promise<{ message: string }> {
-    const response = await apiClient.delete(`${this.baseUrl}/documents/${docType}`);
-    return response.data; // expected { message }
+  /**
+   * ✅ PHASE 1: Upload Single Document (Storage Only - No DB Update)
+   * Returns file metadata for frontend to cache in state
+   */
+  async uploadSingleDocument(
+    file: File,
+    docType: string
+  ): Promise<FileUploadResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('docType', docType);
+
+      console.log(`📤 Phase 1: Upload file to storage (NO DB update) - ${docType}`);
+
+      const response = await apiClient.post(
+        `${this.baseUrl}/documents/upload`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+
+      console.log(`✅ File uploaded: ${file.name}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Upload error:', error);
+      throw new Error(error.response?.data?.message || 'Failed to upload file');
+    }
   }
 
   /**
-   * ✅ MODIFIED: Update Bank Details Only (No files - files uploaded separately)
+   * ✅ PHASE 1: Delete Document from Storage (No DB Update)
    */
-  async updateBankDetailsOnly(bankData: BankDetails): Promise<OnboardingResponse> {
-    console.log("📤 updateBankDetailsOnly called with:", bankData);
+  async deleteDocument(docType: string): Promise<{ message: string }> {
     try {
-      // ✅ VALIDATION: Parse and validate data first
-      const validatedData = bankDetailsSchema.parse(bankData);
+      console.log(`🗑️ Phase 1: Delete from storage (NO DB update) - ${docType}`);
 
-      const payload = {
-        accountNumber: validatedData.accountNumber,
-        ifsc: validatedData.ifsc,
-        bankName: validatedData.bankName,
-        accountHolderName: validatedData.accountHolderName,
-        pennyDropStatus: validatedData.pennyDropStatus || "PENDING",
-        pennyDropScore: validatedData.pennyDropScore || 0,
-      };
-
-      console.log("📤 Sending bank details to backend...");
-      const response = await apiClient.put(`${this.baseUrl}/bank-details`, payload);
-      console.log("✅ Bank details updated successfully", response.data);
-
-      // ✅ VALIDATION: Check response structure before parsing
-      if (!response.data) {
-        throw new Error("Empty response from server");
-      }
+      const response = await apiClient.delete(
+        `${this.baseUrl}/documents/${docType}`
+      );
 
       return response.data;
     } catch (error: any) {
-      console.error("❌ updateBankDetailsOnly error:", error);
-      if (error.response) {
-        throw new Error(error.response.data?.message || error.response.statusText || "Server error");
-      }
-      throw new Error(error.message || "Failed to update bank details");
+      throw new Error(error.response?.data?.message || 'Failed to delete document');
     }
   }
 
-   
-async updateComplianceDeclarations(declarations: {
-  warrantyAssurance: boolean;
-  termsAccepted: boolean;
-  amlCompliance: boolean;
-}): Promise<OnboardingResponse> {
-  try {
-    const response = await apiClient.put(`${this.baseUrl}/compliance-declarations`, declarations);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to update compliance declarations');
-  }
-}
+  // ===========================
+  // PHASE 2: PERSIST TO DB
+  // ===========================
 
   /**
-   * API 4: Update Catalog & Pricing
+   * ✅ PHASE 2: Update Bank Details + Documents (Persists to DB)
+   * Called on form submit with file URLs from frontend state
+   */
+  async updateBankDetailsWithDocuments(
+    bankData: BankDetails,
+    documents: FileUploadResponse[]
+  ): Promise<OnboardingResponse> {
+    try {
+      console.log(`💾 Phase 2: Persist bank details + documents to DB`);
+      console.log(`  Documents: ${documents.length}`);
+
+      const payload = {
+        accountNumber: bankData.accountNumber,
+        ifsc: bankData.ifsc,
+        bankName: bankData.bankName,
+        accountHolderName: bankData.accountHolderName,
+        pennyDropStatus: bankData.pennyDropStatus || 'PENDING',
+        pennyDropScore: bankData.pennyDropScore || 0,
+        documents, // ✅ Pass file URLs from frontend
+      };
+
+      const response = await apiClient.put(
+        `${this.baseUrl}/bank-details`,
+        payload
+      );
+
+      console.log(`✅ Bank details + documents persisted`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Persist error:', error);
+      throw new Error(error.response?.data?.message || 'Failed to save bank details');
+    }
+  }
+
+  /**
+   * ✅ PHASE 2: Update Compliance Documents + Declarations (Persists to DB)
+   * Called on form submit with file URLs and declarations from frontend state
+   */
+  async updateComplianceDocsWithDeclarations(
+    declarations: {
+      warrantyAssurance?: boolean;
+      termsAccepted?: boolean;
+      amlCompliance?: boolean;
+    },
+    documents: DocumentUpload[]
+  ): Promise<OnboardingResponse> {
+    try {
+      console.log(`💾 Phase 2: Persist compliance docs + declarations to DB`);
+      console.log(`  Documents: ${documents.length}`);
+
+      const payload = {
+        warrantyAssurance: declarations.warrantyAssurance,
+        termsAccepted: declarations.termsAccepted,
+        amlCompliance: declarations.amlCompliance,
+        documents, // ✅ Pass file URLs from frontend
+      };
+
+      const response = await apiClient.put(
+        `${this.baseUrl}/compliance`,
+        payload
+      );
+
+      console.log(`✅ Compliance docs + declarations persisted`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Persist error:', error);
+      throw new Error(error.response?.data?.message || 'Failed to save compliance documents');
+    }
+  }
+
+  /**
+   * API: Update Catalog & Pricing
    */
   async updateCatalog(data: CatalogData): Promise<OnboardingResponse> {
     try {
       const response = await apiClient.put(`${this.baseUrl}/catalog`, data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to update catalog");
+      throw new Error(error.response?.data?.message || 'Failed to update catalog');
     }
   }
 
   /**
-   * API 5: Submit for Admin Review
+   * API: Submit Onboarding for Admin Review
    */
   async submitOnboarding(): Promise<SubmitOnboardingResponse> {
     try {
       const response = await apiClient.post(`${this.baseUrl}/submit`, {});
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to submit onboarding");
+      throw new Error(error.response?.data?.message || 'Failed to submit onboarding');
     }
   }
 
   /**
    * Helper: Penny Drop Verification
    */
-  async verifyPennyDrop(accountNumber: string, ifsc: string): Promise<{ verified: boolean; accountName: string }> {
+  async verifyPennyDrop(
+    accountNumber: string,
+    ifsc: string
+  ): Promise<{ verified: boolean; accountName: string }> {
     try {
-      const response = await apiClient.post<{
-        verified: boolean;
-        accountName: string;
-      }>("/organizations/verify-penny-drop", {
+      const response = await apiClient.post('/organizations/verify-penny-drop', {
         accountNumber,
         ifsc,
       });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.message || "Account verification failed. Please check details.");
+      throw new Error(error.message || 'Account verification failed');
     }
   }
 
   /**
-   * Helper: Upload Document (S3 pre-signed URL flow)
-   */
-  async uploadDocument(file: File, documentType: string): Promise<{ fileUrl: string }> {
-    try {
-      const { data: uploadData } = await apiClient.post<{
-        uploadUrl: string;
-        fileUrl: string;
-      }>("/organizations/get-upload-url", {
-        fileName: file.name,
-        fileType: file.type,
-        documentType,
-      });
-
-      await fetch(uploadData.uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      return { fileUrl: uploadData.fileUrl };
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to upload document");
-    }
-  }
-
-  /**
-   * Helper: Fetch GSTIN details
+   * Helper: GSTIN Fetch
    */
   async fetchGSTIN(gstin: string): Promise<any> {
     try {
       const response = await apiClient.get(`/organizations/gstin-fetch?gstin=${gstin}`);
       return response.data;
     } catch (error: any) {
-      throw new Error("Failed to fetch GSTIN details. Please enter manually.");
+      throw new Error('Failed to fetch GSTIN details. Please enter manually.');
     }
   }
 
   /**
-   * API 7: Download Document (Secure)
+   * API: Download Document
    */
   async downloadDocument(fileName: string): Promise<void> {
     try {
-      const response = await apiClient.get(`/organizations/my-organization/documents/${fileName}`, {
-        responseType: "blob",
-      });
+      const response = await apiClient.get(
+        `/organizations/my-organization/documents/${fileName}`,
+        { responseType: 'blob' }
+      );
 
       const blob = response.data as Blob;
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = fileName;
       document.body.appendChild(a);
@@ -229,23 +261,24 @@ async updateComplianceDeclarations(declarations: {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error: any) {
-      throw new Error(error.message || "Failed to download document");
+      throw new Error(error.message || 'Failed to download document');
     }
   }
 
   /**
-   * API 8: Preview Document (Inline)
+   * API: Preview Document
    */
   async previewDocument(fileName: string): Promise<string> {
     try {
-      const response = await apiClient.get(`/organizations/my-organization/documents-preview/${fileName}`, {
-        responseType: "blob",
-      });
+      const response = await apiClient.get(
+        `/organizations/my-organization/documents-preview/${fileName}`,
+        { responseType: 'blob' }
+      );
 
       const blob = response.data as Blob;
       return window.URL.createObjectURL(blob);
     } catch (error: any) {
-      throw new Error(error.message || "Failed to preview document");
+      throw new Error(error.message || 'Failed to preview document');
     }
   }
 }

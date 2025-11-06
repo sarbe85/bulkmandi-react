@@ -175,7 +175,7 @@ export default function Onboarding() {
                 <div key={step} className="flex items-center flex-shrink-0 min-w-0">
                   <div className="flex flex-col items-center gap-2 min-w-[100px]">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
                         isCompleted
                           ? "bg-success text-success-foreground shadow-md"
                           : isCurrent

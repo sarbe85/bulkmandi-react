@@ -97,6 +97,13 @@ export const ONBOARDING_STEP_DESCRIPTIONS: Record<(typeof ONBOARDING_STEPS)[keyo
 //   status: 'UPLOADED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 //   comments?: string;
 // }
+export interface DocumentUpload {
+  docType: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status: string;
+}
 export interface Declarations {
   warrantyAssurance: boolean;
   termsAccepted: boolean;
