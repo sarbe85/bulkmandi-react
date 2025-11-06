@@ -213,21 +213,24 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
   // Submit handler with validation
   const onSubmit = async (formData: OrgKycData) => {
     try {
-      if (plants.length === 0) {
-        toast({
-          title: "Missing Plant Location",
-          description: "Please add at least one plant location.",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (verificationStatus.email !== "verified" || verificationStatus.phone !== "verified") {
-        toast({
-          title: "Verification Required",
-          description: "Please verify both email and phone number",
-          variant: "destructive",
-        });
-        return;
+      // Skip verification checks if data already exists (editing mode)
+      if (!data) {
+        if (plants.length === 0) {
+          toast({
+            title: "Missing Plant Location",
+            description: "Please add at least one plant location.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (verificationStatus.email !== "verified" || verificationStatus.phone !== "verified") {
+          toast({
+            title: "Verification Required",
+            description: "Please verify both email and phone number",
+            variant: "destructive",
+          });
+          return;
+        }
       }
       setIsSubmitting(true);
 
@@ -377,6 +380,22 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
               className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
             />
           </div>
+        </div>
+
+        {/* Registered Address */}
+        <div>
+          <Label htmlFor="registeredAddress" className="text-sm text-gray-700 dark:text-gray-300">
+            Registered Address *
+          </Label>
+          <Input
+            id="registeredAddress"
+            placeholder="Enter complete registered address"
+            {...register("registeredAddress")}
+            className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
+          />
+          {errors.registeredAddress && (
+            <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.registeredAddress.message}</p>
+          )}
         </div>
 
         {/* Business Type & Incorporation Date */}

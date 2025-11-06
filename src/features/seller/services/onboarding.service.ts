@@ -2,6 +2,11 @@ import apiClient from "@/api/api.client";
 import { BankDetails, bankDetailsSchema, OrgKycData } from "../schemas/onboarding.schema";
 import { CatalogData, OnboardingResponse, SubmitOnboardingResponse } from "../types/onboarding.types";
 
+interface FileWithDocType {
+  file: File;
+  docType: string;
+}
+
 class OnboardingService {
   private baseUrl = "/organizations/my-organization/onboarding";
 
@@ -17,9 +22,6 @@ class OnboardingService {
     }
   }
 
-  /**
-   * API 1: Update Organization KYC
-   */
   /**
    * API 1: Update Organization KYC
    */
@@ -50,135 +52,81 @@ class OnboardingService {
       };
 
       console.log("📤 Sending payload to backend:", payload);
-
       const response = await apiClient.put(`${this.baseUrl}/kyc`, payload);
-
       return response.data;
     } catch (error: any) {
-      // ✅ Only log if it's a REAL error (not success)
       console.error("❌ Real API Error:", error.message);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to update organization KYC";
-
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Failed to update organization KYC";
       throw new Error(errorMessage);
     }
   }
 
-  /**
-   * API 2: Update Bank Details WITH FILE UPLOAD
-   */
+   async uploadSingleDocument(file: File, docType: string): Promise<{ fileName: string; fileUrl: string }> {
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('docType', docType);
+    const response = await apiClient.post(`${this.baseUrl}/documents/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data; // expected { fileName, fileUrl }
+  }
 
-  async updateBankDetails(bankData: BankDetails, files: File[] = []): Promise<OnboardingResponse> {
-    console.log("📤 updateBankDetails called with:", { bankData, files });
+  // General delete function
+  async deleteDocument(docType: string): Promise<{ message: string }> {
+    const response = await apiClient.delete(`${this.baseUrl}/documents/${docType}`);
+    return response.data; // expected { message }
+  }
+
+  /**
+   * ✅ MODIFIED: Update Bank Details Only (No files - files uploaded separately)
+   */
+  async updateBankDetailsOnly(bankData: BankDetails): Promise<OnboardingResponse> {
+    console.log("📤 updateBankDetailsOnly called with:", bankData);
     try {
       // ✅ VALIDATION: Parse and validate data first
       const validatedData = bankDetailsSchema.parse(bankData);
 
-      // ✅ BUILD FormData - do NOT set manual Content-Type header
-      const formData = new FormData();
+      const payload = {
+        accountNumber: validatedData.accountNumber,
+        ifsc: validatedData.ifsc,
+        bankName: validatedData.bankName,
+        accountHolderName: validatedData.accountHolderName,
+        pennyDropStatus: validatedData.pennyDropStatus || "PENDING",
+        pennyDropScore: validatedData.pennyDropScore || 0,
+      };
 
-      // Add form fields
-      formData.append("accountNumber", validatedData.accountNumber);
-      formData.append("ifsc", validatedData.ifsc);
-      formData.append("bankName", validatedData.bankName);
-      formData.append("accountHolderName", validatedData.accountHolderName);
-      formData.append("pennyDropStatus", validatedData.pennyDropStatus || "PENDING");
-      formData.append("pennyDropScore", String(validatedData.pennyDropScore || 0));
-
-      // ✅ Append each file with its metadata
-      // Note: File name in FormData should contain document type info
-      // The backend should extract documentType from the file object's custom property or via separate field
-      files.forEach((file) => {
-        formData.append(`bankDocs`, file);
-      });
-
-      // ✅ Don't set Content-Type manually - axios/fetch will handle it
-      const response = await apiClient.put(`${this.baseUrl}/bank`, formData, {
-        headers: {
-          // REMOVED: "Content-Type": "multipart/form-data" - axios sets this automatically
-        },
-      });
+      console.log("📤 Sending bank details to backend...");
+      const response = await apiClient.put(`${this.baseUrl}/bank-details`, payload);
+      console.log("✅ Bank details updated successfully", response.data);
 
       // ✅ VALIDATION: Check response structure before parsing
       if (!response.data) {
         throw new Error("Empty response from server");
       }
 
-      // ✅ Response validation with fallback
-      const responseData = response.data.primaryBankAccount || response.data;
-      const validatedResponse = bankDetailsSchema.parse(responseData);
-
       return response.data;
     } catch (error: any) {
-      // ✅ IMPROVED: Differentiate error types
-      // if (error instanceof z.ZodError) {
-      //   const fieldErrors = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
-      //   throw new Error(`Validation error: ${fieldErrors}`);
-      // }
-
+      console.error("❌ updateBankDetailsOnly error:", error);
       if (error.response) {
-        // ✅ Backend error with details
         throw new Error(error.response.data?.message || error.response.statusText || "Server error");
       }
-
       throw new Error(error.message || "Failed to update bank details");
     }
   }
 
-  /**
-   * API 3: Update Compliance Documents WITH FILE UPLOAD
-   * PUT /organizations/my-organization/onboarding/docs
-   * ✅ CRITICAL: Backend expects BOOLEAN values converted to strings
-   */
-  async updateComplianceDocs(
-    declarations: {
-      warrantyAssurance: boolean;
-      termsAccepted: boolean;
-      amlCompliance: boolean;
-    },
-    files: File[] = []
-  ): Promise<OnboardingResponse> {
-    try {
-      const formData = new FormData();
-
-      // ✅ Append declarations as STRING ("true" or "false")
-      // Backend Nest.js DTO transformer will convert to boolean
-      formData.append("warrantyAssurance", String(declarations.warrantyAssurance));
-      formData.append("termsAccepted", String(declarations.termsAccepted));
-      formData.append("amlCompliance", String(declarations.amlCompliance));
-
-      // ✅ Append each file individually with field name 'complianceDocs'
-      files.forEach((file) => {
-        formData.append("complianceDocs", file);
-      });
-
-      console.log("📤 FormData being sent to API:");
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(` ${key}: [File] ${(value as File).name} (${(value as File).size} bytes)`);
-        } else {
-          console.log(` ${key}: ${value}`);
-        }
-      }
-
-      // ✅ Send to API using apiClient
-      const response = await apiClient.put(
-        `${this.baseUrl}/docs`,
-        formData
-        // Note: Do NOT include Content-Type header - browser sets it automatically with boundary
-      );
-
-      console.log("✅ API Response:", response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error("❌ API Error Response:", error.response?.data);
-      throw new Error(error.response?.data?.message || error.message || "Failed to update compliance documents");
-    }
+   
+async updateComplianceDeclarations(declarations: {
+  warrantyAssurance: boolean;
+  termsAccepted: boolean;
+  amlCompliance: boolean;
+}): Promise<OnboardingResponse> {
+  try {
+    const response = await apiClient.put(`${this.baseUrl}/compliance-declarations`, declarations);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update compliance declarations');
   }
+}
 
   /**
    * API 4: Update Catalog & Pricing

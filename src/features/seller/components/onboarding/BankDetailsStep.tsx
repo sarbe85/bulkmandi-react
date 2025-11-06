@@ -1,15 +1,12 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-
-import { AlertCircle, CheckCircle, FileText, Loader2, Lock, Upload, X } from "lucide-react";
-
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useToast } from "@/shared/hooks/use-toast";
-
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, CheckCircle, FileText, Loader2, Lock, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { BankDetails, bankDetailsSchema } from "../../schemas/onboarding.schema";
 import onboardingService from "../../services/onboarding.service";
 
@@ -19,29 +16,48 @@ interface Props {
   onBack: () => void;
 }
 
+// ✅ Document type enum matching backend
+enum BankDocType {
+  CANCELLED_CHEQUE = "CANCELLED_CHEQUE",
+  BANK_PASSBOOK = "BANK_PASSBOOK",
+  BANK_STATEMENT = "BANK_STATEMENT",
+  BANK_LETTER = "BANK_LETTER",
+}
+
 const BANK_DOC_TYPES = [
-  { type: "CANCELLED_CHEQUE", label: "Cancelled Cheque", required: true },
-  { type: "BANK_PASSBOOK", label: "Bank Passbook", required: false },
-  { type: "BANK_STATEMENT", label: "Bank Statement (3 months)", required: false },
-  { type: "BANK_LETTER", label: "Bank Letter", required: false },
+  { type: BankDocType.CANCELLED_CHEQUE, label: "Cancelled Cheque", required: true },
+  { type: BankDocType.BANK_PASSBOOK, label: "Bank Passbook", required: false },
+  { type: BankDocType.BANK_STATEMENT, label: "Bank Statement (3 months)", required: false },
+  { type: BankDocType.BANK_LETTER, label: "Bank Letter", required: false },
 ];
+
+// ✅ Interface for existing documents from backend
+interface ExistingBankDocument {
+  docType: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status: string;
+}
 
 export default function BankDetailsStep({ data, onNext, onBack }: Props) {
   const { toast } = useToast();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidatingIfsc, setIsValidatingIfsc] = useState(false);
   const [isPennyDropping, setIsPennyDropping] = useState(false);
-
   const [ifscValidated, setIfscValidated] = useState(false);
-  const [ifscBankDetails, setIfscBankDetails] = useState<{ bankName: string; branchName: string } | null>(null);
-
+  const [ifscBankDetails, setIfscBankDetails] = useState<{
+    bankName: string;
+    branchName: string;
+  } | null>(null);
   const [pennyDropStatus, setPennyDropStatus] = useState<"idle" | "verifying" | "verified" | "error">("idle");
 
-  // Map<string, File>
-  const [selectedFiles, setSelectedFiles] = useState<Map<string, File>>(new Map());
-  const fileInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
-  const [existingFiles, setExistingFiles] = useState<Map<string, { name: string; url: string }>>(new Map());
+  // ✅ Store uploading state per docType
+  const [uploadingFiles, setUploadingFiles] = useState<Map<BankDocType, boolean>>(new Map());
+  const fileInputRefs = useRef<Map<BankDocType, HTMLInputElement>>(new Map());
+
+  // ✅ Store existing documents from backend
+  const [existingDocuments, setExistingDocuments] = useState<Map<BankDocType, ExistingBankDocument>>(new Map());
 
   const [payoutMethod, setPayoutMethod] = useState<"RTGS" | "NEFT" | "UPI">("RTGS");
   const [upiDetails, setUpiDetails] = useState("");
@@ -66,48 +82,54 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
   const ifsc = watch("ifsc");
   const accountHolderName = watch("accountHolderName");
 
-  // Pre-fill from API data
+  // ✅ Pre-fill from API data - handle existing documents
   useEffect(() => {
     if (data?.primaryBankAccount) {
+      const validated = data?.primaryBankAccount;
       try {
-        const validated = bankDetailsSchema.parse(data.primaryBankAccount);
+       const validated = bankDetailsSchema.parse(data.primaryBankAccount);
         setValue("accountNumber", validated.accountNumber || "");
         setValue("accountHolderName", validated.accountHolderName || "");
         setValue("ifsc", validated.ifsc || "");
         setValue("bankName", validated.bankName || "");
+
         if (validated.ifsc) {
           setIfscValidated(true);
           if (validated.bankName) {
             setIfscBankDetails({
               bankName: validated.bankName,
-              branchName: "Branch", // optional if branch is not provided
+              branchName: "Branch",
             });
           }
         }
 
-        // Pre-fill penny drop status if already verified
         if (validated.pennyDropStatus === "VERIFIED") {
           setPennyDropStatus("verified");
+        }
+
+        // ✅ Pre-fill existing bank documents with proper structure
+        if (data?.primaryBankAccount?.documents && Array.isArray(data.primaryBankAccount.documents)) {
+          const docsMap = new Map<BankDocType, ExistingBankDocument>();
+          data.primaryBankAccount.documents.forEach((doc: any) => {
+            if (doc.docType && doc.fileName && doc.fileUrl) {
+              docsMap.set(doc.docType as BankDocType, {
+                docType: doc.docType,
+                fileName: doc.fileName,
+                fileUrl: doc.fileUrl,
+                uploadedAt: doc.uploadedAt || new Date().toISOString(),
+                status: doc.status || "UPLOADED",
+              });
+            }
+          });
+          setExistingDocuments(docsMap);
         }
       } catch (error) {
         console.error("Invalid bank details from API:", error);
       }
     }
-
-    // Pre-fill existing bank documents
-    if (data?.primaryBankAccount?.uploadedDocuments) {
-      const filesMap = new Map<string, { name: string; url: string }>();
-      data.primaryBankAccount.uploadedDocuments.forEach((file: any) => {
-        filesMap.set(file.documentType, {
-          name: file.documentName || file.fileName || "Bank Document",
-          url: file.documentUrl || file.fileUrl || "",
-        });
-      });
-      setExistingFiles(filesMap);
-    }
   }, [data, setValue]);
 
-  // Static IFSC Validation with dummy data
+  // Static IFSC Validation
   const handleValidateIfsc = async () => {
     if (!ifsc || ifsc.length < 11) {
       toast({
@@ -121,14 +143,17 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
     try {
       setIsValidatingIfsc(true);
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const result = {
         valid: true,
         bankName: "SBI",
         branchName: "NALCO",
       };
+
       if (!result.valid) {
         throw new Error("IFSC not valid");
       }
+
       setValue("bankName", result.bankName);
       setIfscBankDetails({
         bankName: result.bankName,
@@ -152,7 +177,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
     }
   };
 
-  // Static Penny Drop with verified status
+  // Static Penny Drop
   const handlePennyDrop = async () => {
     if (!accountNumber || !ifsc) {
       toast({
@@ -164,9 +189,8 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
     }
 
     try {
-      setPennyDropStatus("verifying");
       setIsPennyDropping(true);
-
+      setPennyDropStatus("verifying");
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const result = {
@@ -196,15 +220,18 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
     }
   };
 
-  const triggerFileInput = (docType: string) => {
+  // ✅ Trigger file input for specific docType
+  const triggerFileInput = (docType: BankDocType) => {
     const inputElement = fileInputRefs.current.get(docType);
     if (inputElement) inputElement.click();
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
+  // ✅ NEW: Handle immediate file upload on selection
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, docType: BankDocType) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file size
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File Too Large",
@@ -215,6 +242,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
       return;
     }
 
+    // Validate file type
     const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
       toast({
@@ -226,77 +254,107 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
       return;
     }
 
-    const newMap = new Map(selectedFiles);
-    newMap.set(docType, file);
-    setSelectedFiles(newMap);
+    // ✅ Upload file immediately
+    try {
+      // Set uploading state
+      const newUploadingMap = new Map(uploadingFiles);
+      newUploadingMap.set(docType, true);
+      setUploadingFiles(newUploadingMap);
 
-    toast({
-      title: "File Selected",
-      description: `${file.name} ready for upload`,
-    });
+      toast({
+        title: "Uploading...",
+        description: `Uploading ${file.name}`,
+      });
 
-    e.target.value = "";
+      // Call API to upload single file
+      const response = await onboardingService.uploadSingleDocument(file, docType);
+
+      // Update existing documents map with newly uploaded file
+      const newDocsMap = new Map(existingDocuments);
+      newDocsMap.set(docType, {
+        docType: docType,
+        fileName: response.fileName,
+        fileUrl: response.fileUrl,
+        uploadedAt: new Date().toISOString(),
+        status: "UPLOADED",
+      });
+      setExistingDocuments(newDocsMap);
+
+      toast({
+        title: "Upload Successful",
+        description: `${file.name} uploaded successfully`,
+      });
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload file",
+        variant: "destructive",
+      });
+    } finally {
+      // Clear uploading state
+      const newUploadingMap = new Map(uploadingFiles);
+      newUploadingMap.delete(docType);
+      setUploadingFiles(newUploadingMap);
+      e.target.value = "";
+    }
   };
 
-  const removeDocument = (docType: string) => {
-    const newMap = new Map(selectedFiles);
-    newMap.delete(docType);
-    setSelectedFiles(newMap);
+  // ✅ Remove uploaded document
+  const removeDocument = async (docType: BankDocType) => {
+    try {
+      // Call API to delete document
+      await onboardingService.deleteDocument(docType);
+
+      // Remove from local state
+      const newMap = new Map(existingDocuments);
+      newMap.delete(docType);
+      setExistingDocuments(newMap);
+
+      toast({
+        title: "Document Removed",
+        description: "Document removed successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove document",
+        variant: "destructive",
+      });
+    }
   };
 
   // Button enablement gating
-  const canSubmit =
-    !!accountNumber && !!accountHolderName && !!ifsc && ifscValidated && selectedFiles.has("CANCELLED_CHEQUE");
+  const canSubmit = !!accountNumber && !!accountHolderName && !!ifsc && ifscValidated && existingDocuments.has(BankDocType.CANCELLED_CHEQUE);
 
-  // Submit handler
+  // ✅ Submit handler - only saves bank account details (files already uploaded)
   const onSubmit = async (formData: BankDetails) => {
     try {
       setIsSubmitting(true);
 
       if (!ifscValidated) {
-        toast({
-          title: "IFSC Not Validated",
-          description: "Please validate IFSC code first",
-          variant: "destructive",
-        });
+        toast({ title: "IFSC Not Validated", description: "Please validate IFSC code first", variant: "destructive" });
         return;
       }
 
-      const missingDocs = BANK_DOC_TYPES.filter((doc) => doc.required && !selectedFiles.has(doc.type));
-      if (missingDocs.length > 0) {
-        toast({
-          title: "Missing Documents",
-          description: `Please upload: ${missingDocs.map((d) => d.label).join(", ")}`,
-          variant: "destructive",
-        });
+      // Check if required documents are uploaded
+      if (!existingDocuments.has(BankDocType.CANCELLED_CHEQUE)) {
+        toast({ title: "Missing Documents", description: "Please upload Cancelled Cheque", variant: "destructive" });
         return;
       }
 
-      const filesArray: File[] = Array.from(selectedFiles.values());
-
-      // Call service
-      await onboardingService.updateBankDetails(
-        {
-          ...formData,
-          pennyDropStatus: pennyDropStatus === "verified" ? "VERIFIED" : "PENDING",
-          pennyDropScore: pennyDropStatus === "verified" ? 100 : 0,
-        },
-        filesArray
-      );
-
-      toast({
-        title: "Success",
-        description: "Bank details saved successfully",
+      // Call service to update only bank account details (no files)
+      await onboardingService.updateBankDetailsOnly({
+        ...formData,
+        pennyDropStatus: pennyDropStatus === "verified" ? "VERIFIED" : "PENDING",
+        pennyDropScore: pennyDropStatus === "verified" ? 100 : 0,
       });
 
+      toast({ title: "Success", description: "Bank details saved successfully" });
       onNext();
     } catch (error: any) {
       console.error("Submit error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save bank details",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Failed to save bank details", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -304,302 +362,197 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold">Bank Account Details & Documents</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Add your primary bank account information and required documents
-        </p>
-      </div>
-
       {/* Account Details */}
-      <Card className="p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Bank Account Details & Documents</h3>
+        <p className="text-sm text-muted-foreground mb-6">Add your primary bank account information and required documents</p>
+
+        <div className="space-y-4">
+          {/* Account Number */}
           <div>
             <Label htmlFor="accountNumber">Account Number *</Label>
-            <Input
-              id="accountNumber"
-              placeholder="Enter bank account number"
-              {...register("accountNumber")}
-              disabled={isSubmitting}
-            />
-            {errors.accountNumber && (
-              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {errors.accountNumber.message}
-              </p>
-            )}
+            <Input {...register("accountNumber")} id="accountNumber" placeholder="Enter account number" disabled={isSubmitting} className="mt-1" />
+            {errors.accountNumber && <p className="text-sm text-destructive mt-1">{errors.accountNumber.message}</p>}
           </div>
 
+          {/* Account Holder Name */}
           <div>
             <Label htmlFor="accountHolderName">Account Holder Name *</Label>
-            <Input
-              id="accountHolderName"
-              placeholder="Enter account holder name"
-              {...register("accountHolderName")}
-              disabled={isSubmitting}
-            />
-            {errors.accountHolderName && (
-              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {errors.accountHolderName.message}
+            <Input {...register("accountHolderName")} id="accountHolderName" placeholder="As per bank records" disabled={isSubmitting} className="mt-1" />
+            {errors.accountHolderName && <p className="text-sm text-destructive mt-1">{errors.accountHolderName.message}</p>}
+          </div>
+
+          {/* IFSC */}
+          <div>
+            <Label htmlFor="ifsc">IFSC Code *</Label>
+            <div className="flex gap-2 mt-1">
+              <Input {...register("ifsc")} id="ifsc" placeholder="e.g., SBIN0001234" disabled={isSubmitting} className="flex-1" />
+              {isValidatingIfsc ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                <Button type="button" onClick={handleValidateIfsc} disabled={isSubmitting || !ifsc} variant="outline">
+                  Validate
+                </Button>
+              )}
+            </div>
+            {errors.ifsc && <p className="text-sm text-destructive mt-1">{errors.ifsc.message}</p>}
+            {ifscValidated ? (
+              <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                <CheckCircle className="h-4 w-4" />
+                Done
               </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-1">Validate IFSC to fetch bank details</p>
             )}
           </div>
 
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div className="md:col-span-1">
-              <Label htmlFor="ifsc">IFSC Code *</Label>
-              <Input id="ifsc" placeholder="e.g., SBIN0000001" {...register("ifsc")} disabled={isSubmitting} />
-              {errors.ifsc && (
-                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {errors.ifsc.message}
+          {/* Bank Name */}
+          <div>
+            <Label>Bank Name</Label>
+            <Input {...register("bankName")} disabled className="mt-1 bg-muted" />
+            {ifscValidated && ifscBankDetails && (
+              <div className="text-sm text-muted-foreground mt-1">
+                <p>Bank Name: {ifscBankDetails.bankName}</p>
+                <p>Branch: {ifscBankDetails.branchName}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Penny Drop Verification */}
+          <div className="border rounded-lg p-4 bg-muted/50">
+            <Label className="text-base">Penny Drop Verification</Label>
+            <p className="text-sm text-muted-foreground mb-3">Verifies account holder name by sending a nominal amount</p>
+            <Button type="button" onClick={handlePennyDrop} disabled={isPennyDropping || !accountNumber || !ifsc} variant="outline" className="w-full">
+              {isPennyDropping ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>💰 Verify Bank Account</>
+              )}
+            </Button>
+            <div className="mt-2 text-sm">
+              {pennyDropStatus === "verified" && (
+                <p className="text-green-600 flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4" />
+                  Account verified
                 </p>
               )}
-            </div>
-
-            <div className="flex items-end gap-2">
-              <Button
-                type="button"
-                onClick={handleValidateIfsc}
-                disabled={isValidatingIfsc || isSubmitting || !ifsc || ifsc.length < 11}
-                variant="outline"
-              >
-                {isValidatingIfsc ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Validating...
-                  </>
-                ) : (
-                  <>Validate</>
-                )}
-              </Button>
-
-              {ifscValidated ? (
-                <div className="text-green-600 text-sm flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Done</span>
-                </div>
-              ) : (
-                <div className="text-xs text-gray-500">Validate IFSC to fetch bank details</div>
+              {pennyDropStatus === "error" && (
+                <p className="text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  Verification failed
+                </p>
               )}
-            </div>
-
-            <div className="md:col-span-1">
-              <Label htmlFor="bankName">Bank Name</Label>
-              <Input id="bankName" placeholder="Auto-filled after IFSC validation" {...register("bankName")} disabled />
+              {pennyDropStatus === "idle" && <p className="text-muted-foreground">Pending verification</p>}
             </div>
           </div>
 
-          {ifscValidated && ifscBankDetails && (
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Bank Name</Label>
-                <div className="text-sm">{ifscBankDetails.bankName}</div>
-              </div>
-              <div>
-                <Label>Branch</Label>
-                <div className="text-sm">{ifscBankDetails.branchName}</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Penny Drop Verification */}
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
+          {/* Payout Preference */}
           <div>
-            <div className="font-medium">Penny Drop Verification</div>
-            <div className="text-xs text-gray-500">Verifies account holder name by sending a nominal amount</div>
-          </div>
-          <Button
-            type="button"
-            onClick={handlePennyDrop}
-            disabled={isPennyDropping || isSubmitting || !ifsc || !accountNumber}
-          >
-            {isPennyDropping ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              <>💰 Verify Bank Account</>
+            <Label className="text-base mb-2 block">Payout Preference</Label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input type="radio" value="RTGS" checked={payoutMethod === "RTGS"} onChange={(e) => setPayoutMethod(e.target.value as "RTGS" | "NEFT" | "UPI")} className="w-4 h-4" />
+                RTGS (Real Time Gross Settlement)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" value="NEFT" checked={payoutMethod === "NEFT"} onChange={(e) => setPayoutMethod(e.target.value as "RTGS" | "NEFT" | "UPI")} className="w-4 h-4" />
+                NEFT (National Electronic Funds Transfer)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" value="UPI" checked={payoutMethod === "UPI"} onChange={(e) => setPayoutMethod(e.target.value as "RTGS" | "NEFT" | "UPI")} className="w-4 h-4" />
+                UPI (Unified Payments Interface)
+              </label>
+            </div>
+            {payoutMethod === "UPI" && (
+              <div className="mt-3">
+                <Label htmlFor="upiId">UPI ID / Address *</Label>
+                <Input id="upiId" placeholder="yourname@upi" value={upiDetails} onChange={(e) => setUpiDetails(e.target.value)} className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600" disabled={isSubmitting} />
+              </div>
             )}
-          </Button>
-        </div>
-
-        <div className="text-xs">
-          {pennyDropStatus === "verified" && (
-            <div className="text-green-600 flex items-center gap-1">
-              <CheckCircle className="h-4 w-4" />
-              Account verified
-            </div>
-          )}
-          {pennyDropStatus === "error" && (
-            <div className="text-red-600 flex items-center gap-1">
-              <AlertCircle className="h-4 w-4" />
-              Verification failed
-            </div>
-          )}
-          {pennyDropStatus === "idle" && <div className="text-gray-500">Pending verification</div>}
+          </div>
         </div>
       </Card>
 
-      {/* Payout Preference */}
-      <Card className="p-4 space-y-3">
-        <div className="font-medium">Payout Preference</div>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="payout"
-              value="RTGS"
-              checked={payoutMethod === "RTGS"}
-              onChange={(e) => setPayoutMethod(e.target.value as "RTGS" | "NEFT" | "UPI")}
-              className="w-4 h-4"
-            />
-            RTGS (Real Time Gross Settlement)
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="payout"
-              value="NEFT"
-              checked={payoutMethod === "NEFT"}
-              onChange={(e) => setPayoutMethod(e.target.value as "RTGS" | "NEFT" | "UPI")}
-              className="w-4 h-4"
-            />
-            NEFT (National Electronic Funds Transfer)
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="payout"
-              value="UPI"
-              checked={payoutMethod === "UPI"}
-              onChange={(e) => setPayoutMethod(e.target.value as "RTGS" | "NEFT" | "UPI")}
-              className="w-4 h-4"
-            />
-            UPI (Unified Payments Interface)
-          </label>
-
-          {payoutMethod === "UPI" && (
-            <div>
-              <Label htmlFor="upi">UPI ID / Address *</Label>
-              <Input
-                id="upi"
-                placeholder="e.g., name@bank"
-                value={upiDetails}
-                onChange={(e) => setUpiDetails(e.target.value)}
-                className="mt-1 text-sm dark:bg-slate-900 dark:border-slate-600"
-                disabled={isSubmitting}
-              />
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Bank Documents Card */}
-      <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 hover:border-primary/20 transition-all">
-        <div className="flex items-center gap-2 pb-4 border-b mb-4">
-          
-          <h3 className="font-semibold text-lg">Bank Documents</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Bank Documents */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Bank Documents</h3>
+        <div className="space-y-4">
           {BANK_DOC_TYPES.map((doc) => {
-            const hasNewFile = selectedFiles.has(doc.type);
-            const hasExistingFile = existingFiles.has(doc.type);
-            const newFile = selectedFiles.get(doc.type);
-            const existingFile = existingFiles.get(doc.type);
+            const docTypeEnum = doc.type as BankDocType;
+            const hasExistingFile = existingDocuments.has(docTypeEnum);
+            const isUploading = uploadingFiles.get(docTypeEnum) || false;
+            const existingFile = existingDocuments.get(docTypeEnum);
 
             return (
-              <div
-                key={doc.type}
-                className="border-2 rounded-lg p-4 transition-all hover:border-primary/30 border-border"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div className="font-semibold text-sm">
-                        {doc.label} {doc.required && <span className="text-destructive">*</span>}
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {doc.required ? "Required" : "Optional"} • PDF, JPG, PNG (Max 5MB)
-                    </div>
-
-                    {/* Show existing file info */}
-                    {hasExistingFile && !hasNewFile && (
-                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded">
-                        <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
-                          <CheckCircle className="h-3 w-3 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium">Previously uploaded</div>
-                            <div className="truncate text-blue-600 dark:text-blue-400 mt-0.5">{existingFile?.name}</div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Show new file selection */}
-                    {hasNewFile && (
-                      <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded">
-                        <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300">
-                          <CheckCircle className="h-3 w-3 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium">Selected for upload</div>
-                            <div className="truncate text-emerald-600 dark:text-emerald-400 mt-0.5">
-                              {newFile?.name} ({(newFile!.size / 1024).toFixed(1)} KB)
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+              <div key={doc.type} className="border rounded-lg p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <Label className="text-base">
+                      {doc.label} {doc.required && <span className="text-destructive">*</span>}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">{doc.required ? "Required" : "Optional"} • PDF, JPG, PNG (Max 5MB)</p>
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <input
-                      ref={(el) => {
-                        fileInputRefs.current.set(doc.type, el);
-                      }}
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => handleFileSelect(e, doc.type)}
-                      style={{ display: "none" }}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => triggerFileInput(doc.type)}
-                      disabled={isSubmitting}
-                      variant={hasNewFile || hasExistingFile ? "outline" : "default"}
-                      size="sm"
-                      className="whitespace-nowrap"
-                    >
-                      {hasNewFile || hasExistingFile ? (
-                        <>Replace</>
-                      ) : (
-                        <>
-                          <Upload className="mr-2 h-3 w-3" />
-                          Upload
-                        </>
-                      )}
-                    </Button>
-                    {hasNewFile && (
-                      <Button
-                        type="button"
-                        onClick={() => removeDocument(doc.type)}
-                        disabled={isSubmitting}
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
+                {/* Show existing file info */}
+                {hasExistingFile && (
+                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
+                    <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">
+                      <CheckCircle className="inline h-4 w-4 mr-1" />
+                      Previously uploaded
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-green-700 dark:text-green-400">{existingFile?.fileName}</span>
+                      </div>
+                      <Button type="button" onClick={() => removeDocument(docTypeEnum)} disabled={isSubmitting || isUploading} variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
                         <X className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
+                    <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                      Status: {existingFile?.status} • Uploaded: {new Date(existingFile?.uploadedAt || "").toLocaleDateString()}
+                    </p>
                   </div>
+                )}
+
+                {/* File Input */}
+                <input
+                  ref={(el) => {
+                    if (el) fileInputRefs.current.set(docTypeEnum, el);
+                  }}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => handleFileSelect(e, docTypeEnum)}
+                  style={{ display: "none" }}
+                />
+
+                {/* Upload/Replace Button */}
+                <div className="mt-3 flex gap-2">
+                  <Button type="button" onClick={() => triggerFileInput(docTypeEnum)} disabled={isSubmitting || isUploading} variant={hasExistingFile ? "outline" : "default"} size="sm" className="whitespace-nowrap">
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : hasExistingFile ? (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Replace
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             );
@@ -609,11 +562,10 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
 
       {/* Form Actions */}
       <div className="flex items-center justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting} size="lg">
+        <Button type="button" onClick={onBack} variant="outline" disabled={isSubmitting}>
           ← Back
         </Button>
-
-        <Button type="submit" disabled={!canSubmit || isSubmitting} size="lg" className="min-w-[200px]">
+        <Button type="submit" disabled={!canSubmit || isSubmitting}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -626,10 +578,10 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
       </div>
 
       {/* Security Note */}
-      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
-        <Lock className="h-3 w-3" />
-        <span>Your bank details are encrypted and securely processed</span>
-      </div>
+      <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+        <Lock className="h-4 w-4" />
+        Your bank details are encrypted and securely processed
+      </p>
     </form>
   );
 }

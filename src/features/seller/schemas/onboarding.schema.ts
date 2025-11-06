@@ -58,7 +58,7 @@ export const bankDetailsSchema = z.object({
   upiDetails: z.string().optional(),
    documents: z.array(
     z.object({
-      type: z.string(),
+      docType: z.string(),
       fileName: z.string(),
       fileUrl: z.string(),
       uploadedAt: z.string(),

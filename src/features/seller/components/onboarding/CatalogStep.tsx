@@ -420,7 +420,7 @@ export default function CatalogStep({ data, onNext, onBack }: Props) {
                   className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-600 rounded-lg"
                 >
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {pf.category}: ₹{pf.minPrice.toLocaleString()} - ₹{pf.maxPrice.toLocaleString()} per MT
+                    {pf.category}: ₹{pf.minPrice } - ₹{pf.maxPrice } per MT
                   </p>
                   <Button
                     type="button"

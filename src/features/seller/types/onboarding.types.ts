@@ -1,4 +1,3 @@
-import { BankDetails, OrgKycData } from "../schemas/onboarding.schema";
 
 // ===== STEP TYPES (5 STEPS) =====
 
@@ -39,56 +38,56 @@ export const ONBOARDING_STEP_DESCRIPTIONS: Record<(typeof ONBOARDING_STEPS)[keyo
 
 // ===== ORG KYC TYPES =====
 
-export interface OrgKYCResponse {
-  legalName: string;
-  tradeName?: string;
-  gstin: string;
-  pan: string;
-  cin?: string;
-  registeredAddress: string;
-  businessType: string;
-  incorporationDate: string;
-  plantLocations?: PlantLocation[];
-  primaryContactPerson?: ContactPerson;
-  accountsContactPerson?: ContactPerson;
-  techContactPerson?: ContactPerson;
-  documents?: Record<string, string>;
-}
+// export interface OrgKYCResponse {
+//   legalName: string;
+//   tradeName?: string;
+//   gstin: string;
+//   pan: string;
+//   cin?: string;
+//   registeredAddress: string;
+//   businessType: string;
+//   incorporationDate: string;
+//   plantLocations?: PlantLocation[];
+//   primaryContactPerson?: ContactPerson;
+//   accountsContactPerson?: ContactPerson;
+//   techContactPerson?: ContactPerson;
+//   documents?: Record<string, string>;
+// }
 
-export interface PlantLocation {
-  id?: string;
-  street?: string;
-  name?: string;
-  city: string;
-  state: string;
-  pincode?: string;
-  pin?: string;
-  country?: string;
-  isActive?: boolean;
-}
+// export interface PlantLocation {
+//   id?: string;
+//   street?: string;
+//   name?: string;
+//   city: string;
+//   state: string;
+//   pincode?: string;
+//   pin?: string;
+//   country?: string;
+//   isActive?: boolean;
+// }
 
-export interface ContactPerson {
-  name: string;
-  email: string;
-  mobile: string;
-  role?: string;
-}
+// export interface ContactPerson {
+//   name: string;
+//   email: string;
+//   mobile: string;
+//   role?: string;
+// }
 
 
 
 // ===== BANK DETAILS TYPES =====
 
-export interface BankDetailsResponse {
-  accountHolderName: string;
-  accountNumber: string;
-  ifscCode: string;
-  bankName: string;
-  accountType: string;
-  branch: string;
-  benificiaryName?: string;
-  cancelledCheque?: string;
-  bankStatements?: string[];
-}
+// export interface BankDetailsResponse {
+//   accountHolderName: string;
+//   accountNumber: string;
+//   ifscCode: string;
+//   bankName: string;
+//   accountType: string;
+//   branch: string;
+//   benificiaryName?: string;
+//   cancelledCheque?: string;
+//   bankStatements?: string[];
+// }
 
 // export interface DocumentUpload {
 //   type: string;
@@ -106,21 +105,21 @@ export interface Declarations {
 
 // ===== COMPLIANCE DOCS TYPES =====
 
-export interface ComplianceDocument {
-  documentName: string;
-  documentType: string;
-  documentUrl: string;
-  uploadedDate?: string;
-}
+// export interface ComplianceDocument {
+//   documentName: string;
+//   documentType: string;
+//   documentUrl: string;
+//   uploadedDate?: string;
+// }
 
-export interface ComplianceDocsResponse {
-  documents: ComplianceDocument[];
-  bankStatements?: string[];
-  gstinCertificate?: string;
-  panCertificate?: string;
-  cancellationCheque?: string;
-  businessRegistration?: string;
-}
+// export interface ComplianceDocsResponse {
+//   documents: ComplianceDocument[];
+//   bankStatements?: string[];
+//   gstinCertificate?: string;
+//   panCertificate?: string;
+//   cancellationCheque?: string;
+//   businessRegistration?: string;
+// }
 
 // ===== CATALOG TYPES =====
 export interface CatalogData {
@@ -145,34 +144,34 @@ export interface CatalogItem {
   moqPerOrder: number;
   stdLeadTime: number;
 }
-export interface CatalogProduct {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  markup?: number;
-  category?: string;
-}
+// export interface CatalogProduct {
+//   id: string;
+//   name: string;
+//   description?: string;
+//   price: number;
+//   markup?: number;
+//   category?: string;
+// }
 
-export interface CatalogResponse {
-  products: CatalogProduct[];
-  totalProducts: number;
-  defaultMarkup?: number;
-  currency?: string;
-}
+// export interface CatalogResponse {
+//   products: CatalogProduct[];
+//   totalProducts: number;
+//   defaultMarkup?: number;
+//   currency?: string;
+// }
 
 // ===== ONBOARDING STATUS TYPES =====
 
-export type KYCStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+// export type KYCStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
  
 
-export interface OnboardingRequest {
-  orgKyc?: OrgKycData;
-  bankDetails?: BankDetails;
-  complianceDocs?: FormData;
-  catalog?: CatalogProduct[];
-}
+// export interface OnboardingRequest {
+//   orgKyc?: OrgKycData;
+//   bankDetails?: BankDetails;
+//   complianceDocs?: FormData;
+//   catalog?: CatalogProduct[];
+// }
 
 
 
@@ -227,26 +226,26 @@ export interface SubmitOnboardingResponse {
   };
 }
 
-export interface OnboardingStepError {
-  step: OnboardingStep;
-  message: string;
-  timestamp: string;
-}
+// export interface OnboardingStepError {
+//   step: OnboardingStep;
+//   message: string;
+//   timestamp: string;
+// }
 
 // ===== API RESPONSE TYPES =====
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  timestamp?: string;
-}
+// export interface ApiResponse<T> {
+//   success: boolean;
+//   data?: T;
+//   error?: string;
+//   message?: string;
+//   timestamp?: string;
+// }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
-}
+// export interface PaginatedResponse<T> {
+//   items: T[];
+//   total: number;
+//   page: number;
+//   pageSize: number;
+//   hasMore: boolean;
+// }
