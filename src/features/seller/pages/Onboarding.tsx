@@ -2,7 +2,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { useToast } from "@/shared/hooks/use-toast";
 import { Check, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BankDetailsStep from "../components/onboarding/BankDetailsStep";
 import CatalogStep from "../components/onboarding/CatalogStep";
@@ -22,17 +22,16 @@ import {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { onboarding, isLoading: contextLoading, refreshData } = useOnboardingData();
+  const { onboarding, silentRefresh } = useOnboardingData();
 
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(ONBOARDING_STEPS.ORG_KYC);
+  // Navigation state - completely independent from data state
+  const [currentStep, setCurrentStep] = useState<OnboardingStep | null>(null);
   const [saving, setSaving] = useState(false);
-  const manualNavigationTarget = useRef<OnboardingStep | null>(null);
-  const hasInitialized = useRef(false);
 
-  // ========== INITIALIZE FROM SERVER DATA (ONLY ON FIRST LOAD) ==========
+  // ========== INITIALIZE STEP ONLY ONCE ==========
   useEffect(() => {
-    // Only auto-calculate step on initial load, never after manual navigation
-    if (onboarding && !contextLoading && !hasInitialized.current && !manualNavigationTarget.current) {
+    // Only set initial step if not already set
+    if (currentStep === null && onboarding) {
       const completedSteps = onboarding.completedSteps || [];
       
       // Find first incomplete step, or go to REVIEW if all complete
@@ -40,35 +39,27 @@ export default function Onboarding() {
         step => !completedSteps.includes(step)
       );
       
-      const targetStep = firstIncompleteStep || ONBOARDING_STEPS.REVIEW;
-      setCurrentStep(targetStep);
-      console.log(`[Onboarding] Initial step set to: ${targetStep}`);
-      hasInitialized.current = true;
+      const initialStep = firstIncompleteStep || ONBOARDING_STEPS.REVIEW;
+      console.log(`[Onboarding] Setting initial step to: ${initialStep}`);
+      setCurrentStep(initialStep);
     }
-    
-    // If there's a manual navigation target, use it and clear the ref
-    if (manualNavigationTarget.current) {
-      console.log(`[Onboarding] Applying manual navigation to: ${manualNavigationTarget.current}`);
-      setCurrentStep(manualNavigationTarget.current);
-      manualNavigationTarget.current = null;
-    }
-  }, [onboarding, contextLoading]);
+  }, [onboarding, currentStep]);
 
-  // ========== STEP NAVIGATION ==========
+  // ========== STEP NAVIGATION - PURELY SEQUENTIAL ==========
   const handleStepNext = async (targetStep: OnboardingStep) => {
-    console.log(`[Onboarding] Manual navigation to: ${targetStep}`);
-    // Store the target step in ref so useEffect knows to apply it after refresh
-    manualNavigationTarget.current = targetStep;
-    // Immediately update UI
+    console.log(`[Onboarding] Moving to next step: ${targetStep}`);
+    
+    // Update step immediately
     setCurrentStep(targetStep);
-    // Refresh data in background
-    await refreshData();
+    
+    // Refresh data silently in background (won't affect navigation)
+    await silentRefresh();
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStepBack = (targetStep: OnboardingStep) => {
-    console.log(`[Onboarding] Navigate back to: ${targetStep}`);
-    manualNavigationTarget.current = targetStep;
+    console.log(`[Onboarding] Moving back to: ${targetStep}`);
     setCurrentStep(targetStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -100,7 +91,7 @@ export default function Onboarding() {
   };
 
   // ========== LOADING STATE ==========
-  if (contextLoading) {
+  if (currentStep === null || !onboarding) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center py-8 px-4">
         <Card className="w-full max-w-md p-8 text-center">
@@ -125,7 +116,7 @@ export default function Onboarding() {
           </p>
           <button
             onClick={() => navigate("/seller/kyc-status")}
-            className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-medium py-2 px-4 rounded transition-colors"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded transition-colors"
           >
             View KYC Status
           </button>
@@ -145,7 +136,7 @@ export default function Onboarding() {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-medium py-2 px-4 rounded transition-colors"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded transition-colors"
           >
             Restart Onboarding
           </button>

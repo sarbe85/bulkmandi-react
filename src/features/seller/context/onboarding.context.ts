@@ -12,7 +12,7 @@ export interface OnboardingDataContextType {
   onboarding: OnboardingResponse | null;
   isLoading: boolean;
   error: string | null;
-  refreshData: () => Promise<void>;
+  silentRefresh: () => Promise<void>;
 }
 
 export const OnboardingDataContext = createContext<

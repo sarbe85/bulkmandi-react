@@ -26,7 +26,7 @@ import { useOnboardingData } from '../hooks/useOnboardingData';
 export default function SellerDashboard() {
   const navigate = useNavigate();
   // ✅ Get data from hook - no useEffect needed!
-  const { onboarding, refreshData, error } = useOnboardingData();
+  const { onboarding, silentRefresh, error } = useOnboardingData();
 
   if (error) {
     return (
@@ -44,7 +44,7 @@ export default function SellerDashboard() {
                 </p>
               </div>
               <Button
-                onClick={refreshData}
+                onClick={silentRefresh}
                 size="sm"
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
@@ -135,7 +135,7 @@ export default function SellerDashboard() {
             </p>
           </div>
           <Button
-            onClick={refreshData}
+            onClick={silentRefresh}
             variant="outline"
             size="sm"
             className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"

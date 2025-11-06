@@ -22,7 +22,7 @@ interface Props {
 export default function OrgKYCStep({ data, onNext, onBack }: Props) {
   const { toast } = useToast();
   const { getCurrentUser } = useAuth();
-  const { refreshData } = useOnboardingData();
+  const { silentRefresh } = useOnboardingData();
 
   const [gstinFetching, setGstinFetching] = useState(false);
   const [gstinData, setGstinData] = useState<any>(null);

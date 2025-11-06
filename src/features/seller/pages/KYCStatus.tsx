@@ -28,7 +28,7 @@ interface StepInfo {
 export default function KYCStatus() {
   const navigate = useNavigate();
   // ✅ Get data from hook - no useEffect needed!
-  const { onboarding, refreshData, error } = useOnboardingData();
+  const { onboarding, silentRefresh, error } = useOnboardingData();
 
   if (error) {
     return (
@@ -41,7 +41,7 @@ export default function KYCStatus() {
                 <h2 className="font-bold text-red-900 dark:text-red-300">Error Loading KYC Status</h2>
                 <p className="text-red-800 dark:text-red-400 text-sm mt-1">{error}</p>
               </div>
-              <Button onClick={refreshData} size="sm" className="bg-red-600 hover:bg-red-700 text-white flex-shrink-0">
+              <Button onClick={silentRefresh} size="sm" className="bg-red-600 hover:bg-red-700 text-white flex-shrink-0">
                 Retry
               </Button>
             </div>
@@ -161,7 +161,7 @@ export default function KYCStatus() {
             <p className="text-gray-600 dark:text-gray-400">Track your Know Your Customer verification progress</p>
           </div>
           <Button
-            onClick={refreshData}
+            onClick={silentRefresh}
             variant="outline"
             size="sm"
             className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"
