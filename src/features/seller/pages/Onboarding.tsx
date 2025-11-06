@@ -2,7 +2,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { useToast } from "@/shared/hooks/use-toast";
 import { Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BankDetailsStep from "../components/onboarding/BankDetailsStep";
 import CatalogStep from "../components/onboarding/CatalogStep";
@@ -26,12 +26,12 @@ export default function Onboarding() {
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(ONBOARDING_STEPS.ORG_KYC);
   const [saving, setSaving] = useState(false);
+  const isInitialMount = useRef(true);
 
-  // ========== INITIALIZE FROM SERVER DATA ==========
+  // ========== INITIALIZE FROM SERVER DATA (ONLY ON FIRST LOAD) ==========
   useEffect(() => {
-    console.log("Onbaording - Useeffct called ...")
-     console.log(`value of setCurrentStep1: ${currentStep}`);
-    if (onboarding && !contextLoading) {
+    // Only auto-calculate step on initial mount, not after manual navigation + refresh
+    if (onboarding && !contextLoading && isInitialMount.current) {
       const completedSteps = onboarding.completedSteps || [];
       
       // Find first incomplete step, or go to REVIEW if all complete
@@ -39,21 +39,24 @@ export default function Onboarding() {
         step => !completedSteps.includes(step)
       );
       
-     setCurrentStep(firstIncompleteStep || ONBOARDING_STEPS.REVIEW);
-     console.log(`value of setCurrentStep2: ${currentStep}`);
+      setCurrentStep(firstIncompleteStep || ONBOARDING_STEPS.REVIEW);
+      console.log(`[Onboarding] Initial step set to: ${firstIncompleteStep || ONBOARDING_STEPS.REVIEW}`);
+      isInitialMount.current = false;
     }
   }, [onboarding, contextLoading]);
 
   // ========== STEP NAVIGATION ==========
   const handleStepNext = async (targetStep: OnboardingStep) => {
-    console.log(`Moving to next step: ${targetStep}`);
-    await refreshData(); // Refresh to get latest completed steps
+    console.log(`[Onboarding] Manual navigation to: ${targetStep}`);
+    // Set step first, then refresh data
+    // The useEffect won't override because isInitialMount is now false
     setCurrentStep(targetStep);
+    await refreshData(); // Refresh to get latest completed steps
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStepBack = (targetStep: OnboardingStep) => {
-    console.log(`Moving back to step: ${targetStep}`);
+    console.log(`[Onboarding] Navigate back to: ${targetStep}`);
     setCurrentStep(targetStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
