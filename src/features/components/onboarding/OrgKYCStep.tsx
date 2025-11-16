@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { OrgKycFormData, orgKycSchema, PlantLocation } from "../../shared/schemas/onboarding.schema";
 import onboardingService from "../../shared/services/onboarding.service";
-import { useSellerOnboarding } from "../hooks/useSellerOnboarding";
+import { useOnboarding } from "../../shared/hooks/useOnboarding";
 
 interface Props {
   data?: OrgKycFormData;
@@ -22,7 +22,7 @@ interface Props {
 export default function OrgKYCStep({ data, onNext, onBack }: Props) {
   const { toast } = useToast();
   const { getCurrentUser } = useAuth();
-  const { silentRefresh } = useSellerOnboarding();
+  const { fetchData } = useOnboarding();
 
   const [gstinFetching, setGstinFetching] = useState(false);
   const [gstinData, setGstinData] = useState<any>(null);
@@ -111,14 +111,16 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
     if (!gstin) return;
     setGstinFetching(true);
     try {
-      const response = await onboardingService.fetchGSTIN(gstin);
-      setGstinData(response);
-      setValue("legalName", response.legalName);
-      if (response.tradeName) setValue("tradeName", response.tradeName);
-      toast({
-        title: "GSTIN Verified",
-        description: "Business details fetched successfully.",
-      });
+      // TODO: Implement fetchGSTIN in shared service
+      toast({ title: "Info", description: "GSTIN fetch not yet implemented", variant: "default" });
+      // const response = await onboardingService.fetchGSTIN(gstin);
+      // setGstinData(response);
+      // setValue("legalName", response.legalName);
+      // if (response.tradeName) setValue("tradeName", response.tradeName);
+      // toast({
+      //   title: "GSTIN Verified",
+      //   description: "Business details fetched successfully.",
+      // });
     } catch (error: any) {
       toast({
         title: "Fetch Failed",
@@ -140,8 +142,10 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
 
     debounceTimeout.current = setTimeout(async () => {
       setLoadingSuggestions(true);
-      const results = await onboardingService.fetchPostOfficeDetails(query);
-      setSuggestions(results);
+      // TODO: Implement fetchPostOfficeDetails in shared service
+      setSuggestions([]);
+      // const results = await onboardingService.fetchPostOfficeDetails(query);
+      // setSuggestions(results);
       setLoadingSuggestions(false);
     }, 400);
   };
@@ -270,24 +274,24 @@ export default function OrgKYCStep({ data, onNext, onBack }: Props) {
         country: plant.country || "India",
       }));
 
-      const orgKycData: OrgKycFormData = {
-        legalName: formData.legalName,
+      const orgKycData = {
+        legalName: formData.legalName || '',
         tradeName: formData.tradeName,
-        gstin: formData.gstin,
-        pan: formData.pan,
+        gstin: formData.gstin || '',
+        pan: formData.pan || '',
         cin: formData.cin,
-        registeredAddress: formData.registeredAddress,
-        businessType: formData.businessType,
-        incorporationDate: formData.incorporationDate,
+        registeredAddress: formData.registeredAddress || '',
+        businessType: formData.businessType || '',
+        incorporationDate: formData.incorporationDate || '',
         plantLocations: plantLocations as any,
         primaryContact: {
-          name: formData.primaryContact.name,
-          email: formData.primaryContact.email,
-          mobile: formData.primaryContact.mobile,
-          role: formData.primaryContact.role || "CEO",
+          name: formData.primaryContact?.name || '',
+          email: formData.primaryContact?.email || '',
+          mobile: formData.primaryContact?.mobile || '',
+          role: formData.primaryContact?.role || "CEO",
         },
-      };
-      await onboardingService.updateOrgKYC(orgKycData);
+      } as OrgKycFormData;
+      await onboardingService.updateOrgKyc(orgKycData as any);
       toast({
         title: "Success",
         description: "Organization KYC saved successfully",

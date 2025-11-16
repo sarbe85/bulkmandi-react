@@ -55,7 +55,7 @@ export default function UserPreferences({ data, onNext }: Props) {
 
   useEffect(() => {
     setValue('categories', categories);
-    setValue('incoterms', incoterms);
+    setValue('incoterms', incoterms as ('DAP' | 'EXW' | 'FCA' | 'CPT' | 'CIP' | 'DDP')[]);
     setValue('deliveryPins', pins);
   }, [categories, incoterms, pins, setValue]);
 
