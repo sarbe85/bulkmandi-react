@@ -3,12 +3,7 @@
  * Path: src/shared/services/auth.service.ts
  */
 
-import {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  User,
-} from "@/shared/types/api.types";
+import { AuthResponse, LoginRequest, RegisterRequest, User } from "@/shared/types/api.types";
 import { API_CONFIG, STORAGE_KEYS } from "../../../config/api.config";
 
 const getAuthToken = (): string | null => {
@@ -23,9 +18,7 @@ class AuthService {
 
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
     });
 
@@ -33,25 +26,50 @@ class AuthService {
 
     if (!response.ok) {
       console.error("❌ Login failed:", data);
-      throw new Error(
-        Array.isArray(data.message)
-          ? data.message.join(", ")
-          : data.message || `Login failed: ${response.status}`
-      );
+      throw new Error(Array.isArray(data.message) ? data.message.join(", ") : data.message || `Login failed: ${response.status}`);
     }
 
     console.log("✅ Login successful:", {
       role: data.user.role,
       email: data.user.email,
     });
-    const userData: User = data.user;
-    // Store tokens
+
+    // STORE ACCESS TOKEN (existing)
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+
+    // STORE REFRESH TOKEN (new)
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
+
+    // STORE USER DATA (existing)
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
 
     return data;
   }
 
+   async refreshAccessToken(): Promise<string> {
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+    if (!refreshToken) {
+      throw new Error('Refresh token not found');
+    }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/refresh-token`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to refresh access token');
+    }
+
+    const data = await response.json();
+
+    // UPDATE ACCESS TOKEN (new)
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
+
+    return data.accessToken;
+  }
   // ✅ Register - Returns full AuthResponse
   async register(payload: RegisterRequest): Promise<AuthResponse> {
     const url = `${API_CONFIG.BASE_URL}/auth/register`;
@@ -67,11 +85,7 @@ class AuthService {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(
-        Array.isArray(data.message)
-          ? data.message.join(", ")
-          : data.message || `Registration failed: ${response.status}`
-      );
+      throw new Error(Array.isArray(data.message) ? data.message.join(", ") : data.message || `Registration failed: ${response.status}`);
     }
 
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
@@ -83,8 +97,7 @@ class AuthService {
   // ✅ IMPROVED: Comprehensive logout with full cleanup
   async logout(): Promise<void> {
     try {
-      // Step 1: Notify backend
-      const token = getAuthToken();
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
       if (token) {
         try {
           await fetch(`${API_CONFIG.BASE_URL}/auth/logout`, {
@@ -96,10 +109,7 @@ class AuthService {
           });
           console.log("✅ Backend logout successful");
         } catch (error) {
-          console.warn(
-            "⚠️ Backend logout failed, continuing with local cleanup:",
-            error
-          );
+          console.warn("⚠️ Backend logout failed, continuing with local cleanup:", error);
         }
       }
     } catch (error) {
@@ -137,11 +147,7 @@ class AuthService {
     document.cookie.split(";").forEach((c) => {
       const eqPos = c.indexOf("=");
       const name = eqPos > -1 ? c.substring(0, eqPos).trim() : c.trim();
-      if (
-        name.includes("auth") ||
-        name.includes("token") ||
-        name.includes("session")
-      ) {
+      if (name.includes("auth") || name.includes("token") || name.includes("session")) {
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
       }
     });

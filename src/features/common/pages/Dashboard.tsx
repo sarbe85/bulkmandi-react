@@ -10,7 +10,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Redirect if user is not authenticated
-    if (!isAuthenticated()) {
+    if (!isAuthenticated) {
       navigate("/auth/login");
       return;
     }

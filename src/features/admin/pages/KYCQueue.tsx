@@ -3,16 +3,17 @@
  * Path: src/features/admin/pages/KYCQueue.tsx
  */
 
-import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { useToast } from '@/shared/hooks/use-toast';
-import { ArrowLeft, Filter, Loader2, RefreshCw, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import KYCCard from '../components/KYCCard';
-import adminKYCService from '../services/admin-kyc.service';
-import { KYCQueueFilters, KYCQueueItem, KYCStatus, OrgRole } from '../types/admin-kyc.types';
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { useToast } from "@/shared/hooks/use-toast";
+import { KYCStatus, OrgRole } from "@/shared/types/common.types";
+import { ArrowLeft, Filter, Loader2, RefreshCw, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import KYCCard from "../components/KYCCard";
+import adminKYCService from "../services/admin-kyc.service";
+import { KYCQueueFilters, KYCQueueItem } from "../types/admin-kyc.types";
 
 export default function KYCQueue() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -28,13 +29,9 @@ export default function KYCQueue() {
   });
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [statusFilter, setStatusFilter] = useState<KYCStatus | ''>(
-    (searchParams.get('status') as KYCStatus) || ''
-  );
-  const [roleFilter, setRoleFilter] = useState<OrgRole | ''>(
-    (searchParams.get('role') as OrgRole) || ''
-  );
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [statusFilter, setStatusFilter] = useState<KYCStatus | "">((searchParams.get("status") as KYCStatus) || "");
+  const [roleFilter, setRoleFilter] = useState<OrgRole | "">((searchParams.get("role") as OrgRole) || "");
 
   useEffect(() => {
     loadQueue();
@@ -45,7 +42,7 @@ export default function KYCQueue() {
       setIsLoading(true);
 
       const filters: KYCQueueFilters = {
-        page: parseInt(searchParams.get('page') || '1'),
+        page: parseInt(searchParams.get("page") || "1"),
         limit: 20,
       };
 
@@ -57,11 +54,11 @@ export default function KYCQueue() {
       setItems(response.items);
       setPagination(response.pagination);
     } catch (error: any) {
-      console.error('Failed to load KYC queue:', error);
+      console.error("Failed to load KYC queue:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load KYC queue',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load KYC queue",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -70,23 +67,23 @@ export default function KYCQueue() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (searchQuery) params.set('search', searchQuery);
-    if (statusFilter) params.set('status', statusFilter);
-    if (roleFilter) params.set('role', roleFilter);
-    params.set('page', '1');
+    if (searchQuery) params.set("search", searchQuery);
+    if (statusFilter) params.set("status", statusFilter);
+    if (roleFilter) params.set("role", roleFilter);
+    params.set("page", "1");
     setSearchParams(params);
   };
 
   const handleClearFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('');
-    setRoleFilter('');
+    setSearchQuery("");
+    setStatusFilter("");
+    setRoleFilter("");
     setSearchParams({});
   };
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
-    params.set('page', newPage.toString());
+    params.set("page", newPage.toString());
     setSearchParams(params);
   };
 
@@ -97,20 +94,13 @@ export default function KYCQueue() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.history.back()}
-                className="gap-2"
-              >
+              <Button variant="ghost" size="sm" onClick={() => window.history.back()} className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">KYC Verification Queue</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  {pagination.total} submissions waiting for review
-                </p>
+                <p className="text-sm text-gray-600 mt-1">{pagination.total} submissions waiting for review</p>
               </div>
             </div>
             <Button onClick={loadQueue} variant="outline" className="gap-2">
@@ -122,7 +112,6 @@ export default function KYCQueue() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
         {/* Filters */}
         <Card className="p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -136,26 +125,27 @@ export default function KYCQueue() {
                     placeholder="Search by organization name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                     className="pl-10"
                   />
                 </div>
                 <Button onClick={handleSearch}>Search</Button>
               </div>
             </div>
-
             {/* Status Filter */}
             <div>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as KYCStatus | '')}
+                onChange={(e) => setStatusFilter(e.target.value as KYCStatus | "")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500"
               >
-                <option value="">All Statuses</option>
+                <option value="ALL">All</option>
+                <option value="DRAFT">Draft</option>
                 <option value="SUBMITTED">Submitted</option>
                 <option value="APPROVED">Approved</option>
                 <option value="REJECTED">Rejected</option>
                 <option value="INFO_REQUESTED">Info Requested</option>
+                <option value="REVISION_REQUESTED">Revision Requested</option>
               </select>
             </div>
 
@@ -163,7 +153,7 @@ export default function KYCQueue() {
             <div>
               <select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as OrgRole | '')}
+                onChange={(e) => setRoleFilter(e.target.value as OrgRole | "")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">All Roles</option>
@@ -176,9 +166,7 @@ export default function KYCQueue() {
 
           {(statusFilter || roleFilter || searchQuery) && (
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                Active filters: {[statusFilter, roleFilter, searchQuery].filter(Boolean).length}
-              </p>
+              <p className="text-sm text-gray-600">Active filters: {[statusFilter, roleFilter, searchQuery].filter(Boolean).length}</p>
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
                 Clear All
               </Button>
@@ -202,9 +190,7 @@ export default function KYCQueue() {
             <Filter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No submissions found</h3>
             <p className="text-gray-600 mb-4">
-              {searchQuery || statusFilter || roleFilter
-                ? 'Try adjusting your filters'
-                : 'There are no pending KYC submissions at the moment'}
+              {searchQuery || statusFilter || roleFilter ? "Try adjusting your filters" : "There are no pending KYC submissions at the moment"}
             </p>
             {(searchQuery || statusFilter || roleFilter) && (
               <Button onClick={handleClearFilters} variant="outline">
@@ -227,33 +213,23 @@ export default function KYCQueue() {
             {pagination.totalPages > 1 && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600">
-                  Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+                  Showing {(pagination.page - 1) * pagination.limit + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
                   {pagination.total} results
                 </p>
 
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page - 1)} disabled={pagination.page === 1}>
                     Previous
                   </Button>
 
                   {[...Array(pagination.totalPages)].map((_, i) => {
                     const pageNum = i + 1;
                     // Show first, last, and pages around current
-                    if (
-                      pageNum === 1 ||
-                      pageNum === pagination.totalPages ||
-                      (pageNum >= pagination.page - 1 && pageNum <= pagination.page + 1)
-                    ) {
+                    if (pageNum === 1 || pageNum === pagination.totalPages || (pageNum >= pagination.page - 1 && pageNum <= pagination.page + 1)) {
                       return (
                         <Button
                           key={pageNum}
-                          variant={pageNum === pagination.page ? 'default' : 'outline'}
+                          variant={pageNum === pagination.page ? "default" : "outline"}
                           size="sm"
                           onClick={() => handlePageChange(pageNum)}
                         >

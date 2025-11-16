@@ -35,7 +35,6 @@ class ApiClient {
 
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
-          // console.log('✅ Authorization header added');
         } else {
           console.warn("⚠️ No token available for request to:", config.url);
         }
@@ -77,23 +76,22 @@ class ApiClient {
 
           try {
             const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-
-            if (refreshToken) {
-              console.log("🔄 Attempting token refresh...");
-              const response = await axios.post(`${API_CONFIG.BASE_URL}/auth/refresh`, { refreshToken });
-
-              const { accessToken } = response.data;
-              localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-
-              if (originalRequest.headers) {
-                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-              }
-
-              console.log("✅ Token refreshed, retrying request");
-              return this.client(originalRequest);
-            } else {
-              console.warn("⚠️ No refresh token available");
+            if (!refreshToken) {
+              throw new Error("No refresh token available");
             }
+
+            console.log("🔄 Attempting token refresh...");
+            const response = await axios.post(`${API_CONFIG.BASE_URL}/auth/refresh-token`, { refreshToken });
+
+            const { accessToken } = response.data;
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            }
+
+            console.log("✅ Token refreshed, retrying request");
+            return this.client(originalRequest);
           } catch (refreshError) {
             console.error("❌ Token refresh failed:", refreshError);
             localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);

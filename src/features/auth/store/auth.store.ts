@@ -1,19 +1,16 @@
-import authService from '@/features/auth/services/auth.service';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '@/shared/types/api.types';
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import authService from "@/features/auth/services/auth.service";
+import { AuthResponse, LoginRequest, RegisterRequest, User } from "@/shared/types/api.types";
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
- 
 export interface AuthState {
-  // State
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: any;
-  
-  // Actions
-  login: (credentials: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
+
+  login: (credentials: LoginRequest) => Promise<AuthResponse>;
+  register: (data: RegisterRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   checkAuth: () => void;
   updateUser: (user: Partial<User>) => void;
@@ -29,7 +26,7 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
 
-      // Login action
+      // ✅ FIXED: Login action now returns response
       login: async (credentials: LoginRequest) => {
         set({ isLoading: true, error: null });
         try {
@@ -39,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             error: null,
           });
+          return response; // ← ✅ KEY FIX: Return the response
         } catch (error: any) {
           set({
             error: error,
@@ -51,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Register action
+      // ✅ FIXED: Register action now returns response
       register: async (data: RegisterRequest) => {
         set({ isLoading: true, error: null });
         try {
@@ -61,6 +59,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             error: null,
           });
+          return response; // ← ✅ KEY FIX: Return the response
         } catch (error: any) {
           set({
             error: error,
@@ -73,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Logout action
+      // Logout action (already correct)
       logout: async () => {
         set({ isLoading: true });
         try {
@@ -110,7 +109,7 @@ export const useAuthStore = create<AuthState>()(
         set({ error: null });
       },
     }),
-    { name: 'AuthStore' }
+    { name: "AuthStore" }
   )
 );
 

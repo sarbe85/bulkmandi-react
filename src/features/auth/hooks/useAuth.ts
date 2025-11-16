@@ -1,89 +1,35 @@
 /**
- * useAuth Hook
- * Path: src/shared/hooks/useAuth.ts
- * 
- * Wraps authService to provide auth functionality in components
+ * useAuth Hook (Updated)
+ * Wraps Zustand store - single source of truth
  */
 
-import authService from '@/features/auth/services/auth.service';
-import { useState } from 'react';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../../../shared/types/api.types';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { useNavigate } from 'react-router-dom';
 
 export function useAuth() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // ✅ Login wrapper
-  const login = async (credentials: LoginRequest): Promise<AuthResponse | null> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await authService.login(credentials);
-      return response;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
-      console.error('❌ Login error:', message);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ✅ Register wrapper
-  const register = async (data: RegisterRequest): Promise<AuthResponse | null> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await authService.register(data);
-      return response;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
-      setError(message);
-      console.error('❌ Register error:', message);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ✅ IMPROVED: Logout wrapper - calls comprehensive service method
-  const logout = async (): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await authService.logout(); // Calls comprehensive logout
-      console.log('✅ Logout successful');
-      return true;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Logout failed';
-      setError(message);
-      console.error('❌ Logout error:', message);
-      // Still return true to redirect even if error
-      return true;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ✅ Get current user
-  const getCurrentUser = () => authService.getCurrentUser();
-
-  // ✅ Check if authenticated
-  const isAuthenticated = () => authService.isAuthenticated();
-
-  // ✅ Get user role
-  const getUserRole = () => authService.getUserRole();
+  const navigate = useNavigate();
+  const store = useAuthStore();
 
   return {
-    login,
-    register,
-    logout,
-    getCurrentUser,
-    isAuthenticated,
-    getUserRole,
-    isLoading,
-    error,
-    setError,
+    // State from store
+    user: store.user,
+    isAuthenticated: store.isAuthenticated,
+    isLoading: store.isLoading,
+    error: store.error,
+
+    // Actions from store
+    login: store.login,
+    register: store.register,
+    logout: store.logout,
+    clearError: store.clearError,
+
+    // Helpers
+    getCurrentUser: () => store.user,
+    isUserRole: (role: string) => store.user?.role === role,
+    navigateAfterLogout: () => {
+      store.logout().then(() => {
+        navigate('/auth/login', { replace: true });
+      });
+    },
   };
 }

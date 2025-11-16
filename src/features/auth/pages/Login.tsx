@@ -46,66 +46,64 @@ export default function Login() {
     return !newErrors.email && !newErrors.password;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validateForm()) {
+    toast({
+      title: 'Validation Error',
+      description: 'Please fix the errors in the form',
+      variant: 'destructive',
+    });
+    return;
+  }
 
-    if (!validateForm()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fix the errors in the form',
-        variant: 'destructive',
-      });
-      return;
+  try {
+    // Call login API
+    const response = await login(formData);
+
+    // Guard: Check if response/user is valid
+    if (!response || !response.user) {
+      throw new Error('User not registered.');
     }
 
-    try {
-      // ✅ login returns AuthResponse with user.role
-      const response = await login(formData);
+    console.log('✅ Login successful:', {
+      role: response.user.role,
+      email: response.user.email,
+    });
 
-      console.log('✅ Login successful:', {
-        role: response.user.role,
-        email: response.user.email,
-      });
+    toast({
+      title: 'Success',
+      description: 'Login successful! Redirecting...',
+    });
 
-      toast({
-        title: 'Success',
-        description: 'Login successful! Redirecting...',
-      });
-
-      // ✅ Route based on role
-      setTimeout(() => {
-        if (response.user.role === 'ADMIN') {
-          console.log('→ Navigating to /admin/dashboard');
-          navigate('/admin/dashboard', { replace: true });
-        } else if (response.user.role === 'SELLER') {
-          console.log('→ Navigating to /seller/dashboard');
-          navigate('/seller/dashboard', { replace: true });
-        } else if (response.user.role === 'BUYER') {
-          console.log('→ Navigating to /buyer/dashboard');
-          navigate('/buyer/dashboard', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
-      }, 500);
-    } catch (error: any) {
-      console.error('❌ Login error:', error);
-
-      let errorMessage = 'Login failed. Please try again.';
-
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.response?.data?.message) {
-        const msg = error.response.data.message;
-        errorMessage = Array.isArray(msg) ? msg.join(', ') : String(msg);
+    setTimeout(() => {
+      if (response.user.role === 'ADMIN') {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (response.user.role === 'SELLER') {
+        navigate('/seller/dashboard', { replace: true });
+      } else if (response.user.role === 'BUYER') {
+        navigate('/buyer/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
       }
-
-      toast({
-        title: 'Login Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+    }, 500);
+  } catch (error: any) {
+    console.error('❌ Login error:', error);
+    let errorMessage = 'Login failed. Please try again.';
+    if (error?.message) {
+      errorMessage = error.message;
+    } else if (error?.response?.data?.message) {
+      const msg = error.response.data.message;
+      errorMessage = Array.isArray(msg) ? msg.join(', ') : String(msg);
     }
-  };
+    toast({
+      title: 'Login Failed',
+      description: errorMessage,
+      variant: 'destructive',
+    });
+  }
+};
+
 
   const handleChange = (field: 'email' | 'password') => (
     e: React.ChangeEvent<HTMLInputElement>

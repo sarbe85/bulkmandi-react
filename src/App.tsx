@@ -10,6 +10,7 @@ import GetStarted from '@/features/common/pages/GetStarted';
 import NotFound from '@/features/common/pages/NotFound';
 import RoleSelection from '@/features/common/pages/RoleSelection';
 import Index from '@/index';
+import { buyerRoutes } from './features/buyer/routes';
 
 export default function App() {
   return (
@@ -28,6 +29,8 @@ export default function App() {
 
         {/* ✅ ADMIN ROUTES */}
         {adminRoutes}
+
+        {buyerRoutes}
 
         {/* ✅ 404 - MUST BE LAST */}
         <Route path="*" element={<NotFound />} />

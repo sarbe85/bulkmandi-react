@@ -1,9 +1,26 @@
-/**
- * Admin KYC Types
- * Path: src/features/admin/types/admin-kyc.types.ts
- */
+import {
+  ActivityLog,
+  BankAccount,
+  CatalogItem,
+  ContactPerson,
+  DocumentUpload,
+  KycApprovalRequest,
+  KycInfoRequest,
+  KycRejectionRequest,
+  KYCStatus,
+  KycUnlockRequest,
+  KycWatchlistRequest,
+  LogisticsPreference,
+  Organization,
+  OrgRole,
+  PlantLocation,
+  PriceFloor,
+  RiskAssessment,
+  RiskLevel,
+} from "@/shared/types/common.types";
 
-// ===== DASHBOARD STATS =====
+// ===== DASHBOARD STATS (Admin Only) =====
+
 export interface DashboardStats {
   kyc: {
     pending: number;
@@ -32,10 +49,7 @@ export interface DashboardStats {
   };
 }
 
-// ===== KYC QUEUE =====
-export type KYCStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'INFO_REQUESTED';
-export type OrgRole = 'SELLER' | 'BUYER' | '3PL';
-export type RiskLevel = 'Low' | 'Medium' | 'High';
+// ===== KYC QUEUE (Admin Only) =====
 
 export interface KYCQueueItem {
   caseId: string;
@@ -50,7 +64,7 @@ export interface KYCQueueItem {
   riskLevel: RiskLevel;
   riskRemarks: string;
   submittedAt: string;
-  age: string; // "03:10" format
+  age: string; // Format: "03:10" (HH:MM)
 }
 
 export interface KYCQueueResponse {
@@ -64,66 +78,14 @@ export interface KYCQueueResponse {
 }
 
 export interface KYCQueueFilters {
-  status?: KYCStatus;
-  role?: OrgRole;
+  status?: string;
+  role?: string;
   search?: string;
   page?: number;
   limit?: number;
 }
 
-// ===== KYC DETAIL =====
-export interface PlantLocation {
-  street: string;
-  city: string;
-  state: string;
-  pin: string;
-  country: string;
-}
-
-export interface ContactPerson {
-  name: string;
-  email: string;
-  mobile: string;
-  role: string;
-}
-
-export interface BankAccount {
-  accountNumber: string;
-  ifsc: string;
-  bankName: string;
-  accountHolderName: string;
-  accountType: 'Current' | 'Savings';
-  pennyDropStatus: 'VERIFIED' | 'PENDING' | 'FAILED';
-  pennyDropScore: number;
-  documents: DocumentUpload[];
-}
-
-export interface DocumentUpload {
-  docType: string;
-  fileName: string;
-  fileUrl: string;
-  uploadedAt: string;
-  status: string;
-}
-
-export interface CatalogItem {
-  id: string;
-  category: string;
-  isSelected: boolean;
-  grades: string[];
-  moqPerOrder: number;
-  stdLeadTime: number;
-}
-
-export interface PriceFloor {
-  category: string;
-  pricePerMT: number;
-}
-
-export interface LogisticsPreference {
-  usePlatform3PL: boolean;
-  selfPickupAllowed: boolean;
-}
+// ===== KYC CASE DETAIL (Admin Only) =====
 
 export interface AutoChecks {
   gstinValid: boolean;
@@ -133,44 +95,24 @@ export interface AutoChecks {
   addressVerified: boolean;
 }
 
-export interface RiskAssessment {
-  level: RiskLevel;
-  score: number;
-  remarks: string;
-}
-
-export interface ActivityLog {
-  action: string;
-  timestamp: string;
-  performedBy: string;
-  remarks: string;
+export interface KYCCaseInfo {
+  caseId: string;
+  submissionNumber: string;
+  status: KYCStatus;
+  submittedAt: string;
+  age: string; // Format: "03:10"
+  sla: {
+    tat: string; // e.g., "24h"
+    age: string; // Format: "03:10"
+  };
 }
 
 export interface KYCCaseDetail {
-  case: {
-    caseId: string;
-    submissionNumber: string;
-    status: KYCStatus;
-    submittedAt: string;
-    age: string;
-    sla: {
-      tat: string;
-      age: string;
-    };
-  };
-  organization: {
-    id: string;
-    orgId: string;
-    legalName: string;
-    tradeName?: string;
-    role: OrgRole;
-    gstin: string;
-    pan: string;
-    cin?: string;
-    registeredAddress: string;
-    businessType: string;
-    incorporationDate: string;
-  };
+  case: KYCCaseInfo;
+  organization: Omit<
+    Organization,
+    "kycStatus" | "isVerified" | "isOnboardingLocked" | "rejectionReason" | "kycApprovedAt" | "kycApprovedBy" | "createdAt" | "updatedAt"
+  >;
   contacts: {
     primary: ContactPerson;
     secondary?: ContactPerson;
@@ -186,37 +128,20 @@ export interface KYCCaseDetail {
   activityLog: ActivityLog[];
 }
 
-// ===== ACTION PAYLOADS =====
-export interface ApproveKYCPayload {
-  remarks: string;
-}
+// ===== ACTION RESPONSES (Admin Only) =====
 
-export interface RejectKYCPayload {
-  rejectionReason: string;
-}
-
-export interface RequestInfoPayload {
-  message: string;
-  fields: string[];
-}
-
-export interface WatchlistPayload {
-  reason: string;
-  tags: string[];
-}
-
-// ===== ACTION RESPONSES =====
 export interface ApproveKYCResponse {
   message: string;
   kycCase: {
     id: string;
-    status: string;
+    status: KYCStatus;
     reviewedAt: string;
   };
   organization: {
     id: string;
-    kycStatus: string;
+    kycStatus: KYCStatus;
     isVerified: boolean;
+    kycApprovedAt: string;
   };
 }
 
@@ -224,13 +149,13 @@ export interface RejectKYCResponse {
   message: string;
   kycCase: {
     id: string;
-    status: string;
+    status: KYCStatus;
     rejectionReason: string;
     reviewedAt: string;
   };
   organization: {
     id: string;
-    kycStatus: string;
+    kycStatus: KYCStatus;
     rejectionReason: string;
   };
 }
@@ -247,7 +172,14 @@ export interface WatchlistResponse {
   tags: string[];
 }
 
-// ===== HISTORY =====
+export interface UnlockForUpdateResponse {
+  message: string;
+  organizationId: string;
+  kycStatus: KYCStatus;
+}
+
+// ===== HISTORY (Admin Only) =====
+
 export interface KYCHistoryItem {
   caseId: string;
   submissionNumber: string;
@@ -257,3 +189,14 @@ export interface KYCHistoryItem {
   reviewedAt?: string;
   rejectionReason?: string;
 }
+
+// ===== EXPORT ALIASES FOR EASIER IMPORTS =====
+
+export type ApproveKYCPayload = KycApprovalRequest;
+export type RejectKYCPayload = KycRejectionRequest;
+export type RequestInfoPayload = KycInfoRequest;
+export type WatchlistPayload = KycWatchlistRequest;
+export type UnlockForUpdatePayload = KycUnlockRequest;
+
+// ===== RE-EXPORT COMMON TYPES =====
+export type { RiskLevel } from "@/shared/types/common.types";

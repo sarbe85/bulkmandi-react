@@ -7,18 +7,7 @@ import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useToast } from "@/shared/hooks/use-toast";
 import { UserRole } from "@/shared/types/api.types";
-import {
-  AlertCircle,
-  ArrowRight,
-  Building2,
-  CheckCircle2,
-  Lock,
-  Mail,
-  Package,
-  Phone,
-  ShoppingCart,
-  Truck,
-} from "lucide-react";
+import { AlertCircle, ArrowRight, Building2, CheckCircle2, Lock, Mail, Package, Phone, ShoppingCart, Truck } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -114,7 +103,12 @@ export default function Register() {
     }
 
     try {
-      await register(formData);
+      const response = await register(formData);
+
+      // Optionally check response validity here if applicable
+      if (!response || !response.user) {
+        throw new Error("Registration failed: invalid response from server.");
+      }
 
       toast({
         title: "Success",
@@ -122,22 +116,19 @@ export default function Register() {
       });
 
       setTimeout(() => {
-        navigate(formData.role === "SELLER" ? "/seller/onboarding" : "/seller/dashboard");
+        if (formData.role === "SELLER") {
+          navigate("/seller/onboarding");
+        } else if (formData.role === "BUYER") {
+          navigate("/buyer/dashboard");
+        } else if (formData.role === "3PL") {
+          navigate("/logistics/dashboard");
+        } else {
+          navigate("/");
+        }
       }, 500);
     } catch (error: any) {
       console.error("Registration error:", error);
-
-      let errorMessage = "Registration failed. Please try again.";
-
-      if (error?.response?.data?.message) {
-        const msg = error.response.data.message;
-        errorMessage = Array.isArray(msg) ? msg.join(". ") : String(msg);
-      } else if (error?.response?.data?.error) {
-        errorMessage = String(error.response.data.error);
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-
+      const errorMessage = extractErrorMessage(error);
       toast({
         title: "Registration Failed",
         description: errorMessage,
@@ -185,9 +176,10 @@ export default function Register() {
       BUYER: ["Create RFQs", "Compare quotes", "Track orders", "Verified sellers"],
       "3PL": ["Bid on lanes", "Live tracking", "Upload POD", "Get paid fast"],
     };
-    return features[role];
-  };
 
+    // Fallback empty array ensures features is never undefined
+    return features[role] ?? [];
+  };
   const RoleIcon = getRoleIcon(formData.role);
   const features = getRoleFeatures(formData.role);
 
@@ -311,9 +303,7 @@ export default function Register() {
                         key={role}
                         htmlFor={role}
                         className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition ${
-                          formData.role === role
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
+                          formData.role === role ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
                         <RadioGroupItem value={role} id={role} className="sr-only" />

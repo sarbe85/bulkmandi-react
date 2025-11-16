@@ -1,32 +1,36 @@
-
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
-import {
-  ArrowRight,
-  BarChart3,
-  Building2,
-  CheckCircle,
-  FileText,
-  Package,
-  Shield,
-  ShoppingCart,
-  TrendingUp,
-  Truck,
-  Users,
-  Zap,
-} from 'lucide-react';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
+import { ArrowRight, BarChart3, Building2, CheckCircle, FileText, Package, Shield, ShoppingCart, TrendingUp, Truck, Users, Zap } from "lucide-react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, getCurrentUser } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      navigate('/dashboard');
+    if (!isAuthenticated) {
+      navigate("/");
+      return;
+    }
+
+    const user = getCurrentUser();
+    console.log("User Role:", user);
+    switch (user.role) {
+      case "SELLER":
+        navigate("/seller/dashboard");
+        break;
+      case "ADMIN":
+        navigate("/admin/dashboard");
+        break;
+      case "BUYER":
+        navigate("/buyer/dashboard");
+        break;
+      default:
+        navigate("/dashboard");
+        break;
     }
   }, [isAuthenticated, navigate]);
 
@@ -39,33 +43,22 @@ const Index = () => {
             <Zap className="h-3 w-3 mr-2" />
             India's Leading B2B Steel Marketplace
           </Badge>
-
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             Connect, Trade, and Grow
             <span className="block text-primary mt-3">Your Steel Business</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl leading-relaxed">
-            Join India's most trusted B2B steel platform. Whether you're buying, selling, or
-            providing logistics—streamline your operations with verified partners and automated
-            workflows.
+            Join India's most trusted B2B steel platform. Whether you're buying, selling, or providing logistics—streamline your operations with
+            verified partners and automated workflows.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <Button
-              size="lg"
-              onClick={() => navigate('/get-started')}
-              className="text-lg px-10 py-6 shadow-lg"
-            >
+            <Button size="lg" onClick={() => navigate("/get-started")} className="text-lg px-10 py-6 shadow-lg">
               Get Started
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/auth/login')}
-              className="text-lg px-10 py-6"
-            >
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth/login")} className="text-lg px-10 py-6">
               Sign In
             </Button>
           </div>
@@ -158,8 +151,7 @@ const Index = () => {
             </div>
             <h3 className="text-xl font-semibold mb-3">For Sellers</h3>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Get matched with relevant RFQs, submit automated quotes, and manage your catalog
-              efficiently.
+              Get matched with relevant RFQs, submit automated quotes, and manage your catalog efficiently.
             </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
@@ -214,9 +206,7 @@ const Index = () => {
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
               Everything You Need to <span className="text-primary">Succeed</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Powerful tools designed specifically for the steel industry
-            </p>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Powerful tools designed specifically for the steel industry</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -226,8 +216,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Smart Matching</h3>
               <p className="text-muted-foreground leading-relaxed">
-                AI-powered algorithm connects buyers with the right sellers based on catalog,
-                capacity, and delivery zones.
+                AI-powered algorithm connects buyers with the right sellers based on catalog, capacity, and delivery zones.
               </p>
             </Card>
 
@@ -237,8 +226,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Automated Workflows</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Submit quotes in minutes with pre-configured pricing, freight calculations, and
-                validity periods.
+                Submit quotes in minutes with pre-configured pricing, freight calculations, and validity periods.
               </p>
             </Card>
 
@@ -248,8 +236,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Verified Partners</h3>
               <p className="text-muted-foreground leading-relaxed">
-                All users are GSTIN verified with credit checks. Trade with confidence knowing
-                you're dealing with legitimate businesses.
+                All users are GSTIN verified with credit checks. Trade with confidence knowing you're dealing with legitimate businesses.
               </p>
             </Card>
 
@@ -259,8 +246,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Real-Time Updates</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Get instant notifications on new opportunities, quote status, and order updates.
-                Never miss a beat.
+                Get instant notifications on new opportunities, quote status, and order updates. Never miss a beat.
               </p>
             </Card>
 
@@ -270,8 +256,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Analytics Dashboard</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Track your performance with detailed analytics on conversion rates, order values,
-                and business trends.
+                Track your performance with detailed analytics on conversion rates, order values, and business trends.
               </p>
             </Card>
 
@@ -281,8 +266,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Multi-Location</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Manage multiple plant locations, dispatch coordination, and regional pricing from a
-                single dashboard.
+                Manage multiple plant locations, dispatch coordination, and regional pricing from a single dashboard.
               </p>
             </Card>
           </div>
@@ -306,9 +290,7 @@ const Index = () => {
               1
             </div>
             <h3 className="text-xl font-semibold mb-3">Register & Verify</h3>
-            <p className="text-muted-foreground">
-              Quick 15-minute onboarding with GSTIN, PAN, and business verification
-            </p>
+            <p className="text-muted-foreground">Quick 15-minute onboarding with GSTIN, PAN, and business verification</p>
           </div>
 
           <div className="text-center">
@@ -316,9 +298,7 @@ const Index = () => {
               2
             </div>
             <h3 className="text-xl font-semibold mb-3">Set Up Profile</h3>
-            <p className="text-muted-foreground">
-              Add your requirements, catalog, or fleet details based on your role
-            </p>
+            <p className="text-muted-foreground">Add your requirements, catalog, or fleet details based on your role</p>
           </div>
 
           <div className="text-center">
@@ -326,14 +306,12 @@ const Index = () => {
               3
             </div>
             <h3 className="text-xl font-semibold mb-3">Start Trading</h3>
-            <p className="text-muted-foreground">
-              Begin buying, selling, or managing shipments with verified partners instantly
-            </p>
+            <p className="text-muted-foreground">Begin buying, selling, or managing shipments with verified partners instantly</p>
           </div>
         </div>
 
         <div className="text-center mt-12">
-          <Button size="lg" onClick={() => navigate('/get-started')} className="px-8">
+          <Button size="lg" onClick={() => navigate("/get-started")} className="px-8">
             Begin Your Journey
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
@@ -344,23 +322,15 @@ const Index = () => {
       <div className="container mx-auto px-4 py-20">
         <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 p-12 text-center">
           <Users className="h-16 w-16 text-primary mx-auto mb-6" />
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Join 500+ Successful Steel Businesses
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Join 500+ Successful Steel Businesses</h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Start connecting with verified partners today. No setup fees, no commissions, just pure
-            business growth.
+            Start connecting with verified partners today. No setup fees, no commissions, just pure business growth.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate('/get-started')} className="px-8">
+            <Button size="lg" onClick={() => navigate("/get-started")} className="px-8">
               Get Started Free
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/auth/login')}
-              className="px-8"
-            >
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth/login")} className="px-8">
               Sign In to Dashboard
             </Button>
           </div>
