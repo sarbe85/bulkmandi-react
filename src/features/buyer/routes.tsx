@@ -1,7 +1,7 @@
 // src/features/buyer/routes.tsx
 
 import { Route } from 'react-router-dom';
-import BuyerLayout from './components/layout/BuyerLayout';
+import BuyerLayout from './layout/BuyerLayout';
 import Dashboard from './pages/Dashboard';
 import KYCStatusView from './pages/KYCStatusView';
 import OnboardingPage from './pages/OnboardingPage';
