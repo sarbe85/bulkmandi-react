@@ -75,7 +75,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-background">
       <SharedHeader
         kycStatus={data?.kycStatus}
         showKYCBadge={false}
@@ -84,7 +84,7 @@ export default function OnboardingPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Stepper steps={steps} current={currentStepIndex} />
 
-        <div className="mt-8 bg-white rounded-lg p-8 shadow">
+        <div className="mt-8 bg-card rounded-lg p-8 shadow border border-border">
           <StepComponent
             onNext={() => {
               if (currentStepIndex < steps.length - 1) {

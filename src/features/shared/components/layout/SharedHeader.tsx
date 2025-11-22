@@ -1,4 +1,5 @@
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -44,7 +45,7 @@ export default function SharedHeader({
 }: SharedHeaderProps) {
   const navigate = useNavigate();
   const { logout, isLoading: isLoggingOut, getCurrentUser } = useAuth();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const [user, setUser] = useState<UserData>({
     name: 'User Account',
     email: 'user@example.com',
@@ -56,19 +57,14 @@ export default function SharedHeader({
   const currentUser = getCurrentUser();
   const role = userType || currentUser?.role || 'SELLER';
 
-  // Define navigation items based on user type
-  const getNavigationItems = () => {
-    const basePath = `/${role.toLowerCase()}`;
-    return [
-      { label: 'Dashboard', path: `${basePath}/dashboard` },
-      { label: 'RFQs', path: `${basePath}/rfqs` },
-      { label: 'Quotes', path: `${basePath}/quotes` },
-      { label: 'Orders', path: `${basePath}/orders` },
-      { label: 'KYC Status', path: `${basePath}/kyc-status` },
-    ];
-  };
-
-  const navigationItems = getNavigationItems();
+  // Define navigation items - now using generic /user/* paths
+  const navigationItems = [
+    { label: 'Dashboard', path: '/user/dashboard' },
+    { label: 'RFQs', path: '/user/rfqs' },
+    { label: 'Quotes', path: '/user/quotes' },
+    { label: 'Orders', path: '/user/orders' },
+    { label: 'KYC Status', path: '/user/kyc-status' },
+  ];
 
   useEffect(() => {
     const userData = localStorage.getItem('user_data');
@@ -85,31 +81,7 @@ export default function SharedHeader({
         console.error('Failed to parse user data:', error);
       }
     }
-
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-    setIsDarkMode(isDark);
-    applyTheme(isDark);
   }, [role]);
-
-  const applyTheme = (dark: boolean) => {
-    const html = document.documentElement;
-    if (dark) {
-      html.classList.add('dark');
-      document.body.classList.add('bg-slate-950', 'text-white');
-    } else {
-      html.classList.remove('dark');
-      document.body.classList.remove('bg-slate-950', 'text-white');
-    }
-  };
-
-  const toggleTheme = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
-    applyTheme(newDarkMode);
-  };
 
   const handleLogout = async () => {
     try {
@@ -126,26 +98,26 @@ export default function SharedHeader({
       case 'APPROVED':
         return {
           text: 'KYC Verified',
-          className: 'bg-green-100 text-green-800 border-green-300',
+          className: 'bg-success/10 text-success border-success/30',
           icon: <CheckCircle2 className="w-4 h-4" />,
         };
       case 'SUBMITTED':
         return {
           text: 'KYC Pending',
-          className: 'bg-blue-100 text-blue-800 border-blue-300',
+          className: 'bg-primary/10 text-primary border-primary/30',
           icon: <Clock className="w-4 h-4" />,
         };
       case 'REJECTED':
         return {
           text: 'KYC Rejected',
-          className: 'bg-red-100 text-red-800 border-red-300',
+          className: 'bg-destructive/10 text-destructive border-destructive/30',
           icon: '❌',
         };
       case 'DRAFT':
       default:
         return {
           text: 'KYC Incomplete',
-          className: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+          className: 'bg-warning/10 text-warning border-warning/30',
           icon: '⚠️',
         };
     }
@@ -155,20 +127,20 @@ export default function SharedHeader({
   const portalName = role === 'SELLER' ? 'Seller Portal' : role === 'BUYER' ? 'Buyer Portal' : 'Logistics Portal';
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm">
+    <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex justify-between items-center">
           {/* LEFT: LOGO + NAVIGATION */}
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">B</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">B</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h1 className="text-lg font-bold">
                   BulkMandi
                 </h1>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {portalName}
                 </p>
               </div>
@@ -180,7 +152,7 @@ export default function SharedHeader({
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                  className="px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors"
                 >
                   {item.label}
                 </button>
@@ -208,12 +180,12 @@ export default function SharedHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="relative text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+              className="relative hover:bg-muted"
               onClick={() => console.log('Notifications clicked')}
               title="Notifications"
             >
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
             </Button>
 
             {/* Dark Mode Toggle */}
@@ -221,10 +193,10 @@ export default function SharedHeader({
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="hover:bg-muted"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {isDarkMode ? (
+              {theme === 'dark' ? (
                 <Sun className="w-5 h-5" />
               ) : (
                 <Moon className="w-5 h-5" />
@@ -237,19 +209,19 @@ export default function SharedHeader({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 px-2 hover:bg-gray-100 dark:hover:bg-slate-800"
+                  className="gap-2 px-2 hover:bg-muted"
                 >
                   <Avatar className="w-8 h-8">
                     <AvatarImage src="" />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
                       {user.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:block text-left">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[150px]">
+                    <p className="text-sm font-semibold truncate max-w-[150px]">
                       {user.name}
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[150px]">
+                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">
                       {user.email}
                     </p>
                   </div>
@@ -258,51 +230,51 @@ export default function SharedHeader({
 
               <DropdownMenuContent
                 align="end"
-                className="w-72 dark:bg-slate-800 dark:border-slate-700"
+                className="w-72"
               >
-                <div className="px-4 py-4 border-b dark:border-slate-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-700 dark:to-slate-600">
+                <div className="px-4 py-4 border-b bg-muted/30">
                   <div className="flex items-center gap-3 mb-2">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src="" />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-bold text-lg">
                         {user.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-white truncate">
+                      <p className="font-semibold truncate">
                         {user.organizationName || user.name}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {user.email}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <DropdownMenuSeparator className="dark:bg-slate-700" />
+                <DropdownMenuSeparator />
 
                 <DropdownMenuItem
-                  onClick={() => navigate(`/${role.toLowerCase()}/profile`)}
-                  className="cursor-pointer dark:hover:bg-slate-700 dark:text-gray-300"
+                  onClick={() => navigate('/user/profile')}
+                  className="cursor-pointer"
                 >
                   <User className="w-4 h-4 mr-2" />
                   <span>View Profile</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  onClick={() => navigate(`/${role.toLowerCase()}/settings`)}
-                  className="cursor-pointer dark:hover:bg-slate-700 dark:text-gray-300"
+                  onClick={() => navigate('/user/settings')}
+                  className="cursor-pointer"
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   <span>Settings</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuSeparator className="dark:bg-slate-700" />
+                <DropdownMenuSeparator />
 
                 <DropdownMenuItem
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-slate-700"
+                  className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
@@ -316,7 +288,6 @@ export default function SharedHeader({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-gray-700 dark:text-gray-300"
                   title="Open menu"
                 >
                   <Menu className="w-5 h-5" />
@@ -325,10 +296,10 @@ export default function SharedHeader({
 
               <SheetContent
                 side="right"
-                className="w-64 dark:bg-slate-900 dark:border-slate-700"
+                className="w-64"
               >
                 <div className="space-y-4 mt-6">
-                  <div className="font-semibold text-lg text-gray-900 dark:text-white">
+                  <div className="font-semibold text-lg">
                     Menu
                   </div>
                   {navigationItems.map((item) => (
@@ -338,7 +309,7 @@ export default function SharedHeader({
                         navigate(item.path);
                         setSheetOpen(false);
                       }}
-                      className="block w-full text-left px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                      className="block w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                     >
                       {item.label}
                     </button>
