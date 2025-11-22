@@ -2,27 +2,27 @@
 // UNIFIED ONBOARDING PAGE (ALL ROLES)
 // ============================================
 
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import BankDetailsStep from '../components/onboarding/BankDetailsStep';
-import CatalogStep from '../components/onboarding/CatalogStep';
-import ComplianceDocsStep from '../components/onboarding/ComplianceDocsStep';
-import OrgKYCStep from '../components/onboarding/OrgKYCStep';
-import ReviewStep from '../components/onboarding/ReviewStep';
-import Stepper from '../components/Stepper';
-import { useOnboarding } from '../hooks/useOnboarding';
-import { getStepsForRole, UserRole } from '../types/onboarding.types';
- 
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import SellerHeader from "../components/layout/Header";
+import BankDetailsStep from "../components/onboarding/BankDetailsStep";
+import CatalogStep from "../components/onboarding/CatalogStep";
+import ComplianceDocsStep from "../components/onboarding/ComplianceDocsStep";
+import OrgKYCStep from "../components/onboarding/OrgKYCStep";
+import ReviewStep from "../components/onboarding/ReviewStep";
+import Stepper from "../components/Stepper";
+import { useOnboarding } from "../hooks/useOnboarding";
+import { getStepsForRole, UserRole } from "../types/onboarding.types";
 
 // Component map
 const STEP_COMPONENTS: Record<string, any> = {
-  'org-kyc': OrgKYCStep,
-  'bank-details': BankDetailsStep,
-  'compliance-docs': ComplianceDocsStep,
+  "org-kyc": OrgKYCStep,
+  "bank-details": BankDetailsStep,
+  "compliance-docs": ComplianceDocsStep,
   // 'buyer-preferences': BuyerPreferences,
-  'catalog': CatalogStep,
-  'review': ReviewStep
+  catalog: CatalogStep,
+  review: ReviewStep,
 };
 
 export default function OnboardingPage() {
@@ -43,8 +43,8 @@ export default function OnboardingPage() {
 
   // Redirect if onboarding is locked
   useEffect(() => {
-    if (data?.isOnboardingLocked || data?.kycStatus === 'SUBMITTED') {
-      navigate('/onboarding/kyc-status', { replace: true });
+    if (data?.isOnboardingLocked || data?.kycStatus === "SUBMITTED") {
+      navigate("/onboarding/kyc-status", { replace: true });
     }
   }, [data?.isOnboardingLocked, data?.kycStatus, navigate]);
 
@@ -75,26 +75,33 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <Stepper steps={steps} current={currentStepIndex} />
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      {/* ADD HEADER HERE */}
+      <SellerHeader
+        kycStatus={data?.kycStatus}
+        showKYCBadge={false} // Hide during onboarding
+      />
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Stepper steps={steps} current={currentStepIndex} />
 
-      <div className="mt-8 bg-white rounded-lg p-8 shadow">
-        <StepComponent
-          onNext={() => {
-            if (currentStepIndex < steps.length - 1) {
-              setCurrentStepIndex(currentStepIndex + 1);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+        <div className="mt-8 bg-white rounded-lg p-8 shadow">
+          <StepComponent
+            onNext={() => {
+              if (currentStepIndex < steps.length - 1) {
+                setCurrentStepIndex(currentStepIndex + 1);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
+            onBack={
+              currentStepIndex > 0
+                ? () => {
+                    setCurrentStepIndex(currentStepIndex - 1);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                : undefined
             }
-          }}
-          onBack={
-            currentStepIndex > 0
-              ? () => {
-                  setCurrentStepIndex(currentStepIndex - 1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              : undefined
-          }
-        />
+          />
+        </div>
       </div>
     </div>
   );

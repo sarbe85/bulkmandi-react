@@ -1,15 +1,16 @@
 // Copy from: seller/pages/Dashboard.tsx
 // Change: Navigation paths /seller → /buyer
 
+import { useOnboarding } from '@/features/shared/hooks/useOnboarding';
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
 import { ArrowRight, FileText, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useOnboardingData } from '../hooks/useOnboardingData';
 
 export default function BuyerDashboard() {
   const navigate = useNavigate();
-  const { onboarding } = useOnboardingData();
+   const { data: onboarding, isLoading, error, fetchData } = useOnboarding();
+
 
   const getStatusColor = (status: string) => {
     switch (status) {

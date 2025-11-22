@@ -20,17 +20,17 @@ export const API_CONFIG = {
     LOGOUT: '/auth/logout',
 
     // ========== Onboarding ==========
-    ONBOARDING_STATUS: '/seller/onboarding/status',
-    ONBOARDING_ORG_KYC: '/seller/onboarding/org-kyc',
-    ONBOARDING_BANK_DETAILS: '/seller/onboarding/bank-details',
-    ONBOARDING_BANK_DOCS: '/seller/onboarding/bank-docs',
-    ONBOARDING_COMPLIANCE_DOCS: '/seller/onboarding/compliance-docs',
-    ONBOARDING_CATALOG: '/seller/onboarding/catalog',
-    ONBOARDING_SUBMIT: '/seller/onboarding/submit',
+    ONBOARDING_STATUS: '/user/onboarding/status',
+    ONBOARDING_ORG_KYC: '/user/onboarding/org-kyc',
+    ONBOARDING_BANK_DETAILS: '/user/onboarding/bank-details',
+    ONBOARDING_BANK_DOCS: '/user/onboarding/bank-docs',
+    ONBOARDING_COMPLIANCE_DOCS: '/user/onboarding/compliance-docs',
+    ONBOARDING_CATALOG: '/user/onboarding/catalog',
+    ONBOARDING_SUBMIT: '/user/onboarding/submit',
 
     // ========== Dashboard ==========
-    DASHBOARD: '/seller/dashboard',
-    KYC_STATUS: '/seller/kyc-status',
+    DASHBOARD: '/user/dashboard',
+    KYC_STATUS: '/user/kyc-status',
 
     // ========== Organization (Admin) ==========
     ADMIN_PENDING_KYC: '/organizations/admin/kyc/pending',
