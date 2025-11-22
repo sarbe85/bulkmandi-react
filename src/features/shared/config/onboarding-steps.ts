@@ -1,6 +1,6 @@
 // src/features/shared/config/onboarding-steps.ts
 
-import UserPreferences from "@/features/buyer/components/onboarding/UserPreferences";
+import BuyerPreferences from "../components/onboarding/BuyerPreferences";
 import BankDetailsStep from "../components/onboarding/BankDetailsStep";
 import CatalogStep from "../components/onboarding/CatalogStep";
 import ComplianceDocsStep from "../components/onboarding/ComplianceDocsStep";
@@ -26,7 +26,7 @@ export const ONBOARDING_STEPS_BY_ROLE: Record<UserRole, OnboardingStep[]> = {
     { id: "ORG_KYC", label: "Organization KYC", component: OrgKYCStep },
     { id: "BANK", label: "Bank Details", component: BankDetailsStep },
     { id: "COMPLIANCE", label: "Compliance", component: ComplianceDocsStep },
-    { id: "PREFERENCES", label: "Buying Preferences", component: UserPreferences },
+    { id: "PREFERENCES", label: "Buying Preferences", component: BuyerPreferences },
   ],
   LOGISTICS: [
     { id: "ORG_KYC", label: "Organization KYC", component: OrgKYCStep },

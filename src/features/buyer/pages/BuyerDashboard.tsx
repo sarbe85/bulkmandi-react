@@ -1,6 +1,7 @@
 // Copy from: seller/pages/Dashboard.tsx
 // Change: Navigation paths /seller → /buyer
 
+import SharedHeader from '@/features/shared/components/layout/SharedHeader';
 import { useOnboarding } from '@/features/shared/hooks/useOnboarding';
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
@@ -26,8 +27,10 @@ export default function BuyerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-5xl mx-auto px-4 space-y-8">
+    <>
+      <SharedHeader kycStatus={onboarding?.kycStatus} userType="BUYER" />
+      <div className="min-h-screen bg-background py-8">
+        <div className="max-w-5xl mx-auto px-4 space-y-8">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold">Buyer Portal</h1>
@@ -116,7 +119,8 @@ export default function BuyerDashboard() {
             )}
           </div>
         </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
