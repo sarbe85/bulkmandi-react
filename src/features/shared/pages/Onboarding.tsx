@@ -5,7 +5,7 @@
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SellerHeader from "../components/layout/Header";
+import SharedHeader from "../components/layout/SharedHeader";
 import BankDetailsStep from "../components/onboarding/BankDetailsStep";
 import CatalogStep from "../components/onboarding/CatalogStep";
 import ComplianceDocsStep from "../components/onboarding/ComplianceDocsStep";
@@ -76,10 +76,10 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* ADD HEADER HERE */}
-      <SellerHeader
+      <SharedHeader
         kycStatus={data?.kycStatus}
-        showKYCBadge={false} // Hide during onboarding
+        showKYCBadge={false}
+        userType={userRole as any}
       />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Stepper steps={steps} current={currentStepIndex} />

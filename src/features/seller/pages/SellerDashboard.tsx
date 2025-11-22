@@ -6,9 +6,10 @@ import { AlertCircle, ArrowUp, CheckCircle2, Clock, Package, Star, TrendingUp } 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+import SharedHeader from "@/features/shared/components/layout/SharedHeader";
+
 export default function SellerDashboard() {
   const navigate = useNavigate();
-  // ✅ FIXED: Use hook properly
   const { data: onboarding, isLoading, error, fetchData } = useOnboarding();
 
   // ✅ FIXED: Fetch data on mount
@@ -115,8 +116,10 @@ export default function SellerDashboard() {
   const kycDetails = getKYCDetails();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <>
+      <SharedHeader kycStatus={onboarding?.kycStatus} userType="SELLER" />
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
+        <div className="max-w-6xl mx-auto space-y-8">
         {/* ========== PAGE HEADER ========== */}
         <div className="flex justify-between items-center">
           <div>
@@ -303,7 +306,8 @@ export default function SellerDashboard() {
             KYC Status
           </Button>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
