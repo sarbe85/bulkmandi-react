@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SharedHeader from "../components/layout/SharedHeader";
 import BankDetailsStep from "../components/onboarding/BankDetailsStep";
+import BuyerPreferences from "../components/onboarding/BuyerPreferences";
 import CatalogStep from "../components/onboarding/CatalogStep";
 import ComplianceDocsStep from "../components/onboarding/ComplianceDocsStep";
 import OrgKYCStep from "../components/onboarding/OrgKYCStep";
@@ -20,7 +21,7 @@ const STEP_COMPONENTS: Record<string, any> = {
   "org-kyc": OrgKYCStep,
   "bank-details": BankDetailsStep,
   "compliance-docs": ComplianceDocsStep,
-  // 'buyer-preferences': BuyerPreferences,
+  "buyer-preferences": BuyerPreferences,
   catalog: CatalogStep,
   review: ReviewStep,
 };

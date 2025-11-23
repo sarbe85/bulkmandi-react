@@ -17,21 +17,21 @@ interface OnboardingStep {
 // Define which steps show for which roles
 export const ONBOARDING_STEPS_BY_ROLE: Record<UserRole, OnboardingStep[]> = {
   SELLER: [
-    { id: "ORG_KYC", label: "Organization KYC", component: OrgKYCStep },
-    { id: "BANK", label: "Bank Details", component: BankDetailsStep },
-    { id: "COMPLIANCE", label: "Compliance", component: ComplianceDocsStep },
-    { id: "CATALOG", label: "Catalog & Pricing", component: CatalogStep },
+    { id: "org-kyc", label: "Organization KYC", component: OrgKYCStep },
+    { id: "bank-details", label: "Bank Details", component: BankDetailsStep },
+    { id: "compliance-docs", label: "Compliance", component: ComplianceDocsStep },
+    { id: "catalog", label: "Catalog & Pricing", component: CatalogStep },
   ],
   BUYER: [
-    { id: "ORG_KYC", label: "Organization KYC", component: OrgKYCStep },
-    { id: "BANK", label: "Bank Details", component: BankDetailsStep },
-    { id: "COMPLIANCE", label: "Compliance", component: ComplianceDocsStep },
-    { id: "PREFERENCES", label: "Buying Preferences", component: BuyerPreferences },
+    { id: "org-kyc", label: "Organization KYC", component: OrgKYCStep },
+    { id: "bank-details", label: "Bank Details", component: BankDetailsStep },
+    { id: "compliance-docs", label: "Compliance", component: ComplianceDocsStep },
+    { id: "buyer-preferences", label: "Buying Preferences", component: BuyerPreferences },
   ],
   LOGISTICS: [
-    { id: "ORG_KYC", label: "Organization KYC", component: OrgKYCStep },
-    { id: "BANK", label: "Bank Details", component: BankDetailsStep },
-    { id: "COMPLIANCE", label: "Compliance", component: ComplianceDocsStep },
+    { id: "org-kyc", label: "Organization KYC", component: OrgKYCStep },
+    { id: "bank-details", label: "Bank Details", component: BankDetailsStep },
+    { id: "compliance-docs", label: "Compliance", component: ComplianceDocsStep },
   ],
   ADMIN: [],
 };
