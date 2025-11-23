@@ -11,7 +11,7 @@ export type OrgRole = 'SELLER' | 'BUYER' | '3PL';
 
 export type RiskLevel = 'Low' | 'Medium' | 'High';
 
-export type DocumentType = 
+export type ComplianceDocumentType = 
   | 'GSTIN_CERTIFICATE'
   | 'PAN_CERTIFICATE'
   | 'CANCELLEDCHEQUE'
@@ -41,7 +41,7 @@ export interface ContactPerson {
 // ===== DOCUMENT & FILE TYPES =====
 
 export interface DocumentUpload {
-  docType: DocumentType;
+  docType: ComplianceDocumentType;
   fileName: string;
   fileUrl: string;
   uploadedAt: string;

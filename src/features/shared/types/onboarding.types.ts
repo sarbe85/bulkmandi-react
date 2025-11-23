@@ -108,13 +108,11 @@ export interface ComplianceFormData {
 export interface BuyerPreferencesData {
   categories: string[];
   typicalMonthlyVolumeMT?: number;
-  incoterms: string[];
+  incoterms: string[]; // Keep as array for future multi-select
   deliveryPins: string[];
-  acceptanceWindow: "24h" | "48h" | "72h";
-  qcRequirement: "VISUAL_WEIGHT" | "LAB_REQUIRED";
-  notifyEmail?: boolean;
-  notifySMS?: boolean;
-  notifyWhatsApp?: boolean;
+  acceptanceWindow: "24 hours" | "48 hours" | "72 hours"; // ✅ Match UI
+  qcRequirement: "Visual & Weight Check" | "Lab Testing Required"; // ✅ Match UI
+  notifications: string[]; // ✅ Changed from individual booleans to array
   notes?: string;
 }
 
