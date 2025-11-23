@@ -317,7 +317,7 @@ export default function BankDetailsStep({ data, onNext, onBack }: Props) {
         documents: Array.from(uploadedDocs.values()),
       });
 
-      toast({ title: "Success", description: "Bank details saved" });
+      // Note: submitStep already shows a success toast
       onNext();
     } catch (error: any) {
       toast({
